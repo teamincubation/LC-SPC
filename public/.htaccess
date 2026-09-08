@@ -1,0 +1,24 @@
+# ==============================================================================
+# Listening Community SPC (LC-SPC) - Public Directory Front Controller Rewrite
+# ==============================================================================
+
+Options -Indexes -MultiViews
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block access to hidden files inside public
+    RewriteRule ^\. - [F,L,NC]
+
+    # Preserve Authorization header across rewrites
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # If the requested file or directory physically exists in public/, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Otherwise route everything to index.php
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>

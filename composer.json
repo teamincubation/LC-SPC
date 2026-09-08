@@ -1,0 +1,31 @@
+{
+    "name": "teamincubation/lc-spc",
+    "description": "Listening Community – Suicide Prevention Campaign (LC-SPC) standalone application",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.2.0"
+    },
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        },
+        "files": [
+            "app/Core/helpers.php"
+        ]
+    },
+    "scripts": {
+        "start": "php -S localhost:8000 server.php",
+        "migrate": "php bin/migrate.php migrate",
+        "migrate:status": "php bin/migrate.php status",
+        "migrate:rollback": "php bin/migrate.php rollback"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

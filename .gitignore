@@ -1,0 +1,35 @@
+# Environment Configuration
+.env
+.env.*
+!.env.example
+
+# Composer Dependencies
+/vendor/
+
+# Application Storage & Runtime Artifacts
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/cache/*
+!/storage/cache/.gitkeep
+/storage/sessions/*
+!/storage/sessions/.gitkeep
+/storage/uploads/*
+!/storage/uploads/.gitkeep
+/storage/private/*
+!/storage/private/.gitkeep
+
+# Logs and Databases
+*.log
+*.sqlite
+*.sql.gz
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# IDE and Editor Folders
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace

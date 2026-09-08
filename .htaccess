@@ -1,0 +1,46 @@
+# ==============================================================================
+# Listening Community SPC (LC-SPC) - Root Apache Security & Routing Configuration
+# ==============================================================================
+# Designed for Hostinger deployment under /public_html/LC/ (https://teamincubation.in/LC/)
+# Prevents direct access to internal source directories, configurations, and secrets.
+# ==============================================================================
+
+# Disable directory listing and multi-views
+Options -Indexes -MultiViews
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. SECURITY: Block direct HTTP access to hidden files and directories
+    RewriteRule ^\. - [F,L,NC]
+    RewriteRule ^\.env.*$ - [F,L,NC]
+
+    # 2. SECURITY: Block direct access to sensitive internal application directories
+    RewriteRule ^(app|config|database|storage|vendor|tests|bin)(/.*)?$ - [F,L,NC]
+
+    # 3. SECURITY: Block direct access to configuration, lock, log, documentation, and database files
+    RewriteRule \.(env|json|lock|sql|md|log|yml|yaml|ini|sh|bat)$ - [F,L,NC]
+
+    # 4. ROUTING: Pass static assets in public/ directly if already requested
+    RewriteCond %{REQUEST_URI} ^.*/public/(.*)$
+    RewriteRule ^ - [L]
+
+    # 5. ROUTING: Map public files if requested without /public/ prefix
+    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f
+    RewriteRule ^ - [L]
+
+    # 6. ROUTING: Forward all other requests to the public/ front controller
+    RewriteCond %{REQUEST_URI} !^.*/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Fallback server protection if mod_rewrite is unavailable
+<FilesMatch "^(\.env|\.git|composer\.(json|lock)|package\.json|.*\.sql|.*\.log|.*\.md)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Deny,Allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
