@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Core;
+namespace App\Database;
 
+use App\Core\Database;
+use App\Core\Logger;
 use PDO;
 use RuntimeException;
 use Throwable;
@@ -36,7 +38,7 @@ class MigrationRunner
                 `id` INTEGER PRIMARY KEY AUTOINCREMENT,
                 `migration` VARCHAR(255) NOT NULL UNIQUE,
                 `batch` INTEGER NOT NULL,
-                `executed_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                `executed_at` DATETIME DEFAULT CURRENT_TIMESTAMP
             );";
         } else {
             $sql = "CREATE TABLE IF NOT EXISTS `migrations` (

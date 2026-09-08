@@ -19,7 +19,7 @@ use App\Core\Config;
 use App\Core\Database;
 use App\Core\Env;
 use App\Core\Middleware\CsrfMiddleware;
-use App\Core\MigrationRunner;
+use App\Database\MigrationRunner;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Router;
