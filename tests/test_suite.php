@@ -52,14 +52,25 @@ function assertTest(string $description, bool $condition, string $details = ''):
     }
 }
 
+Env::load(APP_ROOT . '/.env');
+Config::load(APP_ROOT . '/config');
+
+// Initialize session before any output/headers are sent to test clean secure start
+$cleanSessionStarted = false;
+if (!headers_sent()) {
+    Session::start();
+    $cleanSessionStarted = Session::isStarted();
+    if ($cleanSessionStarted) {
+        Session::set('audit_test_key', 'phase0_hardened');
+    }
+}
+
 echo "=== LC-SPC Phase 0 Foundation Verification Suite ===" . PHP_EOL;
 
 // -----------------------------------------------------------------------------
 // 1. Environment & Configuration System
 // -----------------------------------------------------------------------------
 echo PHP_EOL . "1. Testing Env & Config System..." . PHP_EOL;
-Env::load(APP_ROOT . '/.env');
-Config::load(APP_ROOT . '/config');
 
 assertTest(
     "Env loads APP_NAME accurately",
@@ -167,6 +178,53 @@ $validToken = Security::csrfToken();
 $reqPostWithCsrf = new Request([], ['_csrf_token' => $validToken], [], ['REQUEST_METHOD' => 'POST', 'REQUEST_URI' => '/submit']);
 $resPostWithCsrf = $csrfRouter->dispatch($reqPostWithCsrf);
 assertTest("State-changing POST with valid CSRF token is accepted (HTTP 200)", $resPostWithCsrf->getStatusCode() === 200 && $resPostWithCsrf->getContent() === 'SUBMIT_SUCCESS');
+
+// Test Permissions-Policy Header Configuration
+$permissionsPolicy = (string) Config::get('security.headers.Permissions-Policy', '');
+assertTest(
+    "Permissions-Policy does NOT contain 'geolocation=()'",
+    !str_contains($permissionsPolicy, 'geolocation=()'),
+    "Actual: {$permissionsPolicy}"
+);
+assertTest(
+    "Permissions-Policy allows geolocation for application origin: 'geolocation=(self)'",
+    str_contains($permissionsPolicy, 'geolocation=(self)'),
+    "Actual: {$permissionsPolicy}"
+);
+assertTest(
+    "Permissions-Policy does NOT allow geolocation for arbitrary third-party origins (*)",
+    !str_contains($permissionsPolicy, 'geolocation=*'),
+    "Actual: {$permissionsPolicy}"
+);
+
+// Test Session Security Configuration Attributes
+$sessionConf = Config::get('security.session', []);
+assertTest("Session security HttpOnly is enabled (true)", ($sessionConf['httponly'] ?? false) === true);
+assertTest("Session security SameSite is configured to Lax", ($sessionConf['samesite'] ?? '') === 'Lax');
+assertTest("Session name is configured as LCSPC_SESSION", ($sessionConf['name'] ?? '') === 'LCSPC_SESSION');
+assertTest("Session lifetime is configured (7200s)", ($sessionConf['lifetime'] ?? 0) === 7200);
+
+$sessionStorageDir = APP_ROOT . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'sessions';
+assertTest("Dedicated session storage directory exists", is_dir($sessionStorageDir));
+
+// Test Session Lifecycle and Destruction
+assertTest("Session::start initializes active session when headers not sent", $cleanSessionStarted === true);
+assertTest("Session::get retrieves stored session data", Session::get('audit_test_key') === 'phase0_hardened');
+
+// Simulate session cookie being set
+$_COOKIE[session_name()] = 'test_session_id_123';
+assertTest("Session cookie is set prior to destruction", isset($_COOKIE[session_name()]));
+
+Session::destroy();
+assertTest("Session::destroy marks session as not started", Session::isStarted() === false);
+assertTest("Session::destroy clears \$_SESSION array", empty($_SESSION));
+assertTest("Session::destroy unsets the session cookie from \$_COOKIE", !isset($_COOKIE[session_name()]));
+assertTest("Session::destroy leaves session inactive in PHP runtime", session_status() !== PHP_SESSION_ACTIVE);
+
+// Test Session::start() safety when headers have already been sent
+assertTest("Headers have already been sent by CLI output stream", headers_sent() === true);
+Session::start();
+assertTest("Session::start() safely aborts when headers already sent", Session::isStarted() === false);
 
 // -----------------------------------------------------------------------------
 // 4. View Helpers Test

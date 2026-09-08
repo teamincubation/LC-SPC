@@ -22,11 +22,10 @@ class Session
             return;
         }
 
+        // Fail safely if headers have already been sent to prevent starting
+        // an insecure session without the required cookie and security attributes.
         if (headers_sent()) {
-            if (session_status() === PHP_SESSION_NONE) {
-                @session_start();
-            }
-            self::$started = true;
+            Logger::error('Session::start() aborted: HTTP headers already sent; cannot apply secure session parameters.');
             return;
         }
 
@@ -39,8 +38,11 @@ class Session
         $httponly = (bool) ($sessionConfig['httponly'] ?? true);
         $samesite = $sessionConfig['samesite'] ?? 'Lax';
 
-        // Auto-detect HTTPS if secure not explicitly forced
-        if (!$secure && (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')) {
+        // Auto-detect HTTPS or production environment if secure not explicitly forced
+        if (!$secure && (
+            (Config::get('app.env') === 'production') ||
+            (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+        )) {
             $secure = true;
         }
 
@@ -126,25 +128,45 @@ class Session
 
     /**
      * Destroy the current session completely.
+     * Deletes the session cookie with matching security parameters including SameSite.
      */
     public static function destroy(): void
     {
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            $_SESSION = [];
-            if (ini_get('session.use_cookies')) {
-                $params = session_get_cookie_params();
-                setcookie(
-                    session_name(),
-                    '',
-                    time() - 42000,
-                    $params['path'],
-                    $params['domain'],
-                    $params['secure'],
-                    $params['httponly']
-                );
+        $_SESSION = [];
+
+        $name = session_name();
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+
+            // Delete cookie using matching security attributes including SameSite where supported
+            if (!headers_sent()) {
+                setcookie($name, '', [
+                    'expires' => time() - 42000,
+                    'path' => $params['path'] ?? '/',
+                    'domain' => $params['domain'] ?? '',
+                    'secure' => (bool) ($params['secure'] ?? false),
+                    'httponly' => (bool) ($params['httponly'] ?? true),
+                    'samesite' => $params['samesite'] ?? 'Lax',
+                ]);
             }
-            session_destroy();
-            self::$started = false;
+
+            if (isset($_COOKIE[$name])) {
+                unset($_COOKIE[$name]);
+            }
         }
+
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
+
+        self::$started = false;
+    }
+
+    /**
+     * Check if session has been started and is active.
+     */
+    public static function isStarted(): bool
+    {
+        return self::$started && session_status() === PHP_SESSION_ACTIVE;
     }
 }
