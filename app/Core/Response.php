@@ -94,6 +94,8 @@ class Response
             }
         }
 
-        echo $this->content;
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'HEAD') {
+            echo $this->content;
+        }
     }
 }

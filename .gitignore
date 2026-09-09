@@ -21,7 +21,9 @@
 # Logs and Databases
 *.log
 *.sqlite
+*.sql
 *.sql.gz
+!database/schema.sql
 
 # Operating System Files
 .DS_Store

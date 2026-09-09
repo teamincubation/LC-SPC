@@ -15,7 +15,7 @@ class App
 {
     private static bool $bootstrapped = false;
     private static Router $router;
-    private static string $rootPath;
+    private static string $rootPath = '';
 
     /**
      * Bootstrap the application runtime.
@@ -150,7 +150,8 @@ class App
         }
 
         // Production: Display safe, professional 500 error page without leaking credentials or paths
-        $errorView = self::$rootPath . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Views' . DIRECTORY_SEPARATOR . 'errors' . DIRECTORY_SEPARATOR . '500.php';
+        $root = !empty(self::$rootPath) ? self::$rootPath : (defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__, 2));
+        $errorView = $root . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'Views' . DIRECTORY_SEPARATOR . 'errors' . DIRECTORY_SEPARATOR . '500.php';
         if (file_exists($errorView)) {
             include $errorView;
         } else {

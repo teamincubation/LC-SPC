@@ -41,7 +41,9 @@ class Session
         // Auto-detect HTTPS or production environment if secure not explicitly forced
         if (!$secure && (
             (Config::get('app.env') === 'production') ||
-            (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+            (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off') ||
+            (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443) ||
+            (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
         )) {
             $secure = true;
         }

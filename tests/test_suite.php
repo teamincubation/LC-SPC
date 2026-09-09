@@ -139,6 +139,11 @@ $reqProdParam = new Request([], [], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI
 $resProdParam = $router->dispatch($reqProdParam);
 assertTest("Hostinger route parameter '/LC/events/999' extracts id=999", $resProdParam->getContent() === 'EVENT_999');
 
+// Test HEAD request compatibility on GET routes (RFC 7231 / RFC 9110)
+$reqHeadRoot = new Request([], [], [], ['REQUEST_METHOD' => 'HEAD', 'REQUEST_URI' => '/LC']);
+$resHeadRoot = $router->dispatch($reqHeadRoot);
+assertTest("Hostinger '/LC' HEAD dispatch matches GET route handler", $resHeadRoot->getContent() === 'ROOT_MATCHED');
+
 // Test 404 on non-existent route
 $req404 = new Request([], [], [], ['REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/LC/non-existent-page']);
 $res404 = $router->dispatch($req404);
@@ -227,17 +232,24 @@ Session::start();
 assertTest("Session::start() safely aborts when headers already sent", Session::isStarted() === false);
 
 // -----------------------------------------------------------------------------
-// 4. View Helpers Test
+// 4. View Helpers & Physical Asset Verification
 // -----------------------------------------------------------------------------
-echo PHP_EOL . "4. Testing View Helpers (url, asset, e)..." . PHP_EOL;
+echo PHP_EOL . "4. Testing View Helpers & Physical Asset Verification..." . PHP_EOL;
 Config::set('app.base_path', '/LC');
 assertTest("url('/health') in production produces '/LC/health'", url('/health') === '/LC/health');
 assertTest("url('/') in production produces '/LC/'", url('/') === '/LC/');
 assertTest("asset('css/app.css') in production produces '/LC/assets/css/app.css'", asset('css/app.css') === '/LC/assets/css/app.css');
+assertTest("asset('js/app.js') in production produces '/LC/assets/js/app.js'", asset('js/app.js') === '/LC/assets/js/app.js');
 
 Config::set('app.base_path', '/');
 assertTest("url('/health') in local produces '/health'", url('/health') === '/health');
 assertTest("asset('css/app.css') in local produces '/assets/css/app.css'", asset('css/app.css') === '/assets/css/app.css');
+assertTest("asset('js/app.js') in local produces '/assets/js/app.js'", asset('js/app.js') === '/assets/js/app.js');
+
+// Physical asset file presence checks
+assertTest("Physical asset 'public/assets/css/app.css' exists", file_exists(APP_ROOT . '/public/assets/css/app.css'));
+assertTest("Physical asset 'public/assets/js/app.js' exists", file_exists(APP_ROOT . '/public/assets/js/app.js'));
+assertTest("Physical asset 'public/assets/images/listening-community-logo.png' exists", file_exists(APP_ROOT . '/public/assets/images/listening-community-logo.png'));
 
 // -----------------------------------------------------------------------------
 // 5. Database Abstraction & Transactions (In-Memory SQLite PDO test)
@@ -292,17 +304,35 @@ assertTest("Health response DOES NOT leak server paths", !isset($healthJson['pat
 assertTest("Health response DOES NOT leak env variables", !isset($healthJson['env']));
 
 // -----------------------------------------------------------------------------
-// 7. Apache Security Rules Verification
+// 7. Production Error Handling & Stack Trace Suppression
 // -----------------------------------------------------------------------------
-echo PHP_EOL . "7. Verifying Apache Security Protection Rules..." . PHP_EOL;
+echo PHP_EOL . "7. Testing Production Error Handling & Information Leak Prevention..." . PHP_EOL;
+Config::set('app.debug', false);
+ob_start();
+App::handleException(new RuntimeException("CRITICAL_DATABASE_SECRET_KEY_12345"));
+$errOutput = ob_get_clean();
+
+assertTest("Production 500 error page renders HTTP 500 card", str_contains($errOutput, '500') && str_contains($errOutput, 'Internal Server Error'));
+assertTest("Production 500 DOES NOT expose exception message", !str_contains($errOutput, 'CRITICAL_DATABASE_SECRET_KEY_12345'));
+assertTest(
+    "Production 500 DOES NOT expose file stack traces",
+    !str_contains($errOutput, 'Stack trace:') && !str_contains($errOutput, '#0 ') && !str_contains($errOutput, 'App.php')
+);
+assertTest("Production 500 DOES NOT expose server paths", !str_contains($errOutput, APP_ROOT));
+
+// -----------------------------------------------------------------------------
+// 8. Apache Security Rules & Protection Verification
+// -----------------------------------------------------------------------------
+echo PHP_EOL . "8. Verifying Apache Security Protection Rules..." . PHP_EOL;
 $htaccessRoot = file_get_contents(APP_ROOT . '/.htaccess');
 $htaccessPublic = file_get_contents(APP_ROOT . '/public/.htaccess');
 $htaccessStorage = file_get_contents(APP_ROOT . '/storage/.htaccess');
 
 assertTest("Root .htaccess disables directory indexes (-Indexes)", str_contains($htaccessRoot, 'Options -Indexes'));
 assertTest("Root .htaccess blocks .env direct access", str_contains($htaccessRoot, '^\.env.*$') || str_contains($htaccessRoot, '\.env'));
-assertTest("Root .htaccess blocks app/ and config/ access", str_contains($htaccessRoot, 'app|config|database|storage|vendor'));
-assertTest("Root .htaccess blocks .sql and .log files", str_contains($htaccessRoot, 'sql') && str_contains($htaccessRoot, 'log'));
+assertTest("Root .htaccess blocks app/, config/, database/, storage/, vendor/, bin/, tests/", str_contains($htaccessRoot, 'app|config|database|storage|vendor|tests|bin'));
+assertTest("Root .htaccess blocks sensitive file extensions (.sql, .log, .json, .lock, .md)", str_contains($htaccessRoot, 'sql') && str_contains($htaccessRoot, 'log') && str_contains($htaccessRoot, 'json'));
+assertTest("Root .htaccess Fallback FilesMatch denies sensitive files", str_contains($htaccessRoot, '<FilesMatch') && str_contains($htaccessRoot, 'Require all denied'));
 assertTest("Storage .htaccess explicitly denies all access", str_contains($htaccessStorage, 'Require all denied') || str_contains($htaccessStorage, 'Deny from all'));
 
 // -----------------------------------------------------------------------------

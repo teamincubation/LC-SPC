@@ -172,7 +172,9 @@ php tests/test_suite.php
 ---
 
 ## Production Deployment on Hostinger
- 
+
+For comprehensive step-by-step instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 - **Hostinger Target Directory**: `/public_html/LC/` (under the `teami.in` website root)
 - **Target URL**: `https://teami.in/LC/`
 - **Dedicated Database**: `u806388046_LC` (User: `u806388046_LC_SPC`)

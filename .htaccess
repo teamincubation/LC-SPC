@@ -1,7 +1,7 @@
 # ==============================================================================
 # Listening Community SPC (LC-SPC) - Root Apache Security & Routing Configuration
 # ==============================================================================
-# Designed for Hostinger deployment under /public_html/LC/ (https://teamincubation.in/LC/)
+# Designed for Hostinger deployment under /public_html/LC/ (https://teami.in/LC/)
 # Prevents direct access to internal source directories, configurations, and secrets.
 # ==============================================================================
 
