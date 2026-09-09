@@ -2,7 +2,7 @@
 
 [![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue.svg)](https://php.net)
 [![Architecture](https://img.shields.io/badge/Architecture-Modular%20MVC-success.svg)]()
-[![Production URL](https://img.shields.io/badge/Production-teamincubation.in%2FLC-orange.svg)](https://teamincubation.in/LC/)
+[![Production URL](https://img.shields.io/badge/Production-teami.in%2FLC-orange.svg)](https://teami.in/LC/)
 
 The **LC-SPC** portal is a standalone web application designed for the **Listening Community – Suicide Prevention Campaign**. It is maintained by Team Incubation as a completely separate application from the main Team Incubation website.
 
@@ -12,7 +12,7 @@ The **LC-SPC** portal is a standalone web application designed for the **Listeni
 
 - **Standalone Codebase**: Isolated within `teamincubation/LC-SPC`. Zero code dependencies on `teami-2027`.
 - **Dedicated Database**: Connects exclusively to dedicated MySQL database `u806388046_LC` with database user `u806388046_LC_SPC`. It does NOT share the main Team Incubation database.
-- **Subdirectory-Aware Routing**: Runs under the `/LC/` subdirectory on Hostinger (`https://teamincubation.in/LC/`) as well as local root (`http://localhost:8000/`) without hardcoding paths in controllers, views, or business logic.
+- **Subdirectory-Aware Routing**: Runs under the `/LC/` subdirectory on Hostinger (`https://teami.in/LC/`) as well as local root (`http://localhost:8000/`) without hardcoding paths in controllers, views, or business logic.
 - **Multi-Tier Apache Security**: Root `.htaccess` redirects to `public/index.php` while blocking direct HTTP access to `.env`, `app/`, `config/`, `database/`, `storage/`, and `composer.json`.
 - **Hardened Sessions & CSRF**: HttpOnly, SameSite, and HTTPS Secure cookies, along with CSRF token generation and enforcement across mutating endpoints.
 
@@ -172,11 +172,12 @@ php tests/test_suite.php
 ---
 
 ## Production Deployment on Hostinger
-
-- **Hostinger Target Directory**: `/public_html/LC/`
-- **Target URL**: `https://teamincubation.in/LC/`
+ 
+- **Hostinger Target Directory**: `/public_html/LC/` (under the `teami.in` website root)
+- **Target URL**: `https://teami.in/LC/`
 - **Dedicated Database**: `u806388046_LC` (User: `u806388046_LC_SPC`)
-
+- **DNS / SSL Requirement**: `teami.in` must be pointed to the Hostinger hosting plan with active SSL/HTTPS.
+ 
 ### Deployment Steps:
 1. Clone or pull the `main` branch into `/public_html/LC/`.
 2. Generate or run `composer dump-autoload -o --no-dev`.
@@ -185,7 +186,7 @@ php tests/test_suite.php
    APP_NAME="Listening Community SPC"
    APP_ENV=production
    APP_DEBUG=false
-   APP_URL=https://teamincubation.in/LC
+   APP_URL=https://teami.in/LC
    APP_BASE_PATH=/LC
    APP_TIMEZONE=Asia/Kolkata
 
@@ -202,13 +203,13 @@ php tests/test_suite.php
    php bin/migrate.php migrate
    ```
 5. Ensure `storage/` permissions allow writing by the web user (chmod 755).
-6. Verify production health endpoint: `https://teamincubation.in/LC/health` returns HTTP 200 `{ "status": "ok", "application": "LC-SPC" }`.
+6. Verify production health endpoint: `https://teami.in/LC/health` returns HTTP 200 `{ "status": "ok", "application": "LC-SPC" }`.
 
 ---
 
 ## Git Workflow & Branching Strategy
 
-- **`main`**: Production-ready branch. Deployed to `https://teamincubation.in/LC/`.
+- **`main`**: Production-ready branch. Deployed to `https://teami.in/LC/`.
 - **`develop`**: Integration branch for completed and tested modules.
 - **`feature/*`**: Feature branches for individual development work (e.g. `feature/events`, `feature/registration`).
 

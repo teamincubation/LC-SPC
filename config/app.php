@@ -29,9 +29,9 @@ return [
     | Application URL & Base Path
     |--------------------------------------------------------------------------
     | Local: APP_URL=http://localhost:8000, APP_BASE_PATH=/
-    | Hostinger Production: APP_URL=https://teamincubation.in/LC, APP_BASE_PATH=/LC
+    | Hostinger Production: APP_URL=https://teami.in/LC, APP_BASE_PATH=/LC
     */
-    'url' => rtrim((string) Env::get('APP_URL', 'https://teamincubation.in/LC'), '/'),
+    'url' => rtrim((string) Env::get('APP_URL', 'https://teami.in/LC'), '/'),
     'base_path' => '/' . trim((string) Env::get('APP_BASE_PATH', '/LC'), '/'),
 
     /*
