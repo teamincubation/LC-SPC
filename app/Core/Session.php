@@ -102,7 +102,10 @@ class Session
     public static function regenerate(bool $deleteOldSession = true): bool
     {
         self::start();
-        return session_regenerate_id($deleteOldSession);
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            return session_regenerate_id($deleteOldSession);
+        }
+        return false;
     }
 
     /**
