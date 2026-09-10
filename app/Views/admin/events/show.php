@@ -55,6 +55,15 @@
         &larr; All Events
       </a>
 
+      <?php if (!$isSoftDeleted && in_array($st, ['published', 'ongoing', 'completed'], true)): ?>
+        <a href="<?= e(url('/admin/checkin/event/' . $event['id'])) ?>" class="btn btn-primary btn-sm">
+          <span>&#9989; Check-In</span>
+        </a>
+        <a href="<?= e(url('/admin/events/' . $event['id'] . '/attendance')) ?>" class="btn btn-outline btn-sm">
+          <span>&#128101; Attendance</span>
+        </a>
+      <?php endif; ?>
+
       <?php if (!$isSoftDeleted && !empty($canEdit)): ?>
         <a href="<?= e(url('/admin/events/' . $event['id'] . '/edit')) ?>" class="btn btn-outline btn-sm">
           Edit Event

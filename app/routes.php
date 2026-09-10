@@ -7,8 +7,10 @@ declare(strict_types=1);
  * All registered routes resolve consistently both locally (/) and under Hostinger (/LC/).
  */
 
+use App\Controllers\Admin\AttendanceController;
 use App\Controllers\Admin\AuthController;
 use App\Controllers\Admin\CampaignController;
+use App\Controllers\Admin\CheckInController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\EventController;
 use App\Controllers\Admin\ParticipantController;
@@ -167,6 +169,30 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
 
     // Reactivate cancelled registration (coordinator+, CSRF protected)
     $adminRouter->post('/registrations/{id}/reactivate', [RegistrationController::class, 'reactivate'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // -------------------------------------------------------------------------
+    // Attendance & Check-In Routes (Phase 1F)
+    // -------------------------------------------------------------------------
+    // Check-in Hub listing active events (staff+)
+    $adminRouter->get('/checkin', [CheckInController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_STAFF)]);
+
+    // Check-in Console for specific event (staff+)
+    $adminRouter->get('/checkin/event/{id}', [CheckInController::class, 'eventConsole'], [new RoleMiddleware(RoleService::ROLE_STAFF)]);
+
+    // Process Check-In (AJAX endpoint with CSRF verification, staff+)
+    $adminRouter->post('/checkin/verify', [CheckInController::class, 'verify'], [new RoleMiddleware(RoleService::ROLE_STAFF), CsrfMiddleware::class]);
+
+    // Event Attendance Roster (viewer+)
+    $adminRouter->get('/events/{id}/attendance', [AttendanceController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Update Attendance Status / Reversal / Correction (coordinator+, CSRF protected)
+    $adminRouter->post('/events/{id}/attendance/update', [AttendanceController::class, 'updateStatus'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Bulk Mark Remaining as Absent (coordinator+, CSRF protected)
+    $adminRouter->post('/events/{id}/attendance/bulk-absent', [AttendanceController::class, 'bulkMarkAbsent'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Export Attendance Roster CSV (staff+)
+    $adminRouter->get('/events/{id}/attendance/export', [AttendanceController::class, 'exportCsv'], [new RoleMiddleware(RoleService::ROLE_STAFF)]);
 
     // -------------------------------------------------------------------------
     // RBAC Capability Gate Routes (Phase 1A Foundation & Verification)

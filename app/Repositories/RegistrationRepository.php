@@ -169,11 +169,13 @@ class RegistrationRepository
                        p.`phone` AS `participant_phone`,
                        p.`category` AS `participant_category`,
                        p.`organization_name` AS `participant_organization`,
-                       p.`status` AS `participant_status`
+                       p.`status` AS `participant_status`,
+                       u.`name` AS `checked_in_by_name`
                 FROM `event_registrations` r
                 JOIN `events` e ON r.`event_id` = e.`id`
                 JOIN `campaigns` c ON e.`campaign_id` = c.`id`
                 JOIN `participants` p ON r.`participant_id` = p.`id`
+                LEFT JOIN `users` u ON r.`checked_in_by` = u.`id`
                 WHERE r.`registration_code` = :code
                 LIMIT 1";
 
@@ -430,4 +432,255 @@ class RegistrationRepository
 
         return Database::fetchAll($sql, [':event_id' => $eventId]);
     }
+
+    /**
+     * Atomic conditional check-in mutation.
+     * Transitions attendance_status from 'unmarked' to 'attended' atomically.
+     * Uses strictly distinct parameter names to comply with native prepared statements.
+     *
+     * @return int Affected row count (1 if this transaction performed check-in; 0 if already marked or condition failed)
+     */
+    public function updateAttendanceAtomic(int $regId, string $method, int $staffUserId, string $now): int
+    {
+        $sql = "UPDATE `event_registrations`
+                SET `attendance_status` = 'attended',
+                    `checked_in_at` = :checked_in_at,
+                    `checked_in_by` = :checked_in_by,
+                    `check_in_method` = :check_in_method,
+                    `updated_at` = :updated_at
+                WHERE `id` = :id AND `attendance_status` = 'unmarked'";
+
+        $params = [
+            ':id'              => $regId,
+            ':checked_in_at'   => $now,
+            ':checked_in_by'   => $staffUserId,
+            ':check_in_method' => $method,
+            ':updated_at'      => $now,
+        ];
+
+        return Database::execute($sql, $params);
+    }
+
+    /**
+     * Update attendance status for an event registration (used for corrections and reversals).
+     * When reversing to 'unmarked', clears checked_in_at, checked_in_by, and check_in_method.
+     */
+    public function updateAttendanceStatus(
+        int $regId,
+        string $status,
+        ?string $adminNotes = null,
+        ?int $staffUserId = null,
+        ?string $method = null
+    ): bool {
+        $now = date('Y-m-d H:i:s');
+        $params = [
+            ':id'         => $regId,
+            ':updated_at' => $now,
+        ];
+
+        $notesSql = "";
+        if ($adminNotes !== null) {
+            $notesSql = ", `admin_notes` = :admin_notes";
+            $params[':admin_notes'] = trim($adminNotes);
+        }
+
+        if ($status === 'unmarked') {
+            $sql = "UPDATE `event_registrations` SET
+                        `attendance_status` = 'unmarked',
+                        `checked_in_at` = NULL,
+                        `checked_in_by` = NULL,
+                        `check_in_method` = NULL,
+                        `updated_at` = :updated_at
+                        {$notesSql}
+                    WHERE `id` = :id";
+        } elseif ($status === 'attended') {
+            $sql = "UPDATE `event_registrations` SET
+                        `attendance_status` = 'attended',
+                        `checked_in_at` = COALESCE(`checked_in_at`, :checked_in_at),
+                        `checked_in_by` = COALESCE(`checked_in_by`, :checked_in_by),
+                        `check_in_method` = COALESCE(`check_in_method`, :check_in_method),
+                        `updated_at` = :updated_at
+                        {$notesSql}
+                    WHERE `id` = :id";
+            $params[':checked_in_at'] = $now;
+            $params[':checked_in_by'] = $staffUserId;
+            $params[':check_in_method'] = $method ?? 'admin_manual';
+        } else {
+            // 'absent' or 'excused'
+            $sql = "UPDATE `event_registrations` SET
+                        `attendance_status` = :attendance_status,
+                        `updated_at` = :updated_at
+                        {$notesSql}
+                    WHERE `id` = :id";
+            $params[':attendance_status'] = $status;
+        }
+
+        Database::execute($sql, $params);
+        return true;
+    }
+
+    /**
+     * Compute real-time attendance metric counts for a specific event.
+     */
+    public function countAttendanceByEvent(int $eventId): array
+    {
+        $sql = "SELECT `attendance_status`, COUNT(*) AS `total` 
+                FROM `event_registrations` 
+                WHERE `event_id` = :event_id AND `status` = 'confirmed'
+                GROUP BY `attendance_status`";
+
+        $rows = Database::fetchAll($sql, [':event_id' => $eventId]);
+
+        $metrics = [
+            'confirmed'          => 0,
+            'attended'           => 0,
+            'absent'             => 0,
+            'excused'            => 0,
+            'unmarked'           => 0,
+            'turnout_percentage' => 0.0,
+        ];
+
+        foreach ($rows as $row) {
+            $status = $row['attendance_status'] ?? '';
+            $count = (int) ($row['total'] ?? 0);
+            if (isset($metrics[$status])) {
+                $metrics[$status] = $count;
+            }
+            $metrics['confirmed'] += $count;
+        }
+
+        if ($metrics['confirmed'] > 0) {
+            $metrics['turnout_percentage'] = round(($metrics['attended'] / $metrics['confirmed']) * 100, 1);
+        }
+
+        return $metrics;
+    }
+
+    /**
+     * Compute breakdown of check-in methods for attended participants of an event.
+     */
+    public function countCheckInMethodsByEvent(int $eventId): array
+    {
+        $sql = "SELECT `check_in_method`, COUNT(*) AS `total` 
+                FROM `event_registrations` 
+                WHERE `event_id` = :event_id AND `attendance_status` = 'attended'
+                GROUP BY `check_in_method`";
+
+        $rows = Database::fetchAll($sql, [':event_id' => $eventId]);
+
+        $counts = [
+            'qr_scan'      => 0,
+            'admin_manual' => 0,
+        ];
+
+        foreach ($rows as $row) {
+            $method = $row['check_in_method'] ?? '';
+            $count = (int) ($row['total'] ?? 0);
+            if (isset($counts[$method])) {
+                $counts[$method] = $count;
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Bulk mark all remaining confirmed 'unmarked' registrations as 'absent' for an event.
+     *
+     * @return int Number of registrations marked absent
+     */
+    public function markRemainingAbsent(int $eventId, string $now): int
+    {
+        $sql = "UPDATE `event_registrations` 
+                SET `attendance_status` = 'absent',
+                    `updated_at` = :updated_at
+                WHERE `event_id` = :event_id 
+                  AND `status` = 'confirmed' 
+                  AND `attendance_status` = 'unmarked'";
+
+        return Database::execute($sql, [
+            ':event_id'   => $eventId,
+            ':updated_at' => $now,
+        ]);
+    }
+
+    /**
+     * Retrieve paginated attendance roster for an event with participant and staff checker details.
+     */
+    public function getAttendanceRoster(int $eventId, array $filters = [], int $page = 1, int $perPage = 50): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, min(100, $perPage));
+        $offset = ($page - 1) * $perPage;
+
+        $where = " WHERE r.`event_id` = :event_id AND r.`status` = 'confirmed'";
+        $params = [':event_id' => $eventId];
+
+        if (!empty($filters['attendance_status']) && $filters['attendance_status'] !== 'all') {
+            $where .= " AND r.`attendance_status` = :attendance_status";
+            $params[':attendance_status'] = $filters['attendance_status'];
+        }
+
+        if (!empty($filters['search'])) {
+            $searchTerm = '%' . trim((string) $filters['search']) . '%';
+            $where .= " AND (r.`registration_code` LIKE :search OR p.`full_name` LIKE :search OR p.`email` LIKE :search OR p.`phone` LIKE :search)";
+            $params[':search'] = $searchTerm;
+        }
+
+        $countSql = "SELECT COUNT(*) AS `total`
+                     FROM `event_registrations` r
+                     JOIN `participants` p ON r.`participant_id` = p.`id`" . $where;
+        $totalRow = Database::fetch($countSql, $params);
+        $total = (int) ($totalRow['total'] ?? 0);
+
+        $dataSql = "SELECT r.*,
+                           p.`full_name` AS `participant_name`,
+                           p.`email` AS `participant_email`,
+                           p.`phone` AS `participant_phone`,
+                           p.`category` AS `participant_category`,
+                           p.`organization_name` AS `participant_organization`,
+                           p.`status` AS `participant_status`,
+                           u.`name` AS `checked_in_by_name`
+                    FROM `event_registrations` r
+                    JOIN `participants` p ON r.`participant_id` = p.`id`
+                    LEFT JOIN `users` u ON r.`checked_in_by` = u.`id`"
+                    . $where . " ORDER BY r.`id` ASC LIMIT " . (int) $perPage . " OFFSET " . (int) $offset;
+
+        $items = Database::fetchAll($dataSql, $params);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+
+        return [
+            'items'       => $items,
+            'total'       => $total,
+            'page'        => $page,
+            'per_page'    => $perPage,
+            'last_page'   => $lastPage,
+            'total_pages' => $lastPage,
+            'has_more'    => $page < $lastPage,
+        ];
+    }
+
+    /**
+     * Retrieve all confirmed registrations for an event for CSV export.
+     */
+    public function getAllConfirmedForExport(int $eventId): array
+    {
+        $sql = "SELECT r.*,
+                       e.`title` AS `event_title`,
+                       p.`full_name` AS `participant_name`,
+                       p.`email` AS `participant_email`,
+                       p.`phone` AS `participant_phone`,
+                       p.`category` AS `participant_category`,
+                       p.`organization_name` AS `participant_organization`,
+                       u.`name` AS `checked_in_by_name`
+                FROM `event_registrations` r
+                JOIN `events` e ON r.`event_id` = e.`id`
+                JOIN `participants` p ON r.`participant_id` = p.`id`
+                LEFT JOIN `users` u ON r.`checked_in_by` = u.`id`
+                WHERE r.`event_id` = :event_id AND r.`status` = 'confirmed'
+                ORDER BY r.`id` ASC";
+
+        return Database::fetchAll($sql, [':event_id' => $eventId]);
+    }
 }
+

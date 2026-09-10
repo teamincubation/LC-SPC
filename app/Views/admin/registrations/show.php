@@ -169,11 +169,42 @@
           </span>
         </div>
 
+        <?php
+          $attStatus = $registration['attendance_status'] ?? 'unmarked';
+          $attBadgeClass = match ($attStatus) {
+            'attended' => 'badge-success',
+            'absent'   => 'badge-danger',
+            'excused'  => 'badge-warning',
+            default    => 'badge-secondary',
+          };
+          $methodLabel = match ($registration['check_in_method'] ?? '') {
+            'qr_scan'       => 'QR Scanner',
+            'manual_lookup' => 'Manual Lookup',
+            'override'      => 'Admin Override',
+            default         => $registration['check_in_method'] ?? 'N/A',
+          };
+        ?>
         <div class="mb-3">
-          <span class="text-secondary" style="font-size: var(--font-size-sm);">Attendance Presence (Phase 1F):</span><br>
-          <span class="badge badge-light" style="text-transform: capitalize; margin-top: 0.25rem;">
-            <?= e($registration['attendance_status'] ?? 'unmarked') ?>
-          </span>
+          <span class="text-secondary" style="font-size: var(--font-size-sm);">Attendance Presence:</span><br>
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; flex-wrap: wrap;">
+            <span class="badge <?= e($attBadgeClass) ?>" style="font-size: var(--font-size-sm); text-transform: uppercase;">
+              <?= e($attStatus) ?>
+            </span>
+            <a href="<?= e(url('/admin/events/' . $registration['event_id'] . '/attendance')) ?>" class="text-primary" style="font-size: var(--font-size-xs); text-decoration: underline;">
+              View Event Attendance Roster &rarr;
+            </a>
+          </div>
+          <?php if ($attStatus === 'attended' && !empty($registration['checked_in_at'])): ?>
+            <div style="font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: 0.35rem; line-height: 1.4;">
+              <div>&#128343; Checked in: <strong><?= e(date('M d, Y H:i:s', strtotime((string) $registration['checked_in_at']))) ?></strong></div>
+              <?php if (!empty($registration['checked_in_by_name'])): ?>
+                <div>&#128100; Verified by: <strong><?= e($registration['checked_in_by_name']) ?></strong></div>
+              <?php endif; ?>
+              <?php if (!empty($registration['check_in_method'])): ?>
+                <div>&#128247; Intake Method: <strong><?= e($methodLabel) ?></strong></div>
+              <?php endif; ?>
+            </div>
+          <?php endif; ?>
         </div>
 
         <?php if (!empty($registration['admin_notes'])): ?>
