@@ -287,6 +287,14 @@ try {
         (int)$resetUserAfter['failed_logins'] === 0 && !empty($resetUserAfter['last_login_at'])
     );
 
+    // Test 9b: Verify resetFailedLoginsAndTouchLastLogin works with distinct MySQL-compatible parameters
+    $userRepo->resetFailedLoginsAndTouchLastLogin($resetTargetId);
+    $touchedUser = $userRepo->findById($resetTargetId);
+    assertAuthTest(
+        "9b. UserRepository::resetFailedLoginsAndTouchLastLogin executes with distinct parameters (:last_login_at, :updated_at)",
+        (int)$touchedUser['failed_logins'] === 0 && !empty($touchedUser['last_login_at'])
+    );
+
     // Test 10: Session Regeneration on Login
     $authService->authenticate('alice.sharma@teami.in', $plainPassword);
     assertAuthTest(

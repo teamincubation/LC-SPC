@@ -182,10 +182,10 @@ class CampaignRepository
     {
         $now = date('Y-m-d H:i:s');
         $sql = "UPDATE `campaigns` 
-                SET `deleted_at` = :now, `updated_at` = :now 
+                SET `deleted_at` = :deleted_at, `updated_at` = :updated_at 
                 WHERE `id` = :id AND `deleted_at` IS NULL";
 
-        $affected = Database::execute($sql, [':id' => $id, ':now' => $now]);
+        $affected = Database::execute($sql, [':id' => $id, ':deleted_at' => $now, ':updated_at' => $now]);
         return $affected > 0;
     }
 

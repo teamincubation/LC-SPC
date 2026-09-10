@@ -90,9 +90,9 @@ class UserRepository
     {
         $now = date('Y-m-d H:i:s');
         $sql = "UPDATE `users` 
-                SET `failed_logins` = 0, `locked_until` = NULL, `last_login_at` = :now, `updated_at` = :now 
+                SET `failed_logins` = 0, `locked_until` = NULL, `last_login_at` = :last_login_at, `updated_at` = :updated_at 
                 WHERE `id` = :id";
-        Database::execute($sql, [':id' => $id, ':now' => $now]);
+        Database::execute($sql, [':id' => $id, ':last_login_at' => $now, ':updated_at' => $now]);
     }
 
     /**
@@ -175,7 +175,7 @@ class UserRepository
     public function softDelete(int $id): bool
     {
         $now = date('Y-m-d H:i:s');
-        $sql = "UPDATE `users` SET `deleted_at` = :now, `updated_at` = :now WHERE `id` = :id";
-        return Database::execute($sql, [':id' => $id, ':now' => $now]) > 0;
+        $sql = "UPDATE `users` SET `deleted_at` = :deleted_at, `updated_at` = :updated_at WHERE `id` = :id";
+        return Database::execute($sql, [':id' => $id, ':deleted_at' => $now, ':updated_at' => $now]) > 0;
     }
 }
