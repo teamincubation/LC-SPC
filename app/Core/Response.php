@@ -70,6 +70,11 @@ class Response
         return $this->headers;
     }
 
+    public function getHeader(string $name): ?string
+    {
+        return $this->headers[$name] ?? null;
+    }
+
     public function setContent(string $content): self
     {
         $this->content = $content;
@@ -77,6 +82,11 @@ class Response
     }
 
     public function getContent(): string
+    {
+        return $this->content;
+    }
+
+    public function getBody(): string
     {
         return $this->content;
     }

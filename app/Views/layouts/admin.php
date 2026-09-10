@@ -47,6 +47,12 @@
           </a>
         </li>
         <li class="admin-nav-item" role="none">
+          <a href="<?= e(url('/admin/participants')) ?>" class="admin-nav-link" role="menuitem">
+            <span class="admin-nav-icon" aria-hidden="true">&#128100;</span>
+            <span>Participants</span>
+          </a>
+        </li>
+        <li class="admin-nav-item" role="none">
           <a href="#" class="admin-nav-link" role="menuitem" tabindex="-1" aria-disabled="true">
             <span class="admin-nav-icon" aria-hidden="true">&#128101;</span>
             <span>Registrations</span>

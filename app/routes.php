@@ -11,6 +11,7 @@ use App\Controllers\Admin\AuthController;
 use App\Controllers\Admin\CampaignController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\EventController;
+use App\Controllers\Admin\ParticipantController;
 use App\Controllers\HealthController;
 use App\Controllers\HomeController;
 use App\Core\Middleware\AuthMiddleware;
@@ -103,6 +104,30 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
 
     // Restore soft-deleted event (super_admin only, CSRF protected)
     $adminRouter->post('/events/{id}/restore', [EventController::class, 'restore'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
+
+    // -------------------------------------------------------------------------
+    // Participant Management Routes (Phase 1D)
+    // -------------------------------------------------------------------------
+    // List participants (viewer+)
+    $adminRouter->get('/participants', [ParticipantController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Create participant form (coordinator+)
+    $adminRouter->get('/participants/create', [ParticipantController::class, 'create'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
+
+    // Store new participant (coordinator+, CSRF protected)
+    $adminRouter->post('/participants', [ParticipantController::class, 'store'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // View participant profile details (viewer+)
+    $adminRouter->get('/participants/{id}', [ParticipantController::class, 'show'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Edit participant form (coordinator+)
+    $adminRouter->get('/participants/{id}/edit', [ParticipantController::class, 'edit'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
+
+    // Update participant (coordinator+, CSRF protected)
+    $adminRouter->post('/participants/{id}', [ParticipantController::class, 'update'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Update participant lifecycle status (coordinator+, CSRF protected)
+    $adminRouter->post('/participants/{id}/status', [ParticipantController::class, 'updateStatus'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
 
     // -------------------------------------------------------------------------
     // RBAC Capability Gate Routes (Phase 1A Foundation & Verification)

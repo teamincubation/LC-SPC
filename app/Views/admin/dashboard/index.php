@@ -104,6 +104,18 @@
       </p>
     </a>
 
+    <!-- Participants Module -->
+    <a href="<?= e(url('/admin/participants')) ?>" style="text-decoration: none; color: inherit; display: block; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; background-color: var(--bg-surface); transition: transform var(--transition-fast), box-shadow var(--transition-fast);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+        <span style="font-size: 1.5rem;" aria-hidden="true">&#128100;</span>
+        <span class="badge badge-success">Phase 1D Active</span>
+      </div>
+      <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin-bottom: 0.35rem; color: var(--color-primary);">Participant Directory &rarr;</h3>
+      <p class="text-caption text-secondary" style="margin-bottom: 0;">
+        Canonical attendee identities, stakeholder categories, server-side consent timestamps, and privacy masking.
+      </p>
+    </a>
+
     <!-- Registrations Module -->
     <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; background-color: var(--bg-surface);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
