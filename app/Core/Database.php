@@ -143,13 +143,23 @@ class Database
      */
     public static function transaction(callable $callback): mixed
     {
-        self::begin();
+        $pdo = self::getConnection();
+        $isRoot = !$pdo->inTransaction();
+
+        if ($isRoot) {
+            self::begin();
+        }
+
         try {
-            $result = $callback(self::getConnection());
-            self::commit();
+            $result = $callback($pdo);
+            if ($isRoot) {
+                self::commit();
+            }
             return $result;
         } catch (\Throwable $e) {
-            self::rollback();
+            if ($isRoot) {
+                self::rollback();
+            }
             throw $e;
         }
     }

@@ -12,8 +12,10 @@ use App\Controllers\Admin\CampaignController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\EventController;
 use App\Controllers\Admin\ParticipantController;
+use App\Controllers\Admin\RegistrationController;
 use App\Controllers\HealthController;
 use App\Controllers\HomeController;
+use App\Controllers\Public\RegistrationPassController;
 use App\Core\Middleware\AuthMiddleware;
 use App\Core\Middleware\CsrfMiddleware;
 use App\Core\Middleware\GuestMiddleware;
@@ -30,6 +32,7 @@ use App\Services\RoleService;
 // -----------------------------------------------------------------------------
 $router->get('/', [HomeController::class, 'index']);
 $router->get('/health', [HealthController::class, 'index']);
+$router->get('/registration/pass/{code}', [RegistrationPassController::class, 'show']);
 
 // -----------------------------------------------------------------------------
 // Authentication Routes (Phase 1A)
@@ -128,6 +131,42 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
 
     // Update participant lifecycle status (coordinator+, CSRF protected)
     $adminRouter->post('/participants/{id}/status', [ParticipantController::class, 'updateStatus'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // -------------------------------------------------------------------------
+    // Event Registration Routes (Phase 1E)
+    // -------------------------------------------------------------------------
+    // List registrations (viewer+)
+    $adminRouter->get('/registrations', [RegistrationController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Create registration form (coordinator+)
+    $adminRouter->get('/registrations/create', [RegistrationController::class, 'create'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
+
+    // Store new registration (coordinator+, CSRF protected)
+    $adminRouter->post('/registrations', [RegistrationController::class, 'store'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // View registration details (viewer+)
+    $adminRouter->get('/registrations/{id}', [RegistrationController::class, 'show'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // View administrative attendance pass (viewer+)
+    $adminRouter->get('/registrations/{id}/pass', [RegistrationController::class, 'pass'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Printable attendance pass layout (viewer+)
+    $adminRouter->get('/registrations/{id}/print', [RegistrationController::class, 'printPass'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Coordinator approves pending registration (coordinator+, CSRF protected)
+    $adminRouter->post('/registrations/{id}/approve', [RegistrationController::class, 'approve'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Coordinator moves pending registration to waitlist when full (coordinator+, CSRF protected)
+    $adminRouter->post('/registrations/{id}/waitlist', [RegistrationController::class, 'moveToWaitlist'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Coordinator promotes waitlisted registration to confirmed (coordinator+, CSRF protected)
+    $adminRouter->post('/registrations/{id}/promote', [RegistrationController::class, 'promote'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Cancel registration (coordinator+, CSRF protected)
+    $adminRouter->post('/registrations/{id}/cancel', [RegistrationController::class, 'cancel'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Reactivate cancelled registration (coordinator+, CSRF protected)
+    $adminRouter->post('/registrations/{id}/reactivate', [RegistrationController::class, 'reactivate'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
 
     // -------------------------------------------------------------------------
     // RBAC Capability Gate Routes (Phase 1A Foundation & Verification)

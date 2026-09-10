@@ -117,16 +117,16 @@
     </a>
 
     <!-- Registrations Module -->
-    <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; background-color: var(--bg-surface);">
+    <a href="<?= e(url('/admin/registrations')) ?>" style="text-decoration: none; color: inherit; display: block; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; background-color: var(--bg-surface); transition: transform var(--transition-fast), box-shadow var(--transition-fast);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
         <span style="font-size: 1.5rem;" aria-hidden="true">&#128101;</span>
-        <span class="badge badge-neutral">Phase 1 Database Ready</span>
+        <span class="badge badge-success">Phase 1E Active</span>
       </div>
-      <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin-bottom: 0.35rem;">Registrations &amp; Passes</h3>
+      <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin-bottom: 0.35rem; color: var(--color-primary);">Registrations &amp; Passes &rarr;</h3>
       <p class="text-caption text-secondary" style="margin-bottom: 0;">
         Participant deduplication, unique QR pass generation, waitlist management, and roster review.
       </p>
-    </div>
+    </a>
 
     <!-- Check-In Module -->
     <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; background-color: var(--bg-surface);">

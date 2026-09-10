@@ -306,4 +306,16 @@ class EventRepository
 
         return $counts;
     }
+
+    /**
+     * Get count of confirmed registrations for an event.
+     */
+    public function getConfirmedRegistrationCount(int $eventId): int
+    {
+        $sql = "SELECT COUNT(*) AS `total` 
+                FROM `event_registrations` 
+                WHERE `event_id` = :event_id AND `status` = 'confirmed'";
+        $row = Database::fetch($sql, [':event_id' => $eventId]);
+        return (int) ($row['total'] ?? 0);
+    }
 }
