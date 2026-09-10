@@ -10,6 +10,7 @@ declare(strict_types=1);
 use App\Controllers\Admin\AuthController;
 use App\Controllers\Admin\CampaignController;
 use App\Controllers\Admin\DashboardController;
+use App\Controllers\Admin\EventController;
 use App\Controllers\HealthController;
 use App\Controllers\HomeController;
 use App\Core\Middleware\AuthMiddleware;
@@ -72,6 +73,36 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
 
     // Restore soft-deleted campaign (super_admin only, CSRF protected)
     $adminRouter->post('/campaigns/{id}/restore', [CampaignController::class, 'restore'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
+
+    // -------------------------------------------------------------------------
+    // Event Management Routes (Phase 1C)
+    // -------------------------------------------------------------------------
+    // List events (viewer+)
+    $adminRouter->get('/events', [EventController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Create event form (coordinator+)
+    $adminRouter->get('/events/create', [EventController::class, 'create'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
+
+    // Store new event (coordinator+, CSRF protected)
+    $adminRouter->post('/events', [EventController::class, 'store'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // View event details (viewer+)
+    $adminRouter->get('/events/{id}', [EventController::class, 'show'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Edit event form (coordinator+)
+    $adminRouter->get('/events/{id}/edit', [EventController::class, 'edit'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
+
+    // Update event (coordinator+, CSRF protected)
+    $adminRouter->post('/events/{id}', [EventController::class, 'update'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Status management (coordinator+, CSRF protected)
+    $adminRouter->post('/events/{id}/status', [EventController::class, 'updateStatus'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Soft-delete event (super_admin only, CSRF protected)
+    $adminRouter->post('/events/{id}/delete', [EventController::class, 'destroy'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
+
+    // Restore soft-deleted event (super_admin only, CSRF protected)
+    $adminRouter->post('/events/{id}/restore', [EventController::class, 'restore'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
 
     // -------------------------------------------------------------------------
     // RBAC Capability Gate Routes (Phase 1A Foundation & Verification)

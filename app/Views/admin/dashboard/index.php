@@ -93,16 +93,16 @@
     </a>
 
     <!-- Events Module -->
-    <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; background-color: var(--bg-surface);">
+    <a href="<?= e(url('/admin/events')) ?>" style="text-decoration: none; color: inherit; display: block; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; background-color: var(--bg-surface); transition: transform var(--transition-fast), box-shadow var(--transition-fast);">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
         <span style="font-size: 1.5rem;" aria-hidden="true">&#128197;</span>
-        <span class="badge badge-neutral">Phase 1 Database Ready</span>
+        <span class="badge badge-success">Phase 1C Active</span>
       </div>
-      <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin-bottom: 0.35rem;">Events &amp; Circles</h3>
+      <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin-bottom: 0.35rem; color: var(--color-primary);">Events &amp; Circles &rarr;</h3>
       <p class="text-caption text-secondary" style="margin-bottom: 0;">
         Workshops, listening circles, training sessions, venues, capacity controls, and approval gating.
       </p>
-    </div>
+    </a>
 
     <!-- Registrations Module -->
     <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem; background-color: var(--bg-surface);">

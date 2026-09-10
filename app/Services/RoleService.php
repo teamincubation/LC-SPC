@@ -59,6 +59,14 @@ class RoleService
     }
 
     /**
+     * Determine if a user's role exactly matches a specific role.
+     */
+    public static function hasExactRole(string $userRole, string $expectedRole): bool
+    {
+        return $userRole === $expectedRole;
+    }
+
+    /**
      * Return list of all valid roles.
      */
     public static function getAllRoles(): array

@@ -40,6 +40,20 @@ class UserRepository
     }
 
     /**
+     * Retrieve all active, non-deleted users eligible for event coordination.
+     */
+    public function getEligibleCoordinators(): array
+    {
+        $sql = "SELECT `id`, `name`, `email`, `role` 
+                FROM `users` 
+                WHERE `status` = 'active' 
+                  AND `deleted_at` IS NULL 
+                  AND `role` IN ('super_admin', 'coordinator', 'staff') 
+                ORDER BY `name` ASC";
+        return Database::fetchAll($sql);
+    }
+
+    /**
      * Increment the consecutive failed logins counter and return updated count.
      */
     public function incrementFailedLogins(int $id): int

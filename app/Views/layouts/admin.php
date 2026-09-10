@@ -41,7 +41,7 @@
           </a>
         </li>
         <li class="admin-nav-item" role="none">
-          <a href="#" class="admin-nav-link" role="menuitem" tabindex="-1" aria-disabled="true">
+          <a href="<?= e(url('/admin/events')) ?>" class="admin-nav-link" role="menuitem">
             <span class="admin-nav-icon" aria-hidden="true">&#128197;</span>
             <span>Events</span>
           </a>
