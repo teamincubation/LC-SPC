@@ -8,6 +8,7 @@ declare(strict_types=1);
  */
 
 use App\Controllers\Admin\AuthController;
+use App\Controllers\Admin\CampaignController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\HealthController;
 use App\Controllers\HomeController;
@@ -42,7 +43,39 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
     // Admin Dashboard Overview (Requires viewer role rank or above)
     $adminRouter->get('/', [DashboardController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
 
+    // -------------------------------------------------------------------------
+    // Campaign Management Routes (Phase 1B)
+    // -------------------------------------------------------------------------
+    // List campaigns (viewer+)
+    $adminRouter->get('/campaigns', [CampaignController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Create campaign form (coordinator+)
+    $adminRouter->get('/campaigns/create', [CampaignController::class, 'create'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
+
+    // Store new campaign (coordinator+, CSRF protected)
+    $adminRouter->post('/campaigns', [CampaignController::class, 'store'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // View campaign details (viewer+)
+    $adminRouter->get('/campaigns/{id}', [CampaignController::class, 'show'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Edit campaign form (coordinator+)
+    $adminRouter->get('/campaigns/{id}/edit', [CampaignController::class, 'edit'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
+
+    // Update campaign (coordinator+, CSRF protected)
+    $adminRouter->post('/campaigns/{id}', [CampaignController::class, 'update'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Status management (coordinator+, CSRF protected)
+    $adminRouter->post('/campaigns/{id}/status', [CampaignController::class, 'updateStatus'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Soft-delete campaign (super_admin only, CSRF protected)
+    $adminRouter->post('/campaigns/{id}/delete', [CampaignController::class, 'destroy'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
+
+    // Restore soft-deleted campaign (super_admin only, CSRF protected)
+    $adminRouter->post('/campaigns/{id}/restore', [CampaignController::class, 'restore'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
+
+    // -------------------------------------------------------------------------
     // RBAC Capability Gate Routes (Phase 1A Foundation & Verification)
+    // -------------------------------------------------------------------------
     $adminRouter->get('/viewer-area', function (Request $request): Response {
         return Response::json(['status' => 'authorized', 'role_required' => 'viewer', 'level' => 10]);
     }, [new RoleMiddleware(RoleService::ROLE_VIEWER)]);

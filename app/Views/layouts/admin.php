@@ -29,9 +29,15 @@
 
       <ul class="admin-nav" role="menubar">
         <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/')) ?>" class="admin-nav-link is-active" role="menuitem">
+          <a href="<?= e(url('/admin')) ?>" class="admin-nav-link" role="menuitem">
             <span class="admin-nav-icon" aria-hidden="true">&#9638;</span>
             <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="admin-nav-item" role="none">
+          <a href="<?= e(url('/admin/campaigns')) ?>" class="admin-nav-link" role="menuitem">
+            <span class="admin-nav-icon" aria-hidden="true">&#127919;</span>
+            <span>Campaigns</span>
           </a>
         </li>
         <li class="admin-nav-item" role="none">
