@@ -94,10 +94,23 @@ class Icon
     ];
 
     /**
-     * Render an inline SVG icon.
+     * Standard size map for vector icons in pixels.
+     *
+     * @var array<string, int>
+     */
+    protected static array $sizeMap = [
+        'xs' => 14,
+        'sm' => 16,
+        'md' => 20,
+        'lg' => 24,
+        'xl' => 32,
+    ];
+
+    /**
+     * Render an inline vector SVG icon with explicit intrinsic dimensions and component scoping.
      *
      * @param string $name Name of the icon
-     * @param array<string, mixed> $attributes HTML attributes (class, width, height, style, title, etc.)
+     * @param array<string, mixed> $attributes HTML attributes (class, width, height, size, style, title, etc.)
      * @return string Valid sanitized inline SVG markup
      */
     public static function render(string $name, array $attributes = []): string
@@ -105,24 +118,100 @@ class Icon
         $key = strtolower(trim($name));
         $paths = self::$icons[$key] ?? self::$icons['info'];
 
+        // Determine explicit pixel dimensions to prevent container growth regression
+        $width = null;
+        $height = null;
+        $sizeClass = null;
+
+        // 1. Explicit width / height passed
+        if (isset($attributes['width'])) {
+            $width = (string) $attributes['width'];
+        }
+        if (isset($attributes['height'])) {
+            $height = (string) $attributes['height'];
+        }
+
+        // 2. 'size' shorthand passed (e.g. 'sm', 'md', or numeric)
+        if (isset($attributes['size'])) {
+            $sizeVal = strtolower(trim((string) $attributes['size']));
+            unset($attributes['size']);
+            if (isset(self::$sizeMap[$sizeVal])) {
+                $dim = (string) self::$sizeMap[$sizeVal];
+                $width = $width ?? $dim;
+                $height = $height ?? $dim;
+                $sizeClass = 'svg-icon-' . $sizeVal;
+            } elseif (is_numeric($sizeVal) && (int) $sizeVal > 0) {
+                $width = $width ?? $sizeVal;
+                $height = $height ?? $sizeVal;
+            }
+        }
+
+        // 3. Inspect custom classes for sizing tokens if width/height not resolved
+        $callerClass = !empty($attributes['class']) ? trim((string) $attributes['class']) : '';
+        if ($width === null || $height === null) {
+            foreach (self::$sizeMap as $sKey => $sPx) {
+                if (str_contains($callerClass, 'svg-icon-' . $sKey)) {
+                    $width = $width ?? (string) $sPx;
+                    $height = $height ?? (string) $sPx;
+                    $sizeClass = 'svg-icon-' . $sKey;
+                    break;
+                }
+            }
+        }
+
+        // 4. Default dimensions fallback (20px standard)
+        $width = $width ?? ($height ?? '20');
+        $height = $height ?? ($width ?? '20');
+
+        // Resolve size class if not already assigned
+        if ($sizeClass === null) {
+            $numW = (int) $width;
+            if ($numW <= 14) {
+                $sizeClass = 'svg-icon-xs';
+            } elseif ($numW <= 16) {
+                $sizeClass = 'svg-icon-sm';
+            } elseif ($numW <= 22) {
+                $sizeClass = 'svg-icon-md';
+            } elseif ($numW <= 24) {
+                $sizeClass = 'svg-icon-lg';
+            } else {
+                $sizeClass = 'svg-icon-xl';
+            }
+        }
+
+        // Assemble class list: base, key-scoped, size-scoped, plus any caller classes
+        $classList = ['svg-icon', 'svg-icon-' . $key];
+        if (!str_contains($callerClass, $sizeClass)) {
+            $classList[] = $sizeClass;
+        }
+        if ($callerClass !== '') {
+            $classList[] = $callerClass;
+        }
+        $finalClass = implode(' ', array_unique(explode(' ', implode(' ', $classList))));
+
         $defaultAttrs = [
             'xmlns'        => 'http://www.w3.org/2000/svg',
             'viewBox'      => '0 0 24 24',
+            'width'        => $width,
+            'height'       => $height,
             'fill'         => 'none',
             'stroke'       => 'currentColor',
             'stroke-width' => '2',
             'stroke-linecap' => 'round',
             'stroke-linejoin' => 'round',
             'aria-hidden'  => 'true',
-            'class'        => 'svg-icon svg-icon-' . $key,
+            'focusable'    => 'false',
+            'data-icon'    => $key,
+            'class'        => $finalClass,
         ];
 
-        // Merge custom attributes
-        if (!empty($attributes['class'])) {
-            $attributes['class'] = $defaultAttrs['class'] . ' ' . trim((string) $attributes['class']);
-        }
-
-        $merged = array_merge($defaultAttrs, $attributes);
+        // Merge remaining custom attributes
+        unset($attributes['class'], $attributes['width'], $attributes['height']);
+        $merged = array_merge($defaultAttrs, $attributes, [
+            'width'  => $width,
+            'height' => $height,
+            'class'  => $finalClass,
+        ]);
 
         $attrStrings = [];
         foreach ($merged as $k => $v) {

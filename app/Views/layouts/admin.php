@@ -62,7 +62,7 @@ $initials = strtoupper($initials ?: 'LC');
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- LC-SPC Design System Stylesheet -->
-  <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
+  <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>?v=<?= e(config('app.version', '1.0.0')) ?>">
 </head>
 <body>
   <!-- Accessibility: Skip Link -->
@@ -213,6 +213,6 @@ $initials = strtoupper($initials ?: 'LC');
   </div>
 
   <!-- Design System Interactions Script -->
-  <script src="<?= e(asset('js/app.js')) ?>"></script>
+  <script src="<?= e(asset('js/app.js')) ?>?v=<?= e(config('app.version', '1.0.0')) ?>"></script>
 </body>
 </html>
