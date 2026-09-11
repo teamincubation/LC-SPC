@@ -12,8 +12,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+  <?php
+    $appCssPath = (defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__, 3)) . '/public/assets/css/app.css';
+    $appJsPath = (defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__, 3)) . '/public/assets/js/app.js';
+    $cssVer = file_exists($appCssPath) ? (string) filemtime($appCssPath) : '2.0.2';
+    $jsVer = file_exists($appJsPath) ? (string) filemtime($appJsPath) : '2.0.2';
+  ?>
+
   <!-- LC-SPC Design System Stylesheet -->
-  <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
+  <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>?v=<?= e($cssVer) ?>">
 </head>
 <body class="public-layout auth-layout">
   <!-- Accessibility: Skip Link -->
@@ -24,7 +31,14 @@
     <div class="public-header-inner auth-header-inner">
       <div class="auth-header-brand-group">
         <a href="<?= e(url('/')) ?>" class="public-brand auth-brand" aria-label="<?= e(config('app.full_title')) ?> Home">
-          <img src="<?= e(asset('images/listening-community-logo.png')) ?>" alt="<?= e(config('app.name')) ?>" class="brand-logo auth-brand-logo">
+          <img 
+            src="<?= e(asset('images/listening-community-logo.png')) ?>" 
+            alt="<?= e(config('app.name')) ?>" 
+            class="brand-logo auth-brand-logo"
+            width="36"
+            height="36"
+            style="height: 36px; max-height: 36px; width: auto; max-width: 140px; object-fit: contain; display: block;"
+          >
         </a>
         <div class="auth-header-divider" aria-hidden="true"></div>
         <div class="auth-header-title-block">
@@ -40,7 +54,7 @@
 
   <!-- Content Shell -->
   <main id="auth-main-content" class="public-main auth-main" role="main">
-    <div class="public-container auth-portal-wrapper">
+    <div class="auth-portal-wrapper">
       <?php if ($flashSuccess = flash('success')): ?>
         <div class="alert alert-success auth-flash-alert" data-dismissible="true" role="status">
           <div class="alert-content"><?= e($flashSuccess) ?></div>
@@ -75,6 +89,6 @@
     </div>
   </footer>
 
-  <script src="<?= e(asset('js/app.js')) ?>"></script>
+  <script src="<?= e(asset('js/app.js')) ?>?v=<?= e($jsVer) ?>"></script>
 </body>
 </html>
