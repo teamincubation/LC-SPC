@@ -4,6 +4,8 @@
  * 1. Dismissible alerts
  * 2. Mobile navigation drawer toggle
  * 3. Accessible modal controller
+ * 4. Accessible password visibility toggle
+ * 5. Login form double-submit prevention
  */
 
 (function () {
@@ -122,16 +124,77 @@
     });
   }
 
+  // 4. Accessible Password Visibility Toggle (Safely scoped to #togglePasswordBtn)
+  function initPasswordToggle() {
+    var toggleBtn = document.getElementById('togglePasswordBtn');
+    if (!toggleBtn) return;
+
+    var passwordInput = document.getElementById('login-password');
+    if (!passwordInput) return;
+
+    var eyeIcon = toggleBtn.querySelector('.icon-eye');
+    var eyeOffIcon = toggleBtn.querySelector('.icon-eye-off');
+
+    toggleBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      var isPassword = passwordInput.getAttribute('type') === 'password';
+
+      if (isPassword) {
+        passwordInput.setAttribute('type', 'text');
+        toggleBtn.setAttribute('aria-label', 'Hide password');
+        toggleBtn.setAttribute('aria-pressed', 'true');
+        if (eyeIcon) eyeIcon.style.display = 'none';
+        if (eyeOffIcon) eyeOffIcon.style.display = 'block';
+      } else {
+        passwordInput.setAttribute('type', 'password');
+        toggleBtn.setAttribute('aria-label', 'Show password');
+        toggleBtn.setAttribute('aria-pressed', 'false');
+        if (eyeIcon) eyeIcon.style.display = 'block';
+        if (eyeOffIcon) eyeOffIcon.style.display = 'none';
+      }
+
+      passwordInput.focus();
+    });
+  }
+
+  // 5. Login Form Double-Submit Prevention (Safely scoped to #adminLoginForm)
+  function initLoginFormDoubleSubmit() {
+    var loginForm = document.getElementById('adminLoginForm');
+    if (!loginForm) return;
+
+    loginForm.addEventListener('submit', function () {
+      if (typeof loginForm.checkValidity === 'function' && !loginForm.checkValidity()) {
+        return;
+      }
+
+      var submitBtn = document.getElementById('loginSubmitBtn');
+      if (submitBtn && !submitBtn.disabled) {
+        var btnText = submitBtn.querySelector('.btn-text');
+        var btnSpinner = submitBtn.querySelector('.btn-spinner');
+
+        setTimeout(function () {
+          submitBtn.disabled = true;
+          if (btnText) btnText.style.display = 'none';
+          if (btnSpinner) btnSpinner.style.display = 'inline-flex';
+        }, 0);
+      }
+    });
+  }
+
   // Initialize on DOMContentLoaded
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
       initDismissibleAlerts();
       initMobileNavigation();
       initModals();
+      initPasswordToggle();
+      initLoginFormDoubleSubmit();
     });
   } else {
     initDismissibleAlerts();
     initMobileNavigation();
     initModals();
+    initPasswordToggle();
+    initLoginFormDoubleSubmit();
   }
 })();

@@ -15,54 +15,63 @@
   <!-- LC-SPC Design System Stylesheet -->
   <link rel="stylesheet" href="<?= e(asset('css/app.css')) ?>">
 </head>
-<body class="public-layout">
+<body class="public-layout auth-layout">
   <!-- Accessibility: Skip Link -->
-  <a href="#public-main-content" class="skip-link">Skip to main content</a>
+  <a href="#auth-main-content" class="skip-link">Skip to main content</a>
 
   <!-- Header -->
-  <header class="public-header" role="banner">
-    <div class="public-header-inner">
-      <a href="<?= e(url('/')) ?>" class="public-brand" aria-label="<?= e(config('app.full_title')) ?> Home">
-        <img src="<?= e(asset('images/listening-community-logo.png')) ?>" alt="<?= e(config('app.name')) ?>" class="brand-logo">
-      </a>
-      <div class="text-caption text-secondary">
-        <span class="badge badge-primary">LC-SPC</span>
+  <header class="public-header auth-header" role="banner">
+    <div class="public-header-inner auth-header-inner">
+      <div class="auth-header-brand-group">
+        <a href="<?= e(url('/')) ?>" class="public-brand auth-brand" aria-label="<?= e(config('app.full_title')) ?> Home">
+          <img src="<?= e(asset('images/listening-community-logo.png')) ?>" alt="<?= e(config('app.name')) ?>" class="brand-logo auth-brand-logo">
+        </a>
+        <div class="auth-header-divider" aria-hidden="true"></div>
+        <div class="auth-header-title-block">
+          <span class="auth-header-title">Suicide Prevention Campaign</span>
+          <span class="auth-header-tagline">LISTEN &bull; SUPPORT &bull; EMPOWER</span>
+        </div>
+      </div>
+      <div class="auth-header-actions">
+        <span class="badge-pill auth-badge-pill">LC-SPC</span>
       </div>
     </div>
   </header>
 
-  <!-- Public Content Shell -->
-  <main id="public-main-content" class="public-main" role="main">
-    <div class="public-container">
+  <!-- Content Shell -->
+  <main id="auth-main-content" class="public-main auth-main" role="main">
+    <div class="public-container auth-portal-wrapper">
       <?php if ($flashSuccess = flash('success')): ?>
-        <div class="alert alert-success" data-dismissible="true" role="status">
+        <div class="alert alert-success auth-flash-alert" data-dismissible="true" role="status">
           <div class="alert-content"><?= e($flashSuccess) ?></div>
           <button type="button" class="alert-close" data-dismiss="alert" aria-label="Close message">&times;</button>
         </div>
       <?php endif; ?>
 
       <?php if ($flashError = flash('error')): ?>
-        <div class="alert alert-danger" data-dismissible="true" role="alert">
+        <div class="alert alert-danger auth-flash-alert" data-dismissible="true" role="alert">
           <div class="alert-content"><?= e($flashError) ?></div>
           <button type="button" class="alert-close" data-dismiss="alert" aria-label="Close alert">&times;</button>
         </div>
       <?php endif; ?>
 
-      <div class="public-form-card">
-        <?= $content ?? '' ?>
-      </div>
+      <?= $content ?? '' ?>
     </div>
   </main>
 
   <!-- Footer -->
-  <footer class="public-footer" role="contentinfo">
-    <div class="container">
-      <p class="mb-2">
-        &copy; <?= date('Y') ?> <strong><?= e(config('app.name')) ?></strong> &mdash; <?= e(config('app.full_title')) ?>.
-      </p>
-      <p class="text-caption text-muted">
-        Dedicated standalone campaign platform.
-      </p>
+  <footer class="public-footer auth-footer" role="contentinfo">
+    <div class="container auth-footer-inner">
+      <div class="auth-footer-copy">
+        &copy; <?= date('Y') ?> <?= e(config('app.name')) ?> &mdash; <?= e(config('app.full_title')) ?>. All rights reserved.
+      </div>
+      <div class="auth-footer-links">
+        <a href="<?= e(url('/')) ?>" class="auth-footer-link">Privacy Policy</a>
+        <span class="auth-footer-sep">|</span>
+        <a href="<?= e(url('/')) ?>" class="auth-footer-link">Terms of Use</a>
+        <span class="auth-footer-sep">|</span>
+        <a href="<?= e(url('/')) ?>" class="auth-footer-link">Contact</a>
+      </div>
     </div>
   </footer>
 
