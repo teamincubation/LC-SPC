@@ -64,7 +64,7 @@
         &copy; <?= date('Y') ?> <strong><?= e(config('app.name')) ?></strong> &mdash; <?= e(config('app.full_title')) ?>. All rights reserved.
       </p>
       <p class="text-caption text-muted">
-        Version <?= e(config('app.version')) ?> &bull; Environment: <?= e(ucfirst(config('app.env'))) ?>
+        Version <?= e(config('app.version', '1.0.0')) ?> &bull; Environment: <?= e(ucfirst((string) config('app.env', 'production'))) ?>
       </p>
     </div>
   </footer>

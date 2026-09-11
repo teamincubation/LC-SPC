@@ -28,9 +28,9 @@
 <body>
   <div class="error-container">
     <div class="error-code">404</div>
-    <h1 style="font-size:1.5rem; margin-bottom:0.75rem;">Page Not Found</h1>
+    <h1 style="font-size:1.5rem; margin-bottom:0.75rem;"><?= e($title ?? 'Page Not Found') ?></h1>
     <p style="color:#64748b; margin-bottom:2rem;">
-      The page you are looking for does not exist or has been moved.
+      <?= e($message ?? 'The page you are looking for does not exist or has been moved.') ?>
     </p>
     <a href="<?= e(url('/')) ?>" class="nav-link" style="display:inline-block; background:#1e3a8a; color:#fff; padding:0.6rem 1.25rem; border-radius:4px; text-decoration:none;">
       &larr; Return to Home

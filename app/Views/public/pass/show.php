@@ -234,6 +234,11 @@
     <button onclick="window.print()" class="btn btn-print">
       <span>&#128424; Print Pass</span>
     </button>
+    <?php if (!empty($pass['certificate']['verification_token'])): ?>
+      <a href="<?= e(url('/verify/' . $pass['certificate']['verification_token'])) ?>" target="_blank" class="btn" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1;">
+        <span>&#127891; View / Verify Certificate</span>
+      </a>
+    <?php endif; ?>
   </div>
 
 </body>

@@ -36,6 +36,9 @@
     <a href="<?= e(url('/admin/events/' . $event['id'] . '/attendance/export')) ?>" class="btn btn-outline btn-sm" title="Export Attendance CSV">
       <span>&#128196; Export CSV</span>
     </a>
+    <a href="<?= e(url('/admin/events/' . $event['id'] . '/certificates')) ?>" class="btn btn-outline btn-sm" title="Manage Event Certificates">
+      <span>&#127891; Certificates</span>
+    </a>
   </div>
 </div>
 

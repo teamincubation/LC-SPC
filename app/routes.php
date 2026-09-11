@@ -10,6 +10,7 @@ declare(strict_types=1);
 use App\Controllers\Admin\AttendanceController;
 use App\Controllers\Admin\AuthController;
 use App\Controllers\Admin\CampaignController;
+use App\Controllers\Admin\CertificateController;
 use App\Controllers\Admin\CheckInController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\EventController;
@@ -17,6 +18,7 @@ use App\Controllers\Admin\ParticipantController;
 use App\Controllers\Admin\RegistrationController;
 use App\Controllers\HealthController;
 use App\Controllers\HomeController;
+use App\Controllers\Public\CertificateVerifyController;
 use App\Controllers\Public\RegistrationPassController;
 use App\Core\Middleware\AuthMiddleware;
 use App\Core\Middleware\CsrfMiddleware;
@@ -35,6 +37,8 @@ use App\Services\RoleService;
 $router->get('/', [HomeController::class, 'index']);
 $router->get('/health', [HealthController::class, 'index']);
 $router->get('/registration/pass/{code}', [RegistrationPassController::class, 'show']);
+$router->get('/verify/{token}', [CertificateVerifyController::class, 'show']);
+$router->get('/certificate/verify/{token}', [CertificateVerifyController::class, 'show']);
 
 // -----------------------------------------------------------------------------
 // Authentication Routes (Phase 1A)
@@ -193,6 +197,42 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
 
     // Export Attendance Roster CSV (staff+)
     $adminRouter->get('/events/{id}/attendance/export', [AttendanceController::class, 'exportCsv'], [new RoleMiddleware(RoleService::ROLE_STAFF)]);
+
+    // -------------------------------------------------------------------------
+    // Certificate Management Routes (Phase 1G)
+    // -------------------------------------------------------------------------
+    // Global Certificate Directory (viewer+)
+    $adminRouter->get('/certificates', [CertificateController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Event Certificate Hub & Candidate Issuance (viewer+)
+    $adminRouter->get('/events/{id}/certificates', [CertificateController::class, 'eventCertificates'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Issue Individual Certificate (coordinator+, CSRF protected)
+    $adminRouter->post('/events/{id}/certificates/issue', [CertificateController::class, 'issueSingle'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Bulk Issue Certificates (coordinator+, CSRF protected)
+    $adminRouter->post('/events/{id}/certificates/bulk', [CertificateController::class, 'bulkIssue'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // View Certificate Details (viewer+)
+    $adminRouter->get('/certificates/{id}', [CertificateController::class, 'show'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // Print-Ready Vector Certificate Layout / PDF (staff+)
+    $adminRouter->get('/certificates/{id}/print', [CertificateController::class, 'printCertificate'], [new RoleMiddleware(RoleService::ROLE_STAFF)]);
+
+    // Download Certificate Gateway (staff+, ?format=pdf|jpg)
+    $adminRouter->get('/certificates/{id}/download', [CertificateController::class, 'download'], [new RoleMiddleware(RoleService::ROLE_STAFF)]);
+
+    // Direct PDF Download / Stream (staff+)
+    $adminRouter->get('/certificates/{id}/pdf', [CertificateController::class, 'downloadPdf'], [new RoleMiddleware(RoleService::ROLE_STAFF)]);
+
+    // Direct High-Resolution JPG Download (staff+)
+    $adminRouter->get('/certificates/{id}/jpg', [CertificateController::class, 'downloadJpg'], [new RoleMiddleware(RoleService::ROLE_STAFF)]);
+
+    // Reissue Certificate with Clerical Name Correction (coordinator+, CSRF protected)
+    $adminRouter->post('/certificates/{id}/reissue', [CertificateController::class, 'reissue'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // Revoke Certificate Permanently (coordinator+, CSRF protected)
+    $adminRouter->post('/certificates/{id}/revoke', [CertificateController::class, 'revoke'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
 
     // -------------------------------------------------------------------------
     // RBAC Capability Gate Routes (Phase 1A Foundation & Verification)

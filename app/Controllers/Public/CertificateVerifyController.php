@@ -8,113 +8,122 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\View;
 use App\Repositories\CertificateRepository;
-use App\Repositories\RegistrationRepository;
 use App\Services\AuditService;
-use App\Services\RegistrationService;
+use App\Services\CertificateService;
 
 /**
- * Public Registration Pass Controller
- * Provides minimal-disclosure public pass lookup for attendees holding valid confirmed pass codes.
+ * Public Certificate Verification Controller
+ * Provides minimal-disclosure public verification for issued certificates via 256-bit QR tokens.
+ * Features strict rate limiting, enumeration resistance, and generic institutional revocation notices.
  */
-class RegistrationPassController
+class CertificateVerifyController
 {
-    private RegistrationRepository $registrationRepo;
-    private RegistrationService $registrationService;
-    private AuditService $auditService;
     private CertificateRepository $certRepo;
+    private CertificateService $certService;
+    private AuditService $auditService;
     private string $rateLimitDir;
 
     public function __construct(
-        ?RegistrationRepository $registrationRepo = null,
-        ?RegistrationService $registrationService = null,
-        ?AuditService $auditService = null,
         ?CertificateRepository $certRepo = null,
+        ?CertificateService $certService = null,
+        ?AuditService $auditService = null,
         ?string $rateLimitDir = null
     ) {
-        $this->registrationRepo = $registrationRepo ?? new RegistrationRepository();
-        $this->registrationService = $registrationService ?? new RegistrationService();
+        $this->certRepo = $certRepo ?? new CertificateRepository();
+        $this->certService = $certService ?? new CertificateService();
         $this->auditService = $auditService ?? new AuditService();
-        $this->certRepo = $certRepo ?? new \App\Repositories\CertificateRepository();
         $this->rateLimitDir = $rateLimitDir ?? (defined('APP_ROOT') ? APP_ROOT . '/storage/cache/rate_limits' : dirname(__DIR__, 3) . '/storage/cache/rate_limits');
     }
 
     /**
-     * Display minimal-disclosure attendance pass for confirmed registrations only.
-     * GET /registration/pass/{code}
+     * Verify certificate publicly by token.
+     * GET /verify/{token}
+     * GET /certificate/verify/{token}
      */
     public function show(Request $request, array $vars): Response
     {
-        $code = trim((string) ($vars['code'] ?? ''));
+        $token = trim((string) ($vars['token'] ?? ''));
         $clientIp = $this->resolveClientIp($request);
 
-        // 1. Rate Limiting Check
+        // 1. Rate Limiting Check (10 failures -> 15 min lock)
         if ($this->isRateLimited($clientIp)) {
             return Response::html(
                 View::render('errors/429', [
                     'title'   => 'Too Many Requests',
-                    'message' => 'Too many invalid pass lookup attempts. Please wait 15 minutes before trying again.',
+                    'message' => 'Too many invalid verification attempts. Please wait 15 minutes before trying again.',
                 ]),
                 429,
                 ['Retry-After' => '900']
             );
         }
 
-        // 2. Query Registration by code
-        $registration = !empty($code) ? $this->registrationRepo->findByCode($code) : null;
-
-        // 3. Strict Status Gate: Only 'confirmed' registrations are publicly accessible.
-        // Pending, waitlisted, cancelled, or non-existent codes all return uniform HTTP 404.
-        if ($registration === null || ($registration['status'] ?? '') !== 'confirmed') {
-            $this->recordFailedAttempt($clientIp, $code);
+        // Validate token format (64-character hex)
+        if (strlen($token) !== 64 || !ctype_xdigit($token)) {
+            $this->recordFailedAttempt($clientIp, $token);
 
             return Response::html(
                 View::render('errors/404', [
-                    'title'   => 'Attendance Pass Not Available',
-                    'message' => 'The requested attendance pass is unavailable or the code is invalid.',
+                    'title'   => 'Certificate Not Found',
+                    'message' => 'The requested certificate verification token is invalid or does not exist.',
                 ]),
                 404
             );
         }
 
-        // 4. Successful confirmed pass lookup: Clear failed attempts
-        $this->clearFailedAttempts($clientIp);
+        // 2. Query Certificate by verification token
+        $cert = $this->certRepo->findByToken($token);
 
-        // 5. Format minimal operational disclosure
-        $passData = $this->registrationService->formatPublicPass($registration);
+        // 3. Strict 404 on non-existent token
+        if ($cert === null) {
+            $this->recordFailedAttempt($clientIp, $token);
 
-        // 6. Check if an active certificate exists for this pass
-        try {
-            $activeCert = $this->certRepo->findActiveByRegistrationId((int) $registration['id']);
-            if ($activeCert !== null) {
-                $passData['certificate'] = [
-                    'certificate_number' => $activeCert['certificate_number'],
-                    'verification_token' => $activeCert['verification_token'],
-                    'type'               => $activeCert['type'],
-                ];
-            }
-        } catch (\Throwable $e) {
-            // Graceful fallback if certificates table does not exist or database error occurs
+            return Response::html(
+                View::render('errors/404', [
+                    'title'   => 'Certificate Not Found',
+                    'message' => 'The requested certificate verification token is invalid or does not exist.',
+                ]),
+                404
+            );
         }
 
+        // 4. Successful verification: Clear rate-limit failures
+        $this->clearFailedAttempts($clientIp);
+
+        // Audit verification lookup without logging raw token or contact PII
+        $this->auditService->log(
+            'certificate.verify',
+            'certificates',
+            (int) $cert['id'],
+            [
+                'certificate_number' => $cert['certificate_number'],
+                'status'             => $cert['status'],
+                'is_revoked'         => ($cert['status'] === 'revoked'),
+            ],
+            null,
+            'public'
+        );
+
+        // 5. Format minimal operational disclosure
+        $verificationData = $this->certService->formatPublicVerification($cert);
+
         return Response::html(
-            View::render('public/pass/show', [
-                'title' => 'Attendance Pass — ' . ($passData['attendee_name'] ?? 'Attendee'),
-                'pass'  => $passData,
+            View::render('public/certificates/verify', [
+                'title'        => ($verificationData['is_revoked'] ? 'Revoked Certificate — ' : 'Verified Certificate — ') . $verificationData['certificate_number'],
+                'verification' => $verificationData,
+                'token'        => $token,
             ])
         );
     }
 
     /**
-     * Resolve client IP safely without blindly trusting spoofable client headers.
+     * Safely resolve client IP address.
      */
     private function resolveClientIp(Request $request): string
     {
         $server = $_SERVER;
         $remoteAddr = $server['REMOTE_ADDR'] ?? '127.0.0.1';
 
-        // Known trusted proxy ranges (e.g. localhost reverse proxy or Cloudflare)
         $trustedProxies = ['127.0.0.1', '::1'];
-
         if (in_array($remoteAddr, $trustedProxies, true)) {
             $forwarded = $server['HTTP_CF_CONNECTING_IP'] ?? $server['HTTP_X_FORWARDED_FOR'] ?? null;
             if ($forwarded) {
@@ -130,7 +139,7 @@ class RegistrationPassController
     }
 
     /**
-     * Check whether client IP is currently rate-limited (10 failures in 5 mins -> 15 min lock).
+     * Check whether client IP is currently rate-limited.
      */
     private function isRateLimited(string $ip): bool
     {
@@ -153,9 +162,9 @@ class RegistrationPassController
     }
 
     /**
-     * Record failed pass lookup attempt.
+     * Record failed verification attempt.
      */
-    private function recordFailedAttempt(string $ip, string $attemptedCode): void
+    private function recordFailedAttempt(string $ip, string $attemptedToken): void
     {
         if (!is_dir($this->rateLimitDir)) {
             @mkdir($this->rateLimitDir, 0755, true);
@@ -172,7 +181,6 @@ class RegistrationPassController
         if (file_exists($filePath)) {
             $existing = @json_decode((string) file_get_contents($filePath), true);
             if (is_array($existing)) {
-                // If window (5 mins = 300s) has expired, reset window
                 if (($now - ($existing['window_start'] ?? 0)) > 300) {
                     $data['failures'] = 1;
                     $data['window_start'] = $now;
@@ -187,19 +195,18 @@ class RegistrationPassController
             $data['failures'] = 1;
         }
 
-        // 10 failed attempts locks for 15 minutes (900 seconds) so 11th attempt receives HTTP 429
+        // 10 failed attempts triggers 15 min lock (900s)
         if ($data['failures'] >= 10) {
             $data['locked_until'] = $now + 900;
 
-            // Log security audit burst with masked code
             $this->auditService->log(
-                'auth.failed_pass_lookup',
+                'security.failed_certificate_verify',
                 'security',
                 null,
                 [
-                    'ip'                    => $ip,
+                    'ip'                   => $ip,
                     'consecutive_failures' => $data['failures'],
-                    'attempted_masked_code' => RegistrationService::maskCode($attemptedCode),
+                    'attempted_token'      => CertificateService::maskToken($attemptedToken),
                 ],
                 null,
                 'anonymous',
@@ -211,7 +218,7 @@ class RegistrationPassController
     }
 
     /**
-     * Clear rate limit file upon successful confirmed pass lookup.
+     * Clear rate limit on successful verification.
      */
     private function clearFailedAttempts(string $ip): void
     {
@@ -221,12 +228,9 @@ class RegistrationPassController
         }
     }
 
-    /**
-     * Get rate limit file path for a given IP.
-     */
     private function getRateLimitFilePath(string $ip): string
     {
         $hash = hash('sha256', $ip);
-        return $this->rateLimitDir . '/pass_lookup_' . $hash . '.json';
+        return $this->rateLimitDir . '/cert_verify_' . $hash . '.json';
     }
 }

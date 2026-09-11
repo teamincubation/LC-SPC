@@ -62,6 +62,9 @@
         <a href="<?= e(url('/admin/events/' . $event['id'] . '/attendance')) ?>" class="btn btn-outline btn-sm">
           <span>&#128101; Attendance</span>
         </a>
+        <a href="<?= e(url('/admin/events/' . $event['id'] . '/certificates')) ?>" class="btn btn-outline btn-sm">
+          <span>&#127891; Certificates</span>
+        </a>
       <?php endif; ?>
 
       <?php if (!$isSoftDeleted && !empty($canEdit)): ?>

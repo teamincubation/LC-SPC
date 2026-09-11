@@ -65,7 +65,7 @@
           </a>
         </li>
         <li class="admin-nav-item" role="none">
-          <a href="#" class="admin-nav-link" role="menuitem" tabindex="-1" aria-disabled="true">
+          <a href="<?= e(url('/admin/certificates')) ?>" class="admin-nav-link" role="menuitem">
             <span class="admin-nav-icon" aria-hidden="true">&#127891;</span>
             <span>Certificates</span>
           </a>

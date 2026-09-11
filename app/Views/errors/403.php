@@ -28,9 +28,9 @@
 <body>
   <div class="error-container">
     <div class="error-code">403</div>
-    <h1 style="font-size: 1.5rem; margin-bottom: 0.75rem; color: #1e293b;">Access Forbidden</h1>
+    <h1 style="font-size: 1.5rem; margin-bottom: 0.75rem; color: #1e293b;"><?= e($title ?? 'Access Forbidden') ?></h1>
     <p style="color: #64748b; margin-bottom: 1.5rem; line-height: 1.6;">
-      You do not possess the administrative privileges required to access this resource or action.
+      <?= e($message ?? 'You do not possess the administrative privileges required to access this resource or action.') ?>
       <?php if (!empty($requiredRole)): ?>
         <br><small style="color: #94a3b8;">Requires minimum rank: <strong><?= e($requiredRole) ?></strong></small>
       <?php endif; ?>
