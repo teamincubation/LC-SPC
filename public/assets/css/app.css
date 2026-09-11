@@ -2588,8 +2588,83 @@ button .svg-icon,
 
 @media (max-width: 640px) {
   .admin-header {
-    padding: 0 1rem;
+    padding: 0 0.75rem;
     height: 56px;
+    gap: 0.5rem;
+  }
+
+  .admin-header-left {
+    gap: 0.5rem;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .admin-sidebar-toggle {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .admin-header-breadcrumb {
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .admin-breadcrumb-root,
+  .admin-breadcrumb-sep {
+    display: none;
+  }
+
+  .admin-breadcrumb-current {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .admin-header-right {
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Hide Live Health pill badge on mobile topbar to prioritize essential controls */
+  .admin-header-right .badge {
+    display: none;
+  }
+
+  .admin-user-meta {
+    display: none;
+  }
+
+  .admin-avatar {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    font-size: 0.75rem;
+  }
+
+  /* Compact accessible icon-only logout button in mobile topbar */
+  .btn-logout .btn-logout-text {
+    display: none;
+  }
+
+  .btn-logout {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    min-height: 34px !important;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
   }
 
   .admin-content {
@@ -2622,8 +2697,7 @@ button .svg-icon,
 
   .btn-icon,
   .filter-tab,
-  .btn-auto,
-  .btn-logout {
+  .btn-auto {
     width: auto !important;
   }
 
@@ -2633,17 +2707,46 @@ button .svg-icon,
     gap: 0.5rem;
     width: 100%;
   }
+}
 
-  .admin-user-meta {
-    display: none;
+@media (max-width: 360px) {
+  .admin-header {
+    padding: 0 0.5rem;
+    gap: 0.35rem;
   }
 
-  .admin-breadcrumb-root span {
-    display: none;
+  .admin-header-left {
+    gap: 0.35rem;
+  }
+
+  .admin-header-right {
+    gap: 0.35rem;
+  }
+
+  .admin-sidebar-toggle {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .admin-avatar {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    font-size: 0.7rem;
+  }
+
+  .btn-logout {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
   }
 
   .admin-breadcrumb-current {
-    max-width: 140px;
+    max-width: 95px;
+    font-size: 0.75rem;
   }
 }
 

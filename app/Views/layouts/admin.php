@@ -138,6 +138,13 @@ $initials = strtoupper($initials ?: 'LC');
       </ul>
 
       <div class="admin-sidebar-footer">
+        <form action="<?= e(url('/logout')) ?>" method="POST" style="margin: 0 0 0.75rem 0;">
+          <?= csrf_field() ?>
+          <button type="submit" class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center; gap: 0.5rem;" aria-label="Sign out of portal">
+            <?= icon('log-out', ['size' => 'sm']) ?>
+            <span>Sign Out</span>
+          </button>
+        </form>
         <div><strong><?= e(config('app.name')) ?></strong> Foundation</div>
         <div class="text-caption">Version <?= e(config('app.version')) ?></div>
       </div>
