@@ -1151,6 +1151,9 @@ code, kbd, samp, pre {
 /* Main Canvas & Centered Container */
 .auth-main {
   flex: 1;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1161,6 +1164,8 @@ code, kbd, samp, pre {
 .auth-portal-wrapper {
   width: 100%;
   max-width: 440px;
+  min-width: 0;
+  box-sizing: border-box;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -1171,11 +1176,14 @@ code, kbd, samp, pre {
 .auth-flash-alert {
   width: 100%;
   max-width: 440px;
+  min-width: 0;
+  box-sizing: border-box;
   margin-bottom: 1rem;
 }
 
 /* Institutional Admin Sign-In Card */
-.auth-card {
+.auth-card,
+.public-form-card.auth-card {
   background-color: #FFFFFF;
   border: 1px solid #E2E8F0;
   border-radius: 16px;
@@ -1183,12 +1191,18 @@ code, kbd, samp, pre {
   padding: 2.25rem 2rem 1.75rem;
   width: 100%;
   max-width: 440px;
+  min-width: 0;
+  box-sizing: border-box;
   margin: 0 auto;
 }
 
 .auth-card-header {
   text-align: center;
   margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .auth-card-logo-wrap {
@@ -1218,6 +1232,8 @@ code, kbd, samp, pre {
   margin-bottom: 0.25rem;
   letter-spacing: -0.015em;
   text-align: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .auth-subtitle {
@@ -1226,11 +1242,25 @@ code, kbd, samp, pre {
   margin: 0;
   text-align: center;
   line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Form Controls */
+.auth-card form,
+#adminLoginForm {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 .auth-card .form-group {
   margin-bottom: 1.125rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .auth-card .form-label {
@@ -1239,6 +1269,16 @@ code, kbd, samp, pre {
   font-weight: 600;
   color: #334155;
   margin-bottom: 0.375rem;
+}
+
+.auth-card .form-input-group {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .auth-card .form-control {
@@ -1250,8 +1290,12 @@ code, kbd, samp, pre {
   background-color: #F8FAFC;
   color: #0F172A;
   padding-left: 2.75rem;
+  padding-right: 0.875rem;
   transition: border-color var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .auth-card .form-control:focus {
@@ -1280,6 +1324,9 @@ code, kbd, samp, pre {
 
 .btn-auth-submit {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   min-height: 48px;
   height: 48px;
   display: inline-flex;
@@ -1294,6 +1341,8 @@ code, kbd, samp, pre {
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(191, 30, 46, 0.2);
   cursor: pointer;
+  padding: 0 1rem;
+  white-space: normal;
   transition: background-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
@@ -1339,6 +1388,10 @@ code, kbd, samp, pre {
   position: relative;
   text-align: center;
   margin: 1.25rem 0 1rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .auth-divider::before {
@@ -1364,6 +1417,10 @@ code, kbd, samp, pre {
 .auth-back-home-wrap {
   display: flex;
   justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .btn-back-home {
@@ -1394,6 +1451,9 @@ code, kbd, samp, pre {
 
 /* Footer */
 .auth-footer {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 1rem 1.5rem;
   background-color: transparent;
   border-top: 1px solid #E2E8F0;
@@ -1401,8 +1461,10 @@ code, kbd, samp, pre {
 }
 
 .auth-footer-inner {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1413,6 +1475,8 @@ code, kbd, samp, pre {
 .auth-footer-copy {
   font-size: 0.75rem;
   color: #64748B;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .auth-footer-links {
@@ -1441,6 +1505,9 @@ code, kbd, samp, pre {
 @media (max-width: 640px) {
   .auth-header {
     padding: 0.625rem 1rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .auth-brand-logo {
@@ -1456,12 +1523,26 @@ code, kbd, samp, pre {
   .auth-main {
     padding: 1.25rem 1rem;
     min-height: auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
-  .auth-card {
+  .auth-portal-wrapper {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .auth-card,
+  .public-form-card.auth-card {
     padding: 1.75rem 1.25rem 1.5rem;
     border-radius: 14px;
+    width: 100%;
     max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .auth-card-logo-wrap {
@@ -1476,9 +1557,14 @@ code, kbd, samp, pre {
 
   .auth-footer {
     padding: 1rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .auth-footer-inner {
+    width: 100%;
+    max-width: 100%;
     flex-direction: column;
     justify-content: center;
     text-align: center;
@@ -1489,11 +1575,59 @@ code, kbd, samp, pre {
 @media (max-width: 480px) {
   .auth-main {
     padding: 1rem 0.75rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
-  .auth-card {
+  .auth-card,
+  .public-form-card.auth-card {
     padding: 1.5rem 1rem;
     border-radius: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .auth-title {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .auth-main {
+    padding: 0.75rem 0.5rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .auth-card,
+  .public-form-card.auth-card {
+    padding: 1.25rem 0.75rem;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .auth-title {
+    font-size: 1.125rem;
+  }
+
+  .auth-subtitle {
+    font-size: 0.75rem;
+  }
+
+  .auth-card .form-control {
+    padding-left: 2.5rem;
+    font-size: 0.8125rem;
+  }
+
+  .auth-card .form-input-icon {
+    left: 0.75rem;
   }
 }
 
