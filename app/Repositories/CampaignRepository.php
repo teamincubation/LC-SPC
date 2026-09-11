@@ -249,4 +249,44 @@ class CampaignRepository
 
         return $counts;
     }
+
+    /**
+     * Retrieve all active public campaigns with affiliated published event counts.
+     */
+    public function getActivePublicCampaigns(): array
+    {
+        $sql = "SELECT c.*,
+                       (SELECT COUNT(*) 
+                        FROM `events` e 
+                        WHERE e.`campaign_id` = c.`id` 
+                          AND e.`deleted_at` IS NULL 
+                          AND e.`status` = 'published'
+                       ) AS `published_event_count`
+                FROM `campaigns` c
+                WHERE c.`deleted_at` IS NULL
+                  AND c.`status` = 'active'
+                ORDER BY c.`start_date` DESC, c.`id` DESC";
+
+        return Database::fetchAll($sql);
+    }
+
+    /**
+     * Retrieve completed/archived public campaigns for transparency archives.
+     */
+    public function getArchivedPublicCampaigns(): array
+    {
+        $sql = "SELECT c.*,
+                       (SELECT COUNT(*) 
+                        FROM `events` e 
+                        WHERE e.`campaign_id` = c.`id` 
+                          AND e.`deleted_at` IS NULL
+                       ) AS `total_event_count`
+                FROM `campaigns` c
+                WHERE c.`deleted_at` IS NULL
+                  AND c.`status` IN ('completed', 'archived')
+                ORDER BY c.`end_date` DESC, c.`id` DESC";
+
+        return Database::fetchAll($sql);
+    }
 }
+

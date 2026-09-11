@@ -322,10 +322,14 @@ class ParticipantService
         if ($email !== null) {
             $candidate = $this->participantRepo->findPotentialDuplicate($fullName, $email, $phone);
             if ($candidate !== null) {
-                if ($candidate['status'] === 'blocked') {
-                    throw new RuntimeException('Registration cannot be processed at this time.');
+                $normTarget = preg_replace('/\s+/', ' ', trim(mb_strtolower($fullName)));
+                $normCand = preg_replace('/\s+/', ' ', trim(mb_strtolower((string) $candidate['full_name'])));
+                if ($normTarget === $normCand) {
+                    if ($candidate['status'] === 'blocked') {
+                        throw new RuntimeException('Registration cannot be processed at this time.');
+                    }
+                    return $candidate;
                 }
-                return $candidate;
             }
         }
 

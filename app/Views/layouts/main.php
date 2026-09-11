@@ -26,9 +26,16 @@
         <img src="<?= e(asset('images/listening-community-logo.png')) ?>" alt="<?= e(config('app.name')) ?>" class="brand-logo">
       </a>
       <nav aria-label="Main Navigation">
-        <div class="flex gap-2">
+        <div class="flex gap-2 items-center flex-wrap">
           <a href="<?= e(url('/')) ?>" class="btn btn-ghost btn-sm">Home</a>
-          <a href="<?= e(url('/health')) ?>" class="btn btn-outline btn-sm">Health Status</a>
+          <a href="<?= e(url('/events')) ?>" class="btn btn-ghost btn-sm">Events</a>
+          <a href="<?= e(url('/campaigns')) ?>" class="btn btn-ghost btn-sm">Campaigns</a>
+          <a href="<?= e(url('/registration/status')) ?>" class="btn btn-outline btn-sm">My Pass / Status</a>
+          <?php if (\App\Core\Session::isStarted() && \App\Core\Session::has('_auth_user_id')): ?>
+            <a href="<?= e(url('/admin')) ?>" class="btn btn-primary btn-sm">Admin Dashboard</a>
+          <?php else: ?>
+            <a href="<?= e(url('/login')) ?>" class="btn btn-ghost btn-sm text-muted">Staff Login</a>
+          <?php endif; ?>
         </div>
       </nav>
     </div>

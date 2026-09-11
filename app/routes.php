@@ -19,6 +19,9 @@ use App\Controllers\Admin\RegistrationController;
 use App\Controllers\HealthController;
 use App\Controllers\HomeController;
 use App\Controllers\Public\CertificateVerifyController;
+use App\Controllers\Public\PublicCampaignController;
+use App\Controllers\Public\PublicEventController;
+use App\Controllers\Public\PublicRegistrationController;
 use App\Controllers\Public\RegistrationPassController;
 use App\Core\Middleware\AuthMiddleware;
 use App\Core\Middleware\CsrfMiddleware;
@@ -32,10 +35,27 @@ use App\Services\RoleService;
 /** @var Router $router */
 
 // -----------------------------------------------------------------------------
-// Public Foundation Routes
+// Public Foundation & Discovery Routes (Phase 0, Phase 1E, Phase 1G, Phase 1H)
 // -----------------------------------------------------------------------------
 $router->get('/', [HomeController::class, 'index']);
 $router->get('/health', [HealthController::class, 'index']);
+
+// Phase 1H: Public Campaign Discovery
+$router->get('/campaigns', [PublicCampaignController::class, 'index']);
+$router->get('/campaigns/{slug}', [PublicCampaignController::class, 'show']);
+
+// Phase 1H: Public Event Discovery & Registration
+$router->get('/events', [PublicEventController::class, 'index']);
+$router->get('/events/{campaign_slug}/{event_slug}', [PublicEventController::class, 'show']);
+$router->get('/events/{campaign_slug}/{event_slug}/register', [PublicRegistrationController::class, 'showRegister']);
+$router->post('/events/{campaign_slug}/{event_slug}/register', [PublicRegistrationController::class, 'register'], [CsrfMiddleware::class]);
+
+// Phase 1H: Registration Confirmation & Status Lookup
+$router->get('/registration/confirmed/{code}', [PublicRegistrationController::class, 'confirmation']);
+$router->get('/registration/status', [PublicRegistrationController::class, 'showStatus']);
+$router->post('/registration/status', [PublicRegistrationController::class, 'checkStatus'], [CsrfMiddleware::class]);
+
+// Phase 1E & 1G: Public Attendance Pass & Certificate Verification
 $router->get('/registration/pass/{code}', [RegistrationPassController::class, 'show']);
 $router->get('/verify/{token}', [CertificateVerifyController::class, 'show']);
 $router->get('/certificate/verify/{token}', [CertificateVerifyController::class, 'show']);

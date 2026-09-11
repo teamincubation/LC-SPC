@@ -53,6 +53,16 @@ class AuditService
             $actorType = 'admin';
         }
 
+        // Normalize non-positive actor IDs for anonymous/public actions
+        if ($actorId !== null && $actorId <= 0) {
+            $actorId = null;
+            if ($actorType === 'admin') {
+                $actorType = 'anonymous';
+            }
+        } elseif ($actorId === null && (!Session::isStarted() || !Session::has('_auth_user_id')) && $actorType === 'admin') {
+            $actorType = 'anonymous';
+        }
+
         // Auto-resolve IP and User Agent if not passed
         if ($ip === null || $userAgent === null) {
             $request = Request::capture();

@@ -318,4 +318,89 @@ class EventRepository
         $row = Database::fetch($sql, [':event_id' => $eventId]);
         return (int) ($row['total'] ?? 0);
     }
+
+    /**
+     * Find a public event by campaign slug and event slug.
+     * Enforces public visibility: non-deleted, non-draft, active campaign.
+     * Computes confirmed registration count and campaign metadata.
+     */
+    public function findPublicByCampaignAndSlug(string $campaignSlug, string $eventSlug): ?array
+    {
+        $sql = "SELECT e.*, 
+                       c.title AS campaign_title, 
+                       c.slug AS campaign_slug, 
+                       c.theme AS campaign_theme,
+                       c.status AS campaign_status,
+                       (SELECT COUNT(*) 
+                        FROM `event_registrations` er 
+                        WHERE er.`event_id` = e.`id` AND er.`status` = 'confirmed'
+                       ) AS confirmed_count
+                FROM `events` e
+                JOIN `campaigns` c ON e.`campaign_id` = c.`id`
+                WHERE c.`slug` = :campaign_slug
+                  AND e.`slug` = :event_slug
+                  AND e.`deleted_at` IS NULL
+                  AND c.`deleted_at` IS NULL
+                  AND e.`status` IN ('published', 'ongoing', 'completed', 'cancelled')
+                LIMIT 1";
+
+        $row = Database::fetch($sql, [
+            ':campaign_slug' => strtolower(trim($campaignSlug)),
+            ':event_slug'    => strtolower(trim($eventSlug)),
+        ]);
+
+        return $row ?: null;
+    }
+
+    /**
+     * Retrieve public upcoming events with optional filters (category, format, campaign_slug, search).
+     * Enforces non-deleted, status = 'published', and start_time >= current timestamp.
+     */
+    public function getPublicUpcomingEvents(array $filters = [], int $limit = 20): array
+    {
+        $limit = max(1, min(100, $limit));
+        $now = date('Y-m-d H:i:s');
+
+        $sql = "SELECT e.*, 
+                       c.title AS campaign_title, 
+                       c.slug AS campaign_slug,
+                       (SELECT COUNT(*) 
+                        FROM `event_registrations` er 
+                        WHERE er.`event_id` = e.`id` AND er.`status` = 'confirmed'
+                       ) AS confirmed_count
+                FROM `events` e
+                JOIN `campaigns` c ON e.`campaign_id` = c.`id`
+                WHERE e.`deleted_at` IS NULL
+                  AND c.`deleted_at` IS NULL
+                  AND e.`status` = 'published'
+                  AND c.`status` = 'active'
+                  AND e.`start_time` >= :now";
+
+        $params = [':now' => $now];
+
+        if (!empty($filters['category'])) {
+            $sql .= " AND e.`category` = :category";
+            $params[':category'] = $filters['category'];
+        }
+
+        if (!empty($filters['format'])) {
+            $sql .= " AND e.`format` = :format";
+            $params[':format'] = $filters['format'];
+        }
+
+        if (!empty($filters['campaign_slug'])) {
+            $sql .= " AND c.`slug` = :campaign_slug";
+            $params[':campaign_slug'] = strtolower(trim((string) $filters['campaign_slug']));
+        }
+
+        if (!empty($filters['search'])) {
+            $sql .= " AND (e.`title` LIKE :search OR e.`description` LIKE :search OR e.`venue_name` LIKE :search)";
+            $params[':search'] = '%' . trim((string) $filters['search']) . '%';
+        }
+
+        $sql .= " ORDER BY e.`start_time` ASC, e.`id` ASC LIMIT {$limit}";
+
+        return Database::fetchAll($sql, $params);
+    }
 }
+

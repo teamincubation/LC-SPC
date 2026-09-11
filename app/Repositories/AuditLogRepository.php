@@ -35,9 +35,15 @@ class AuditLogRepository
             );
         }
 
+        $actorId = isset($data['actor_id']) && (int) $data['actor_id'] > 0 ? (int) $data['actor_id'] : null;
+        $actorType = !empty($data['actor_type']) ? (string) $data['actor_type'] : 'admin';
+        if ($actorId === null && $actorType === 'admin') {
+            $actorType = 'anonymous';
+        }
+
         Database::execute($sql, [
-            ':actor_id'    => $data['actor_id'] ?? null,
-            ':actor_type'  => $data['actor_type'] ?? 'admin',
+            ':actor_id'    => $actorId,
+            ':actor_type'  => $actorType,
             ':action'      => $data['action'],
             ':entity_type' => $data['entity_type'],
             ':entity_id'   => $data['entity_id'] ?? null,
