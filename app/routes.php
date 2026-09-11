@@ -16,6 +16,8 @@ use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\EventController;
 use App\Controllers\Admin\ParticipantController;
 use App\Controllers\Admin\RegistrationController;
+use App\Controllers\Admin\ReportController;
+use App\Controllers\Admin\SettingsController;
 use App\Controllers\HealthController;
 use App\Controllers\HomeController;
 use App\Controllers\Public\CertificateVerifyController;
@@ -253,6 +255,16 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
 
     // Revoke Certificate Permanently (coordinator+, CSRF protected)
     $adminRouter->post('/certificates/{id}/revoke', [CertificateController::class, 'revoke'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // -------------------------------------------------------------------------
+    // Reports & Analytics Routes
+    // -------------------------------------------------------------------------
+    $adminRouter->get('/reports', [ReportController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // -------------------------------------------------------------------------
+    // Platform Settings Routes
+    // -------------------------------------------------------------------------
+    $adminRouter->get('/settings', [SettingsController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
 
     // -------------------------------------------------------------------------
     // RBAC Capability Gate Routes (Phase 1A Foundation & Verification)

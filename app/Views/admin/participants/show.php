@@ -1,62 +1,71 @@
 <!-- Participant Profile Header -->
-<div class="card mb-6">
-  <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
-    <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+<div class="admin-page-header">
+  <div class="admin-page-header-title">
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="<?= e(url('/admin/participants')) ?>" class="btn btn-outline btn-sm btn-icon" title="Return to Directory" aria-label="Return to Directory">
+        <?= icon('arrow-left', ['width' => '14', 'height' => '14']) ?>
+      </a>
       <div>
-        <h1 class="card-title" style="font-size: var(--font-size-xl); margin-bottom: 0.25rem;">
-          <?= e($participant['full_name']) ?>
-        </h1>
         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-          <span class="badge" style="background-color: var(--bg-surface-subtle); color: var(--text-secondary); border: 1px solid var(--border-color);">
+          <h1 style="margin: 0;"><?= e($participant['full_name']) ?></h1>
+          <span class="badge badge-pill badge-neutral" style="font-size: var(--font-size-xs);">
             ID #<?= e((string) $participant['id']) ?>
           </span>
 
-          <span class="badge" style="background-color: var(--bg-surface-subtle); color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.7rem;">
+          <span class="badge badge-pill badge-info" style="font-size: var(--font-size-xs);">
             <?= e(ucfirst($participant['category'])) ?>
           </span>
 
           <?php if ($participant['status'] === 'active'): ?>
-            <span class="badge" style="background-color: var(--bg-success); color: var(--text-success);">
-              &#10003; Active
+            <span class="badge badge-pill badge-success">
+              <span class="badge-dot" aria-hidden="true"></span>
+              Active
             </span>
           <?php elseif ($participant['status'] === 'flagged'): ?>
-            <span class="badge" style="background-color: var(--bg-warning); color: var(--text-warning);">
-              &#9873; Flagged
+            <span class="badge badge-pill badge-warning">
+              <span class="badge-dot" aria-hidden="true"></span>
+              Flagged
             </span>
           <?php else: ?>
-            <span class="badge" style="background-color: var(--bg-danger); color: var(--text-danger);">
-              &#9888; Blocked
+            <span class="badge badge-pill badge-danger">
+              <span class="badge-dot" aria-hidden="true"></span>
+              Blocked
             </span>
           <?php endif; ?>
 
           <?php if (!empty($participant['_is_masked'])): ?>
-            <span class="badge" style="background-color: var(--bg-surface-subtle); color: var(--text-muted); font-size: 0.7rem;">
-              &#128065; PII Masked (Role: <?= e(ucfirst($userRole)) ?>)
+            <span class="badge badge-pill badge-neutral" style="display: inline-flex; align-items: center; gap: 0.35rem; font-size: 11px;">
+              <?= icon('shield', ['width' => '11', 'height' => '11']) ?>
+              <span>PII Masked (Role: <?= e(ucfirst($userRole)) ?>)</span>
             </span>
           <?php endif; ?>
         </div>
       </div>
     </div>
+  </div>
 
-    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-      <?php if (!empty($canEdit)): ?>
-        <a href="<?= e(url('/admin/participants/' . (int) $participant['id'] . '/edit')) ?>" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem;">
-          <span>&#9998;</span>
-          <span>Edit Participant</span>
-        </a>
-      <?php endif; ?>
-      <a href="<?= e(url('/admin/participants')) ?>" class="btn btn-outline btn-sm">
-        &larr; Return to Directory
+  <div class="admin-page-header-actions">
+    <a href="<?= e(url('/admin/participants')) ?>" class="btn btn-outline btn-sm">
+      <?= icon('list', ['width' => '14', 'height' => '14']) ?>
+      <span>Directory</span>
+    </a>
+
+    <?php if (!empty($canEdit)): ?>
+      <a href="<?= e(url('/admin/participants/' . (int) $participant['id'] . '/edit')) ?>" class="btn btn-primary btn-sm">
+        <?= icon('edit', ['width' => '14', 'height' => '14']) ?>
+        <span>Edit Participant</span>
       </a>
-    </div>
+    <?php endif; ?>
   </div>
 </div>
 
 <?php if (!empty($participant['_is_masked'])): ?>
   <!-- Privacy Shield Notice Banner -->
-  <div class="alert alert-info mb-6" role="alert" style="background-color: var(--bg-surface-subtle); border-left: 4px solid var(--primary); padding: 0.875rem 1.25rem;">
+  <div class="alert alert-info mb-6" role="alert" style="background-color: var(--bg-surface-subtle); border-left: 4px solid var(--color-primary); padding: 0.875rem 1.25rem;">
     <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <span style="font-size: 1.25rem; color: var(--primary);">&#128274;</span>
+      <div style="color: var(--color-primary); display: flex; align-items: center;">
+        <?= icon('shield', ['width' => '20', 'height' => '20']) ?>
+      </div>
       <span style="font-size: var(--font-size-sm); color: var(--text-secondary);">
         <strong>Privacy Shield Active:</strong> Contact information is masked server-side to safeguard participant privacy under your current operational role (<strong><?= e(ucfirst($userRole)) ?></strong>). Full PII is restricted to authorized coordinators and administrators.
       </span>
@@ -69,7 +78,8 @@
   <div class="card">
     <div class="card-header">
       <h2 class="card-title" style="font-size: var(--font-size-md); display: flex; align-items: center; gap: 0.5rem;">
-        <span>&#128100;</span> Identity &amp; Contact Details
+        <?= icon('user', ['width' => '16', 'height' => '16']) ?>
+        <span>Identity &amp; Contact Details</span>
       </h2>
     </div>
 
@@ -121,7 +131,8 @@
   <div class="card">
     <div class="card-header">
       <h2 class="card-title" style="font-size: var(--font-size-md); display: flex; align-items: center; gap: 0.5rem;">
-        <span>&#128220;</span> Compliance &amp; Consent Audit
+        <?= icon('file-text', ['width' => '16', 'height' => '16']) ?>
+        <span>Compliance &amp; Consent Audit</span>
       </h2>
     </div>
 
@@ -131,12 +142,18 @@
           <th style="width: 40%; color: var(--text-secondary); font-weight: var(--font-weight-normal);">Safe Space Guidelines</th>
           <td style="color: var(--text-primary);">
             <?php if (!empty($participant['agreed_guidelines_at'])): ?>
-              <span style="color: var(--success); font-weight: var(--font-weight-medium);">&#10003; Agreed</span>
+              <span style="color: var(--color-success); font-weight: var(--font-weight-medium); display: inline-flex; align-items: center; gap: 0.35rem;">
+                <?= icon('check', ['width' => '14', 'height' => '14']) ?>
+                <span>Agreed</span>
+              </span>
               <div style="font-size: var(--font-size-xs); color: var(--text-muted); font-family: monospace;">
                 <?= e(date('M d, Y H:i:s T', strtotime($participant['agreed_guidelines_at']))) ?>
               </div>
             <?php else: ?>
-              <span class="text-danger">&#10007; Not Recorded</span>
+              <span class="text-danger" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                <?= icon('x', ['width' => '14', 'height' => '14']) ?>
+                <span>Not Recorded</span>
+              </span>
             <?php endif; ?>
           </td>
         </tr>
@@ -144,12 +161,18 @@
           <th style="color: var(--text-secondary); font-weight: var(--font-weight-normal);">Privacy Notice Consent</th>
           <td style="color: var(--text-primary);">
             <?php if (!empty($participant['privacy_consent_at'])): ?>
-              <span style="color: var(--success); font-weight: var(--font-weight-medium);">&#10003; Consented</span>
+              <span style="color: var(--color-success); font-weight: var(--font-weight-medium); display: inline-flex; align-items: center; gap: 0.35rem;">
+                <?= icon('check', ['width' => '14', 'height' => '14']) ?>
+                <span>Consented</span>
+              </span>
               <div style="font-size: var(--font-size-xs); color: var(--text-muted); font-family: monospace;">
                 <?= e(date('M d, Y H:i:s T', strtotime($participant['privacy_consent_at']))) ?>
               </div>
             <?php else: ?>
-              <span class="text-danger">&#10007; Not Recorded</span>
+              <span class="text-danger" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                <?= icon('x', ['width' => '14', 'height' => '14']) ?>
+                <span>Not Recorded</span>
+              </span>
             <?php endif; ?>
           </td>
         </tr>
@@ -175,7 +198,8 @@
   <div class="card">
     <div class="card-header">
       <h2 class="card-title" style="font-size: var(--font-size-md); display: flex; align-items: center; gap: 0.5rem;">
-        <span>&#9881;</span> Lifecycle Status Transition
+        <?= icon('settings', ['width' => '16', 'height' => '16']) ?>
+        <span>Lifecycle Status Transition</span>
       </h2>
     </div>
 

@@ -1,20 +1,28 @@
-<div class="card mb-6">
-  <div class="card-header">
-    <div>
-      <h1 class="card-title" style="font-size: var(--font-size-xl); margin-bottom: 0.25rem;">
-        Create New Campaign
-      </h1>
-      <p class="text-secondary" style="font-size: var(--font-size-sm); margin: 0;">
-        Initialize a multi-year campaign initiative with theme and duration parameters.
-      </p>
-    </div>
-    <a href="<?= e(url('/admin/campaigns')) ?>" class="btn btn-outline btn-sm">
-      &larr; Return to Roster
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Modernized Campaign Creation Form
+ */
+?>
+
+<!-- Campaign Page Header -->
+<div class="admin-page-header">
+  <div>
+    <h1 class="admin-page-title">Create New Campaign</h1>
+    <p class="admin-page-desc">Initialize a multi-year campaign initiative with theme and duration parameters.</p>
+  </div>
+
+  <div class="admin-page-actions">
+    <a href="<?= e(url('/admin/campaigns')) ?>" class="btn btn-outline btn-auto">
+      <?= icon('arrow-left', ['class' => 'svg-icon-sm']) ?>
+      <span>Back to Campaigns</span>
     </a>
   </div>
 </div>
 
-<div class="card">
+<div class="card" style="max-width: 900px;">
   <form action="<?= e(url('/admin/campaigns')) ?>" method="POST" novalidate>
     <?= csrf_field() ?>
 
@@ -161,11 +169,12 @@
 
     <!-- Actions -->
     <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
-      <a href="<?= e(url('/admin/campaigns')) ?>" class="btn btn-outline">
+      <a href="<?= e(url('/admin/campaigns')) ?>" class="btn btn-outline btn-auto">
         Cancel
       </a>
-      <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.5rem;">
-        Save Campaign &rarr;
+      <button type="submit" class="btn btn-primary btn-auto" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+        <?= icon('plus', ['class' => 'svg-icon-sm']) ?>
+        <span>Save Campaign</span>
       </button>
     </div>
   </form>

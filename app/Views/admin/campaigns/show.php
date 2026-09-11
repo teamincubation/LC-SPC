@@ -1,70 +1,80 @@
 <?php
-  $st = $campaign['status'] ?? 'draft';
-  $badgeClass = match ($st) {
-      'active'    => 'badge-success',
-      'completed' => 'badge-info',
-      'archived'  => 'badge-neutral',
-      default     => 'badge-warning',
-  };
-  $isSoftDeleted = !empty($campaign['deleted_at']);
+
+declare(strict_types=1);
+
+/**
+ * Modernized Campaign Details View
+ */
+
+$st = $campaign['status'] ?? 'draft';
+$pillClass = match ($st) {
+    'active'    => 'badge-pill-success',
+    'completed' => 'badge-pill-info',
+    'archived'  => 'badge-pill-neutral',
+    default     => 'badge-pill-warning',
+};
+$isSoftDeleted = !empty($campaign['deleted_at']);
 ?>
 
-<div class="card mb-6" style="border-left: 4px solid var(--color-primary);">
-  <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
-    <div>
-      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
-        <h1 class="card-title" style="font-size: var(--font-size-xl); margin: 0;">
-          <?= e($campaign['title']) ?>
-        </h1>
-        <?php if ($isSoftDeleted): ?>
-          <span class="badge badge-danger">
-            <span class="badge-dot" aria-hidden="true"></span>
-            Soft-Deleted
-          </span>
-        <?php else: ?>
-          <span class="badge <?= e($badgeClass) ?>">
-            <span class="badge-dot" aria-hidden="true"></span>
-            <?= e(ucfirst($st)) ?>
-          </span>
-        <?php endif; ?>
-      </div>
-
-      <?php if (!empty($campaign['theme'])): ?>
-        <p class="text-secondary" style="font-size: var(--font-size-sm); font-style: italic; margin: 0;">
-          &ldquo;<?= e($campaign['theme']) ?>&rdquo;
-        </p>
+<!-- Campaign Page Header -->
+<div class="admin-page-header">
+  <div>
+    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+      <h1 class="admin-page-title" style="margin: 0;">
+        <?= e($campaign['title']) ?>
+      </h1>
+      <?php if ($isSoftDeleted): ?>
+        <span class="badge-pill badge-pill-danger">
+          <span class="badge-pill-dot" aria-hidden="true"></span>
+          Deleted
+        </span>
+      <?php else: ?>
+        <span class="badge-pill <?= e($pillClass) ?>">
+          <span class="badge-pill-dot" aria-hidden="true"></span>
+          <?= e(ucfirst($st)) ?>
+        </span>
       <?php endif; ?>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-      <a href="<?= e(url('/admin/campaigns')) ?>" class="btn btn-outline btn-sm">
-        &larr; All Campaigns
+    <?php if (!empty($campaign['theme'])): ?>
+      <p class="admin-page-desc" style="font-style: italic;">
+        &ldquo;<?= e($campaign['theme']) ?>&rdquo;
+      </p>
+    <?php endif; ?>
+  </div>
+
+  <div class="admin-page-actions">
+    <a href="<?= e(url('/admin/campaigns')) ?>" class="btn btn-outline btn-auto">
+      <?= icon('arrow-left', ['class' => 'svg-icon-sm']) ?>
+      <span>All Campaigns</span>
+    </a>
+
+    <?php if (!$isSoftDeleted && !empty($canEdit)): ?>
+      <a href="<?= e(url('/admin/campaigns/' . $campaign['id'] . '/edit')) ?>" class="btn btn-primary btn-auto">
+        <?= icon('pencil', ['class' => 'svg-icon-sm']) ?>
+        <span>Edit Campaign</span>
       </a>
+    <?php endif; ?>
 
-      <?php if (!$isSoftDeleted && !empty($canEdit)): ?>
-        <a href="<?= e(url('/admin/campaigns/' . $campaign['id'] . '/edit')) ?>" class="btn btn-outline btn-sm">
-          Edit Campaign
-        </a>
-      <?php endif; ?>
+    <?php if (!$isSoftDeleted && !empty($canDelete)): ?>
+      <form action="<?= e(url('/admin/campaigns/' . $campaign['id'] . '/delete')) ?>" method="POST" style="margin: 0; display: inline;" onsubmit="return confirm('Are you sure you want to delete this campaign?');">
+        <?= csrf_field() ?>
+        <button type="submit" class="btn btn-outline btn-auto" style="color: var(--color-danger); border-color: var(--border-danger);">
+          <?= icon('trash', ['class' => 'svg-icon-sm']) ?>
+          <span>Delete</span>
+        </button>
+      </form>
+    <?php endif; ?>
 
-      <?php if (!$isSoftDeleted && !empty($canDelete)): ?>
-        <form action="<?= e(url('/admin/campaigns/' . $campaign['id'] . '/delete')) ?>" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to soft-delete this campaign?');">
-          <?= csrf_field() ?>
-          <button type="submit" class="btn btn-outline btn-sm" style="color: var(--color-danger); border-color: var(--border-danger);">
-            Delete Campaign
-          </button>
-        </form>
-      <?php endif; ?>
-
-      <?php if ($isSoftDeleted && !empty($canDelete)): ?>
-        <form action="<?= e(url('/admin/campaigns/' . $campaign['id'] . '/restore')) ?>" method="POST" style="margin: 0;">
-          <?= csrf_field() ?>
-          <button type="submit" class="btn btn-primary btn-sm">
-            Restore Campaign
-          </button>
-        </form>
-      <?php endif; ?>
-    </div>
+    <?php if ($isSoftDeleted && !empty($canDelete)): ?>
+      <form action="<?= e(url('/admin/campaigns/' . $campaign['id'] . '/restore')) ?>" method="POST" style="margin: 0; display: inline;">
+        <?= csrf_field() ?>
+        <button type="submit" class="btn btn-primary btn-auto">
+          <?= icon('refresh', ['class' => 'svg-icon-sm']) ?>
+          <span>Restore</span>
+        </button>
+      </form>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -72,7 +82,7 @@
 <div class="grid grid-cols-3 gap-6 mb-6">
   <!-- Core Information Column -->
   <div class="card" style="grid-column: span 2;">
-    <h2 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin-bottom: 1rem;">
+    <h2 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
       Campaign Overview &amp; Strategy
     </h2>
 
@@ -112,7 +122,7 @@
 
   <!-- Administrative Metadata Column -->
   <div class="card">
-    <h2 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin-bottom: 1rem;">
+    <h2 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
       Audit &amp; Governance
     </h2>
 
@@ -163,7 +173,7 @@
                 <option value="completed" <?= $st === 'completed' ? 'selected' : '' ?>>Completed</option>
                 <option value="archived" <?= $st === 'archived' ? 'selected' : '' ?>>Archived</option>
               </select>
-              <button type="submit" class="btn btn-outline btn-sm">Update</button>
+              <button type="submit" class="btn btn-secondary btn-sm btn-auto">Update</button>
             </div>
           </form>
         </div>

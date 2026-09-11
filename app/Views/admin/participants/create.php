@@ -1,16 +1,20 @@
 <!-- Participant Creation Header -->
-<div class="card mb-6">
-  <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
-    <div>
-      <h1 class="card-title" style="font-size: var(--font-size-xl); margin-bottom: 0.25rem;">
-        Register Participant
-      </h1>
-      <p class="text-secondary" style="font-size: var(--font-size-sm); margin: 0;">
-        Establish a canonical attendee identity with verified contact governance and server-side consent logging.
-      </p>
+<div class="admin-page-header">
+  <div class="admin-page-header-title">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <a href="<?= e(url('/admin/participants')) ?>" class="btn btn-outline btn-sm btn-icon" title="Return to Participants" aria-label="Return to Participants">
+        <?= icon('arrow-left', ['width' => '14', 'height' => '14']) ?>
+      </a>
+      <div>
+        <h1>Register Participant</h1>
+        <p>Establish a canonical attendee identity with verified contact governance and server-side consent logging.</p>
+      </div>
     </div>
+  </div>
+  <div class="admin-page-header-actions">
     <a href="<?= e(url('/admin/participants')) ?>" class="btn btn-outline btn-sm">
-      &larr; Return to Participants
+      <?= icon('list', ['width' => '14', 'height' => '14']) ?>
+      <span>All Participants</span>
     </a>
   </div>
 </div>
@@ -19,7 +23,9 @@
   <!-- Duplicate Warning Intervention Banner -->
   <div class="alert alert-warning mb-6" role="alert" style="border-left: 4px solid var(--warning); background-color: var(--bg-surface); padding: 1.25rem;">
     <div style="display: flex; align-items: flex-start; gap: 1rem;">
-      <div style="font-size: 1.5rem; line-height: 1; color: var(--warning);">&#9888;</div>
+      <div style="color: var(--warning);">
+        <?= icon('alert-triangle', ['width' => '24', 'height' => '24']) ?>
+      </div>
       <div style="flex: 1;">
         <h4 style="margin: 0 0 0.5rem; font-size: var(--font-size-md); font-weight: var(--font-weight-bold); color: var(--text-primary);">
           Potential Duplicate Detected
@@ -205,7 +211,8 @@
     <!-- Server-Side Consent & Guidelines Compliance Section -->
     <div class="card mb-6" style="background-color: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 1.25rem;">
       <h3 style="font-size: var(--font-size-md); margin: 0 0 0.5rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
-        <span>&#128220;</span> Institutional Consent &amp; Safe Space Compliance
+        <?= icon('shield', ['width' => '18', 'height' => '18']) ?>
+        <span>Institutional Consent &amp; Safe Space Compliance</span>
       </h3>
       <p class="text-secondary" style="font-size: var(--font-size-xs); margin-bottom: 1rem;">
         Affirmative confirmations below record permanent, immutable server-side audit timestamps (<code>agreed_guidelines_at</code> and <code>privacy_consent_at</code>). Once committed, consent timestamps cannot be modified.
@@ -224,7 +231,7 @@
           >
           <div>
             <strong style="color: var(--text-primary); font-size: var(--font-size-sm); display: block;">
-              Community Guidelines &amp; Safe Space Conduct Agreement <span style="color: var(--danger);">&#42;</span>
+              Community Guidelines &amp; Safe Space Conduct Agreement <span style="color: var(--danger);">*</span>
             </strong>
             <span class="text-secondary" style="font-size: var(--font-size-xs);">
               The participant acknowledges and commits to the LC-SPC Safe Space Code of Conduct, mutual respect, and listening circle guidelines.
@@ -249,7 +256,7 @@
           >
           <div>
             <strong style="color: var(--text-primary); font-size: var(--font-size-sm); display: block;">
-              Data Governance &amp; Privacy Notice Consent <span style="color: var(--danger);">&#42;</span>
+              Data Governance &amp; Privacy Notice Consent <span style="color: var(--danger);">*</span>
             </strong>
             <span class="text-secondary" style="font-size: var(--font-size-xs);">
               The participant has given explicit consent for identity and contact processing solely for event administration, verification, and accreditation.
@@ -267,9 +274,9 @@
       <a href="<?= e(url('/admin/participants')) ?>" class="btn btn-outline">
         Cancel
       </a>
-      <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+      <button type="submit" class="btn btn-primary">
+        <?= icon('user-plus', ['width' => '14', 'height' => '14']) ?>
         <span>Create Participant Record</span>
-        <span aria-hidden="true">&rarr;</span>
       </button>
     </div>
   </form>

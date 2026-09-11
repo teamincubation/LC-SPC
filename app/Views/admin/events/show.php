@@ -16,81 +16,90 @@
 ?>
 
 <!-- Event Overview Header -->
-<div class="card mb-6" style="border-left: 4px solid var(--color-primary);">
-  <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
-    <div>
-      <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
-        <h1 class="card-title" style="font-size: var(--font-size-xl); margin: 0;">
-          <?= e($event['title']) ?>
-        </h1>
-        <span class="badge badge-neutral" style="font-size: var(--font-size-xs);">
-          <?= e(ucwords(str_replace('_', ' ', $event['category'] ?? 'workshop'))) ?>
-        </span>
-        <span class="badge <?= e($fmtBadge) ?>" style="font-size: var(--font-size-xs);">
-          <?= e(ucfirst(str_replace('_', '-', $event['format'] ?? 'in_person'))) ?>
-        </span>
-        <?php if ($isSoftDeleted): ?>
-          <span class="badge badge-danger">
-            <span class="badge-dot" aria-hidden="true"></span>
-            Soft-Deleted
-          </span>
-        <?php else: ?>
-          <span class="badge <?= e($statusBadge) ?>">
-            <span class="badge-dot" aria-hidden="true"></span>
-            <?= e(ucfirst($st)) ?>
-          </span>
-        <?php endif; ?>
-      </div>
-
-      <p class="text-secondary" style="font-size: var(--font-size-sm); margin: 0;">
-        Part of campaign: 
-        <a href="<?= e(url('/admin/campaigns/' . $event['campaign_id'])) ?>" style="font-weight: var(--font-weight-medium); color: var(--color-primary); text-decoration: none;">
-          <?= e($event['campaign_title'] ?? 'Campaign #' . $event['campaign_id']) ?>
-        </a>
-      </p>
-    </div>
-
-    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-      <a href="<?= e(url('/admin/events')) ?>" class="btn btn-outline btn-sm">
-        &larr; All Events
+<div class="admin-page-header">
+  <div class="admin-page-header-title">
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="<?= e(url('/admin/events')) ?>" class="btn btn-outline btn-sm btn-icon" title="All Events" aria-label="All Events">
+        <?= icon('arrow-left', ['width' => '14', 'height' => '14']) ?>
       </a>
-
-      <?php if (!$isSoftDeleted && in_array($st, ['published', 'ongoing', 'completed'], true)): ?>
-        <a href="<?= e(url('/admin/checkin/event/' . $event['id'])) ?>" class="btn btn-primary btn-sm">
-          <span>&#9989; Check-In</span>
-        </a>
-        <a href="<?= e(url('/admin/events/' . $event['id'] . '/attendance')) ?>" class="btn btn-outline btn-sm">
-          <span>&#128101; Attendance</span>
-        </a>
-        <a href="<?= e(url('/admin/events/' . $event['id'] . '/certificates')) ?>" class="btn btn-outline btn-sm">
-          <span>&#127891; Certificates</span>
-        </a>
-      <?php endif; ?>
-
-      <?php if (!$isSoftDeleted && !empty($canEdit)): ?>
-        <a href="<?= e(url('/admin/events/' . $event['id'] . '/edit')) ?>" class="btn btn-outline btn-sm">
-          Edit Event
-        </a>
-      <?php endif; ?>
-
-      <?php if (!$isSoftDeleted && !empty($canDelete)): ?>
-        <form action="<?= e(url('/admin/events/' . $event['id'] . '/delete')) ?>" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to soft-delete this event?');">
-          <?= csrf_field() ?>
-          <button type="submit" class="btn btn-outline btn-sm" style="color: var(--color-danger); border-color: var(--border-danger);">
-            Delete Event
-          </button>
-        </form>
-      <?php endif; ?>
-
-      <?php if ($isSoftDeleted && !empty($canDelete)): ?>
-        <form action="<?= e(url('/admin/events/' . $event['id'] . '/restore')) ?>" method="POST" style="margin: 0;">
-          <?= csrf_field() ?>
-          <button type="submit" class="btn btn-primary btn-sm">
-            Restore Event
-          </button>
-        </form>
-      <?php endif; ?>
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <h1 style="margin: 0;"><?= e($event['title']) ?></h1>
+          <span class="badge badge-pill badge-neutral" style="font-size: var(--font-size-xs);">
+            <?= e(ucwords(str_replace('_', ' ', $event['category'] ?? 'workshop'))) ?>
+          </span>
+          <span class="badge badge-pill <?= e($fmtBadge) ?>" style="font-size: var(--font-size-xs);">
+            <?= e(ucfirst(str_replace('_', '-', $event['format'] ?? 'in_person'))) ?>
+          </span>
+          <?php if ($isSoftDeleted): ?>
+            <span class="badge badge-pill badge-danger">
+              <span class="badge-dot" aria-hidden="true"></span>
+              Soft-Deleted
+            </span>
+          <?php else: ?>
+            <span class="badge badge-pill <?= e($statusBadge) ?>">
+              <span class="badge-dot" aria-hidden="true"></span>
+              <?= e(ucfirst($st)) ?>
+            </span>
+          <?php endif; ?>
+        </div>
+        <p style="margin-top: 0.25rem;">
+          Part of campaign: 
+          <a href="<?= e(url('/admin/campaigns/' . $event['campaign_id'])) ?>" style="font-weight: var(--font-weight-medium); color: var(--color-primary); text-decoration: none;">
+            <?= e($event['campaign_title'] ?? 'Campaign #' . $event['campaign_id']) ?>
+          </a>
+        </p>
+      </div>
     </div>
+  </div>
+
+  <div class="admin-page-header-actions">
+    <a href="<?= e(url('/admin/events')) ?>" class="btn btn-outline btn-sm">
+      <?= icon('list', ['width' => '14', 'height' => '14']) ?>
+      <span>All Events</span>
+    </a>
+
+    <?php if (!$isSoftDeleted && in_array($st, ['published', 'ongoing', 'completed'], true)): ?>
+      <a href="<?= e(url('/admin/checkin/event/' . $event['id'])) ?>" class="btn btn-primary btn-sm">
+        <?= icon('check-circle', ['width' => '14', 'height' => '14']) ?>
+        <span>Check-In</span>
+      </a>
+      <a href="<?= e(url('/admin/events/' . $event['id'] . '/attendance')) ?>" class="btn btn-outline btn-sm">
+        <?= icon('users', ['width' => '14', 'height' => '14']) ?>
+        <span>Attendance</span>
+      </a>
+      <a href="<?= e(url('/admin/events/' . $event['id'] . '/certificates')) ?>" class="btn btn-outline btn-sm">
+        <?= icon('award', ['width' => '14', 'height' => '14']) ?>
+        <span>Certificates</span>
+      </a>
+    <?php endif; ?>
+
+    <?php if (!$isSoftDeleted && !empty($canEdit)): ?>
+      <a href="<?= e(url('/admin/events/' . $event['id'] . '/edit')) ?>" class="btn btn-outline btn-sm">
+        <?= icon('edit', ['width' => '14', 'height' => '14']) ?>
+        <span>Edit Event</span>
+      </a>
+    <?php endif; ?>
+
+    <?php if (!$isSoftDeleted && !empty($canDelete)): ?>
+      <form action="<?= e(url('/admin/events/' . $event['id'] . '/delete')) ?>" method="POST" style="margin: 0;" onsubmit="return confirm('Are you sure you want to soft-delete this event?');">
+        <?= csrf_field() ?>
+        <button type="submit" class="btn btn-outline btn-sm" style="color: var(--color-danger); border-color: var(--border-danger);">
+          <?= icon('trash', ['width' => '14', 'height' => '14']) ?>
+          <span>Delete</span>
+        </button>
+      </form>
+    <?php endif; ?>
+
+    <?php if ($isSoftDeleted && !empty($canDelete)): ?>
+      <form action="<?= e(url('/admin/events/' . $event['id'] . '/restore')) ?>" method="POST" style="margin: 0;">
+        <?= csrf_field() ?>
+        <button type="submit" class="btn btn-primary btn-sm">
+          <?= icon('refresh-cw', ['width' => '14', 'height' => '14']) ?>
+          <span>Restore Event</span>
+        </button>
+      </form>
+    <?php endif; ?>
   </div>
 </div>
 

@@ -1,15 +1,14 @@
-<div class="card mb-6">
-  <div class="card-header">
-    <div>
-      <h1 class="card-title" style="font-size: var(--font-size-xl); margin-bottom: 0.25rem;">
-        Schedule New Event
-      </h1>
-      <p class="text-secondary" style="font-size: var(--font-size-sm); margin: 0;">
-        Configure workshop, listening circle, seminar, or training sessions within an active campaign.
-      </p>
-    </div>
-    <a href="<?= e(url('/admin/events')) ?>" class="btn btn-outline btn-sm">
-      &larr; Return to Events
+<!-- Event Create Page Header -->
+<div class="admin-page-header">
+  <div>
+    <h1 class="admin-page-title">Schedule New Event</h1>
+    <p class="admin-page-desc">Configure workshop, listening circle, seminar, or training sessions within an active campaign.</p>
+  </div>
+
+  <div class="admin-page-actions">
+    <a href="<?= e(url('/admin/events')) ?>" class="btn btn-outline btn-auto">
+      <?= icon('arrow-left', ['class' => 'svg-icon-sm']) ?>
+      <span>Back to Events</span>
     </a>
   </div>
 </div>
@@ -343,11 +342,12 @@
 
     <!-- Submission Actions -->
     <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
-      <a href="<?= e(url('/admin/events')) ?>" class="btn btn-outline">
+      <a href="<?= e(url('/admin/events')) ?>" class="btn btn-outline btn-auto">
         Cancel
       </a>
-      <button type="submit" class="btn btn-primary">
-        Schedule Event
+      <button type="submit" class="btn btn-primary btn-auto" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+        <?= icon('plus', ['class' => 'svg-icon-sm']) ?>
+        <span>Schedule Event</span>
       </button>
     </div>
   </form>

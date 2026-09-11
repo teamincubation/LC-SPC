@@ -1,15 +1,21 @@
-<!-- Create Registration Form -->
-<div class="card mb-6">
-  <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-    <div>
-      <h1 class="card-title" style="font-size: var(--font-size-xl); margin-bottom: 0.25rem;">
-        New Event Registration
-      </h1>
-      <p class="text-secondary" style="font-size: var(--font-size-sm); margin: 0;">
-        Enroll a participant into a scheduled awareness workshop or listening circle.
-      </p>
+<!-- Create Registration Header -->
+<div class="admin-page-header">
+  <div class="admin-page-header-title">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <a href="<?= e(url('/admin/registrations')) ?>" class="btn btn-outline btn-sm btn-icon" title="Back to Registrations" aria-label="Back to Registrations">
+        <?= icon('arrow-left', ['width' => '14', 'height' => '14']) ?>
+      </a>
+      <div>
+        <h1>New Event Registration</h1>
+        <p>Enroll a participant into a scheduled awareness workshop or listening circle.</p>
+      </div>
     </div>
-    <a href="<?= e(url('/admin/registrations')) ?>" class="btn btn-outline btn-sm">&larr; Back to Directory</a>
+  </div>
+  <div class="admin-page-header-actions">
+    <a href="<?= e(url('/admin/registrations')) ?>" class="btn btn-outline btn-sm">
+      <?= icon('list', ['width' => '14', 'height' => '14']) ?>
+      <span>All Registrations</span>
+    </a>
   </div>
 </div>
 
@@ -158,8 +164,9 @@
   <!-- Form Actions -->
   <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
     <a href="<?= e(url('/admin/registrations')) ?>" class="btn btn-outline">Cancel</a>
-    <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">
-      Confirm Enrollment & Generate Pass
+    <button type="submit" class="btn btn-primary">
+      <?= icon('check', ['width' => '14', 'height' => '14']) ?>
+      <span>Confirm Enrollment &amp; Generate Pass</span>
     </button>
   </div>
 </form>

@@ -1,22 +1,25 @@
 <!-- Participant Edit Header -->
-<div class="card mb-6">
-  <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
-    <div>
-      <h1 class="card-title" style="font-size: var(--font-size-xl); margin-bottom: 0.25rem;">
-        Edit Participant: <?= e($participant['full_name']) ?>
-      </h1>
-      <p class="text-secondary" style="font-size: var(--font-size-sm); margin: 0;">
-        Update attendee profile, category alignment, or contact information. Consent timestamps remain permanently immutable.
-      </p>
-    </div>
+<div class="admin-page-header">
+  <div class="admin-page-header-title">
     <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <a href="<?= e(url('/admin/participants/' . (int) $participant['id'])) ?>" class="btn btn-outline btn-sm">
-        &larr; View Profile
+      <a href="<?= e(url('/admin/participants/' . (int) $participant['id'])) ?>" class="btn btn-outline btn-sm btn-icon" title="View Profile" aria-label="View Profile">
+        <?= icon('arrow-left', ['width' => '14', 'height' => '14']) ?>
       </a>
-      <a href="<?= e(url('/admin/participants')) ?>" class="btn btn-outline btn-sm">
-        Directory
-      </a>
+      <div>
+        <h1>Edit Participant: <?= e($participant['full_name']) ?></h1>
+        <p>Update attendee profile, category alignment, or contact information. Consent timestamps remain permanently immutable.</p>
+      </div>
     </div>
+  </div>
+  <div class="admin-page-header-actions">
+    <a href="<?= e(url('/admin/participants/' . (int) $participant['id'])) ?>" class="btn btn-outline btn-sm">
+      <?= icon('user', ['width' => '14', 'height' => '14']) ?>
+      <span>View Profile</span>
+    </a>
+    <a href="<?= e(url('/admin/participants')) ?>" class="btn btn-outline btn-sm">
+      <?= icon('list', ['width' => '14', 'height' => '14']) ?>
+      <span>Directory</span>
+    </a>
   </div>
 </div>
 
@@ -154,7 +157,8 @@
     <!-- Read-Only Immutable Compliance & Consent Audit Card -->
     <div class="card mb-6" style="background-color: var(--bg-surface-subtle); border: 1px solid var(--border-color); padding: 1.25rem;">
       <h3 style="font-size: var(--font-size-md); margin: 0 0 0.5rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
-        <span>&#128274;</span> Immutable Compliance Timestamps
+        <?= icon('shield', ['width' => '16', 'height' => '16']) ?>
+        <span>Immutable Compliance Timestamps</span>
       </h3>
       <p class="text-secondary" style="font-size: var(--font-size-xs); margin-bottom: 1rem;">
         Pursuant to data governance policies, server-side consent timestamps are permanently locked and cannot be altered after creation.
@@ -166,7 +170,7 @@
             Guidelines Agreement (<code>agreed_guidelines_at</code>)
           </div>
           <div style="font-weight: var(--font-weight-semibold); color: var(--text-primary); font-size: var(--font-size-sm); display: flex; align-items: center; gap: 0.4rem;">
-            <span style="color: var(--success);">&#10003;</span>
+            <span style="color: var(--color-success); display: inline-flex; align-items: center;"><?= icon('check', ['width' => '14', 'height' => '14']) ?></span>
             <span><?= !empty($participant['agreed_guidelines_at']) ? e(date('F j, Y, g:i A', strtotime($participant['agreed_guidelines_at']))) : '<em>Not Recorded</em>' ?></span>
           </div>
         </div>
@@ -176,7 +180,7 @@
             Privacy Consent (<code>privacy_consent_at</code>)
           </div>
           <div style="font-weight: var(--font-weight-semibold); color: var(--text-primary); font-size: var(--font-size-sm); display: flex; align-items: center; gap: 0.4rem;">
-            <span style="color: var(--success);">&#10003;</span>
+            <span style="color: var(--color-success); display: inline-flex; align-items: center;"><?= icon('check', ['width' => '14', 'height' => '14']) ?></span>
             <span><?= !empty($participant['privacy_consent_at']) ? e(date('F j, Y, g:i A', strtotime($participant['privacy_consent_at']))) : '<em>Not Recorded</em>' ?></span>
           </div>
         </div>
@@ -188,9 +192,9 @@
       <a href="<?= e(url('/admin/participants/' . (int) $participant['id'])) ?>" class="btn btn-outline">
         Cancel
       </a>
-      <button type="submit" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+      <button type="submit" class="btn btn-primary">
+        <?= icon('save', ['width' => '14', 'height' => '14']) ?>
         <span>Save Participant Changes</span>
-        <span aria-hidden="true">&rarr;</span>
       </button>
     </div>
   </form>

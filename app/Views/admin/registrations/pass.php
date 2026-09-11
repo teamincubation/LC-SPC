@@ -11,9 +11,13 @@
 
 <div style="max-width: 650px; margin: 0 auto;">
   <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
-    <a href="<?= e(url('/admin/registrations/' . $registration['id'])) ?>" class="btn btn-outline btn-sm">&larr; Back to Registration</a>
+    <a href="<?= e(url('/admin/registrations/' . $registration['id'])) ?>" class="btn btn-outline btn-sm">
+      <?= icon('arrow-left', ['width' => '14', 'height' => '14']) ?>
+      <span>Back to Registration</span>
+    </a>
     <a href="<?= e(url('/admin/registrations/' . $registration['id'] . '/print')) ?>" target="_blank" class="btn btn-primary btn-sm">
-      <span>&#128424; Print Pass</span>
+      <?= icon('printer', ['width' => '14', 'height' => '14']) ?>
+      <span>Print Pass</span>
     </a>
   </div>
 
@@ -43,7 +47,7 @@
           <?= e($registration['registration_code']) ?>
         </div>
         <div style="margin-top: 0.5rem;">
-          <span class="badge <?= e($badgeClass) ?>" style="font-size: var(--font-size-sm); text-transform: uppercase; padding: 0.3rem 0.8rem;">
+          <span class="badge badge-pill <?= e($badgeClass) ?>" style="font-size: var(--font-size-sm); text-transform: uppercase; padding: 0.3rem 0.8rem;">
             <?= e($status) ?> Pass
           </span>
         </div>

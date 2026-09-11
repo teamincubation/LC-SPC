@@ -241,13 +241,16 @@
   <!-- On-Screen Controls (hidden in print) -->
   <div class="print-controls">
     <button onclick="window.print()" class="btn">
-      <span>&#128424; Print Certificate / Save as PDF</span>
+      <?= icon('printer', ['width' => '16', 'height' => '16']) ?>
+      <span>Print Certificate / Save as PDF</span>
     </button>
     <a href="<?= e(url('/admin/certificates/' . $certificate['id'] . '/jpg')) ?>" class="btn btn-outline">
-      <span>&#128190; Download JPG (Shareable)</span>
+      <?= icon('download', ['width' => '16', 'height' => '16']) ?>
+      <span>Download JPG (Shareable)</span>
     </a>
     <a href="<?= e(url('/admin/certificates/' . $certificate['id'])) ?>" class="btn btn-outline">
-      <span>&larr; Back to Detail</span>
+      <?= icon('chevron-left', ['width' => '16', 'height' => '16']) ?>
+      <span>Back to Detail</span>
     </a>
   </div>
 

@@ -11,42 +11,53 @@
 ?>
 
 <!-- Registration Detail Header -->
-<div class="card mb-6">
-  <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-    <div>
-      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
-        <h1 class="card-title" style="font-size: var(--font-size-xl); margin: 0;">
-          Registration #<?= e((string) $registration['id']) ?>
-        </h1>
-        <code style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); background-color: var(--bg-surface-subtle); padding: 0.2rem 0.5rem; border-radius: var(--border-radius-sm); color: var(--color-primary-dark);">
-          <?= e($registration['registration_code']) ?>
-        </code>
-        <span class="badge <?= e($badgeClass) ?>" style="font-size: var(--font-size-sm); text-transform: uppercase;">
-          <?= e($status) ?>
-        </span>
+<div class="admin-page-header">
+  <div class="admin-page-header-title">
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="<?= e(url('/admin/registrations')) ?>" class="btn btn-outline btn-sm btn-icon" title="All Registrations" aria-label="All Registrations">
+        <?= icon('arrow-left', ['width' => '14', 'height' => '14']) ?>
+      </a>
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <h1 style="margin: 0;">Registration #<?= e((string) $registration['id']) ?></h1>
+          <code style="font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); background-color: var(--bg-surface-subtle); padding: 0.2rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color); color: var(--color-primary-dark);">
+            <?= e($registration['registration_code']) ?>
+          </code>
+          <span class="badge badge-pill <?= e($badgeClass) ?>" style="font-size: var(--font-size-xs); text-transform: uppercase;">
+            <span class="badge-dot" aria-hidden="true"></span>
+            <?= e($status) ?>
+          </span>
+        </div>
+        <p style="margin-top: 0.25rem;">
+          Enrolled on <?= e(date('M d, Y H:i', strtotime((string) $registration['created_at']))) ?>
+        </p>
       </div>
-      <p class="text-secondary" style="font-size: var(--font-size-sm); margin: 0;">
-        Enrolled on <?= e(date('M d, Y H:i', strtotime((string) $registration['created_at']))) ?>
-      </p>
     </div>
+  </div>
 
-    <!-- Quick Actions Toolbar -->
-    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-      <a href="<?= e(url('/admin/registrations')) ?>" class="btn btn-outline btn-sm">&larr; Directory</a>
-      <a href="<?= e(url('/admin/registrations/' . $registration['id'] . '/pass')) ?>" class="btn btn-primary btn-sm" title="View formatted digital pass">
-        <span>&#127915; View Pass</span>
-      </a>
-      <a href="<?= e(url('/admin/registrations/' . $registration['id'] . '/print')) ?>" target="_blank" class="btn btn-outline btn-sm" title="Print physical attendance pass">
-        <span>&#128424; Print Pass</span>
-      </a>
-    </div>
+  <!-- Quick Actions Toolbar -->
+  <div class="admin-page-header-actions">
+    <a href="<?= e(url('/admin/registrations')) ?>" class="btn btn-outline btn-sm">
+      <?= icon('list', ['width' => '14', 'height' => '14']) ?>
+      <span>Directory</span>
+    </a>
+    <a href="<?= e(url('/admin/registrations/' . $registration['id'] . '/pass')) ?>" class="btn btn-primary btn-sm" title="View formatted digital pass">
+      <?= icon('credit-card', ['width' => '14', 'height' => '14']) ?>
+      <span>View Pass</span>
+    </a>
+    <a href="<?= e(url('/admin/registrations/' . $registration['id'] . '/print')) ?>" target="_blank" class="btn btn-outline btn-sm" title="Print physical attendance pass">
+      <?= icon('printer', ['width' => '14', 'height' => '14']) ?>
+      <span>Print Pass</span>
+    </a>
   </div>
 </div>
 
 <!-- Privacy Shield Notification for Masked Roles -->
 <?php if (in_array($userRole, ['staff', 'viewer'], true)): ?>
-  <div class="alert alert-info mb-6" style="display: flex; align-items: center; gap: 0.75rem; font-size: var(--font-size-sm);">
-    <span style="font-size: 1.25rem;">&#128737;</span>
+  <div class="alert alert-info mb-6" style="display: flex; align-items: center; gap: 0.75rem; font-size: var(--font-size-sm); background-color: var(--bg-surface-subtle); border-left: 4px solid var(--color-primary);">
+    <div style="color: var(--color-primary); display: flex; align-items: center;">
+      <?= icon('shield', ['width' => '20', 'height' => '20']) ?>
+    </div>
     <div>
       <strong>Privacy Shield Active:</strong> Personal email and phone contact details are masked for role <code><?= e($userRole) ?></code> in compliance with data minimization rules.
     </div>
@@ -140,9 +151,15 @@
 
         <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
           <span class="text-secondary" style="font-size: var(--font-size-xs); font-weight: var(--font-weight-medium);">Compliance Records:</span>
-          <div style="font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: 0.25rem;">
-            &#10003; Guidelines Consent: <?= !empty($registration['participant_agreed_guidelines_at']) ? e(date('M d, Y H:i', strtotime((string) $registration['participant_agreed_guidelines_at']))) : 'Verified' ?><br>
-            &#10003; Privacy Consent: <?= !empty($registration['participant_privacy_consent_at']) ? e(date('M d, Y H:i', strtotime((string) $registration['participant_privacy_consent_at']))) : 'Verified' ?>
+          <div style="font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.35rem;">
+              <span style="color: var(--color-success); display: inline-flex;"><?= icon('check', ['width' => '13', 'height' => '13']) ?></span>
+              <span>Guidelines Consent: <?= !empty($registration['participant_agreed_guidelines_at']) ? e(date('M d, Y H:i', strtotime((string) $registration['participant_agreed_guidelines_at']))) : 'Verified' ?></span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.35rem;">
+              <span style="color: var(--color-success); display: inline-flex;"><?= icon('check', ['width' => '13', 'height' => '13']) ?></span>
+              <span>Privacy Consent: <?= !empty($registration['participant_privacy_consent_at']) ? e(date('M d, Y H:i', strtotime((string) $registration['participant_privacy_consent_at']))) : 'Verified' ?></span>
+            </div>
           </div>
         </div>
       </div>
@@ -154,7 +171,7 @@
 <div class="card mb-6">
   <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding: 1rem 1.25rem;">
     <h2 style="font-size: var(--font-size-md); margin: 0; font-weight: var(--font-weight-semibold); color: var(--color-primary-dark);">
-      Registration Status & Operational Controls
+      Registration Status &amp; Operational Controls
     </h2>
   </div>
 
@@ -164,7 +181,8 @@
       <div style="max-width: 450px;">
         <div class="mb-3">
           <span class="text-secondary" style="font-size: var(--font-size-sm);">Lifecycle Status:</span><br>
-          <span class="badge <?= e($badgeClass) ?>" style="font-size: var(--font-size-md); text-transform: uppercase; margin-top: 0.25rem;">
+          <span class="badge badge-pill <?= e($badgeClass) ?>" style="font-size: var(--font-size-sm); text-transform: uppercase; margin-top: 0.25rem;">
+            <span class="badge-dot" aria-hidden="true"></span>
             <?= e($status) ?>
           </span>
         </div>
@@ -175,7 +193,7 @@
             'attended' => 'badge-success',
             'absent'   => 'badge-danger',
             'excused'  => 'badge-warning',
-            default    => 'badge-secondary',
+            default    => 'badge-neutral',
           };
           $methodLabel = match ($registration['check_in_method'] ?? '') {
             'qr_scan'       => 'QR Scanner',
@@ -187,21 +205,32 @@
         <div class="mb-3">
           <span class="text-secondary" style="font-size: var(--font-size-sm);">Attendance Presence:</span><br>
           <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; flex-wrap: wrap;">
-            <span class="badge <?= e($attBadgeClass) ?>" style="font-size: var(--font-size-sm); text-transform: uppercase;">
+            <span class="badge badge-pill <?= e($attBadgeClass) ?>" style="font-size: var(--font-size-xs); text-transform: uppercase;">
+              <span class="badge-dot" aria-hidden="true"></span>
               <?= e($attStatus) ?>
             </span>
-            <a href="<?= e(url('/admin/events/' . $registration['event_id'] . '/attendance')) ?>" class="text-primary" style="font-size: var(--font-size-xs); text-decoration: underline;">
-              View Event Attendance Roster &rarr;
+            <a href="<?= e(url('/admin/events/' . $registration['event_id'] . '/attendance')) ?>" class="text-primary" style="font-size: var(--font-size-xs); text-decoration: underline; display: inline-flex; align-items: center; gap: 0.25rem;">
+              <span>View Event Attendance Roster</span>
+              <?= icon('arrow-right', ['width' => '12', 'height' => '12']) ?>
             </a>
           </div>
           <?php if ($attStatus === 'attended' && !empty($registration['checked_in_at'])): ?>
-            <div style="font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: 0.35rem; line-height: 1.4;">
-              <div>&#128343; Checked in: <strong><?= e(date('M d, Y H:i:s', strtotime((string) $registration['checked_in_at']))) ?></strong></div>
+            <div style="font-size: var(--font-size-xs); color: var(--text-secondary); margin-top: 0.4rem; line-height: 1.5; display: flex; flex-direction: column; gap: 0.2rem;">
+              <div style="display: flex; align-items: center; gap: 0.4rem;">
+                <?= icon('clock', ['width' => '13', 'height' => '13']) ?>
+                <span>Checked in: <strong><?= e(date('M d, Y H:i:s', strtotime((string) $registration['checked_in_at']))) ?></strong></span>
+              </div>
               <?php if (!empty($registration['checked_in_by_name'])): ?>
-                <div>&#128100; Verified by: <strong><?= e($registration['checked_in_by_name']) ?></strong></div>
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <?= icon('user', ['width' => '13', 'height' => '13']) ?>
+                  <span>Verified by: <strong><?= e($registration['checked_in_by_name']) ?></strong></span>
+                </div>
               <?php endif; ?>
               <?php if (!empty($registration['check_in_method'])): ?>
-                <div>&#128247; Intake Method: <strong><?= e($methodLabel) ?></strong></div>
+                <div style="display: flex; align-items: center; gap: 0.4rem;">
+                  <?= icon('check-circle', ['width' => '13', 'height' => '13']) ?>
+                  <span>Intake Method: <strong><?= e($methodLabel) ?></strong></span>
+                </div>
               <?php endif; ?>
             </div>
           <?php endif; ?>
@@ -224,16 +253,18 @@
           <?php if ($status === 'pending'): ?>
             <form action="<?= e(url('/admin/registrations/' . $registration['id'] . '/approve')) ?>" method="POST">
               <?= csrf_field() ?>
-              <button type="submit" class="btn btn-primary" style="width: 100%; text-align: center;">
-                &#10003; Approve Pass
+              <button type="submit" class="btn btn-primary" style="width: 100%; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                <?= icon('check', ['width' => '14', 'height' => '14']) ?>
+                <span>Approve Pass</span>
               </button>
             </form>
 
             <?php if ($isEventFull): ?>
               <form action="<?= e(url('/admin/registrations/' . $registration['id'] . '/waitlist')) ?>" method="POST">
                 <?= csrf_field() ?>
-                <button type="submit" class="btn btn-outline" style="width: 100%; text-align: center;" title="Event is full; move application to waitlist">
-                  &#9873; Move to Waitlist
+                <button type="submit" class="btn btn-outline" style="width: 100%; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;" title="Event is full; move application to waitlist">
+                  <?= icon('bookmark', ['width' => '14', 'height' => '14']) ?>
+                  <span>Move to Waitlist</span>
                 </button>
               </form>
             <?php endif; ?>
@@ -243,8 +274,9 @@
           <?php if ($status === 'waitlisted'): ?>
             <form action="<?= e(url('/admin/registrations/' . $registration['id'] . '/promote')) ?>" method="POST">
               <?= csrf_field() ?>
-              <button type="submit" class="btn btn-primary" style="width: 100%; text-align: center;">
-                &#11014; Promote to Confirmed
+              <button type="submit" class="btn btn-primary" style="width: 100%; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                <?= icon('arrow-up', ['width' => '14', 'height' => '14']) ?>
+                <span>Promote to Confirmed</span>
               </button>
             </form>
           <?php endif; ?>
@@ -253,8 +285,9 @@
           <?php if (in_array($status, ['confirmed', 'pending', 'waitlisted'], true)): ?>
             <form action="<?= e(url('/admin/registrations/' . $registration['id'] . '/cancel')) ?>" method="POST" onsubmit="return confirm('Are you sure you want to cancel this registration?');">
               <?= csrf_field() ?>
-              <button type="submit" class="btn btn-danger" style="width: 100%; text-align: center;">
-                &#10005; Cancel Registration
+              <button type="submit" class="btn btn-danger" style="width: 100%; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                <?= icon('x', ['width' => '14', 'height' => '14']) ?>
+                <span>Cancel Registration</span>
               </button>
             </form>
           <?php endif; ?>
@@ -263,8 +296,9 @@
           <?php if ($status === 'cancelled'): ?>
             <form action="<?= e(url('/admin/registrations/' . $registration['id'] . '/reactivate')) ?>" method="POST" onsubmit="return confirm('Reactivate this registration? A fresh pass code will be generated.');">
               <?= csrf_field() ?>
-              <button type="submit" class="btn btn-primary" style="width: 100%; text-align: center;">
-                &#8634; Reactivate Registration
+              <button type="submit" class="btn btn-primary" style="width: 100%; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                <?= icon('refresh-cw', ['width' => '14', 'height' => '14']) ?>
+                <span>Reactivate Registration</span>
               </button>
             </form>
           <?php endif; ?>

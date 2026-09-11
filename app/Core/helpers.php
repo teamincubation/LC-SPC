@@ -105,3 +105,17 @@ if (!function_exists('flash')) {
         return Session::getFlash($key, $default);
     }
 }
+
+if (!function_exists('icon')) {
+    /**
+     * Render an inline vector SVG icon.
+     *
+     * @param string $name
+     * @param array<string, mixed> $attributes
+     * @return string
+     */
+    function icon(string $name, array $attributes = []): string
+    {
+        return \App\Core\Icon::render($name, $attributes);
+    }
+}

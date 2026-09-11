@@ -1,25 +1,32 @@
-<div class="card mb-6">
-  <div class="card-header">
-    <div>
-      <h1 class="card-title" style="font-size: var(--font-size-xl); margin-bottom: 0.25rem;">
-        Edit Campaign: <?= e($campaign['title']) ?>
-      </h1>
-      <p class="text-secondary" style="font-size: var(--font-size-sm); margin: 0;">
-        Modify title, slug, schedule timeline, or lifecycle status.
-      </p>
-    </div>
-    <div style="display: flex; align-items: center; gap: 0.5rem;">
-      <a href="<?= e(url('/admin/campaigns/' . $campaign['id'])) ?>" class="btn btn-outline btn-sm">
-        View Details
-      </a>
-      <a href="<?= e(url('/admin/campaigns')) ?>" class="btn btn-outline btn-sm">
-        &larr; Return to Roster
-      </a>
-    </div>
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Modernized Campaign Edit Form
+ */
+?>
+
+<!-- Campaign Page Header -->
+<div class="admin-page-header">
+  <div>
+    <h1 class="admin-page-title">Edit Campaign: <?= e($campaign['title']) ?></h1>
+    <p class="admin-page-desc">Modify title, slug, schedule timeline, or lifecycle status.</p>
+  </div>
+
+  <div class="admin-page-actions">
+    <a href="<?= e(url('/admin/campaigns/' . $campaign['id'])) ?>" class="btn btn-outline btn-auto">
+      <?= icon('eye', ['class' => 'svg-icon-sm']) ?>
+      <span>View Details</span>
+    </a>
+    <a href="<?= e(url('/admin/campaigns')) ?>" class="btn btn-outline btn-auto">
+      <?= icon('arrow-left', ['class' => 'svg-icon-sm']) ?>
+      <span>Back to Roster</span>
+    </a>
   </div>
 </div>
 
-<div class="card">
+<div class="card" style="max-width: 900px;">
   <form action="<?= e(url('/admin/campaigns/' . $campaign['id'])) ?>" method="POST" novalidate>
     <?= csrf_field() ?>
 
@@ -162,11 +169,12 @@
 
     <!-- Actions -->
     <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
-      <a href="<?= e(url('/admin/campaigns/' . $campaign['id'])) ?>" class="btn btn-outline">
+      <a href="<?= e(url('/admin/campaigns/' . $campaign['id'])) ?>" class="btn btn-outline btn-auto">
         Cancel
       </a>
-      <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.5rem;">
-        Update Campaign &rarr;
+      <button type="submit" class="btn btn-primary btn-auto" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+        <?= icon('pencil', ['class' => 'svg-icon-sm']) ?>
+        <span>Update Campaign</span>
       </button>
     </div>
   </form>

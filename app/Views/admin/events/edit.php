@@ -1,21 +1,24 @@
-<div class="card mb-6">
-  <div class="card-header">
-    <div>
-      <h1 class="card-title" style="font-size: var(--font-size-xl); margin-bottom: 0.25rem;">
-        Edit Event: <?= e($event['title']) ?>
-      </h1>
-      <p class="text-secondary" style="font-size: var(--font-size-sm); margin: 0;">
-        Update session schedule, modality parameters, coordinator attribution, and capacity.
-      </p>
-    </div>
-    <div style="display: flex; align-items: center; gap: 0.5rem;">
-      <a href="<?= e(url('/admin/events/' . $event['id'])) ?>" class="btn btn-outline btn-sm">
-        &larr; View Event Details
+<div class="admin-page-header">
+  <div class="admin-page-header-title">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <a href="<?= e(url('/admin/events/' . $event['id'])) ?>" class="btn btn-outline btn-sm btn-icon" title="Back to Event Details" aria-label="Back to Event Details">
+        <?= icon('arrow-left', ['width' => '14', 'height' => '14']) ?>
       </a>
-      <a href="<?= e(url('/admin/events')) ?>" class="btn btn-outline btn-sm">
-        All Events
-      </a>
+      <div>
+        <h1>Edit Event: <?= e($event['title']) ?></h1>
+        <p>Update session schedule, modality parameters, coordinator attribution, and capacity.</p>
+      </div>
     </div>
+  </div>
+  <div class="admin-page-header-actions">
+    <a href="<?= e(url('/admin/events/' . $event['id'])) ?>" class="btn btn-outline btn-sm">
+      <?= icon('calendar', ['width' => '14', 'height' => '14']) ?>
+      <span>View Event Details</span>
+    </a>
+    <a href="<?= e(url('/admin/events')) ?>" class="btn btn-outline btn-sm">
+      <?= icon('list', ['width' => '14', 'height' => '14']) ?>
+      <span>All Events</span>
+    </a>
   </div>
 </div>
 

@@ -13,79 +13,105 @@
 ?>
 
 <!-- Console Header -->
-<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
-  <div>
-    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-      <a href="<?= e(url('/admin/checkin')) ?>" class="btn btn-outline btn-sm">&larr; Events</a>
-      <span class="badge <?= e($statusBadge) ?>" style="text-transform: uppercase; font-size: var(--font-size-xs);">
-        <?= e($status) ?>
-      </span>
-      <span id="net-status-badge" class="badge badge-success" style="font-size: var(--font-size-xs);">
-        &#9679; Online
-      </span>
-    </div>
-    <h1 style="margin: 0; font-size: var(--font-size-xl); line-height: 1.2;">
-      <?= e($event['title']) ?>
-    </h1>
-    <div class="text-secondary" style="font-size: var(--font-size-xs); margin-top: 0.25rem;">
-      <?= e(date('M d, Y', strtotime((string) $event['start_time']))) ?> &bull;
-      <?= e(date('h:i A', strtotime((string) $event['start_time']))) ?> &ndash; <?= e(date('h:i A', strtotime((string) $event['end_time']))) ?>
-      <?php if (!empty($event['venue_name'])): ?>
-        &bull; <?= e($event['venue_name']) ?>
-      <?php endif; ?>
+<div class="admin-page-header">
+  <div class="admin-page-header-title">
+    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+      <a href="<?= e(url('/admin/checkin')) ?>" class="btn btn-outline btn-sm btn-icon" title="Check-In Events" aria-label="Check-In Events">
+        <?= icon('arrow-left', ['width' => '14', 'height' => '14']) ?>
+      </a>
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <h1 style="margin: 0; font-size: var(--font-size-xl);"><?= e($event['title']) ?></h1>
+          <span class="badge badge-pill <?= e($statusBadge) ?>" style="text-transform: uppercase; font-size: var(--font-size-xs);">
+            <span class="badge-dot" aria-hidden="true"></span>
+            <?= e($status) ?>
+          </span>
+          <span id="net-status-badge" class="badge badge-pill badge-success" style="font-size: var(--font-size-xs);">
+            <span class="badge-dot" aria-hidden="true"></span> Online
+          </span>
+        </div>
+        <p style="margin-top: 0.25rem;">
+          <?= e(date('M d, Y', strtotime((string) $event['start_time']))) ?> &bull;
+          <?= e(date('h:i A', strtotime((string) $event['start_time']))) ?> &ndash; <?= e(date('h:i A', strtotime((string) $event['end_time']))) ?>
+          <?php if (!empty($event['venue_name'])): ?>
+            &bull; <?= e($event['venue_name']) ?>
+          <?php endif; ?>
+        </p>
+      </div>
     </div>
   </div>
 
-  <div style="display: flex; align-items: center; gap: 0.5rem;">
+  <div class="admin-page-header-actions">
     <!-- Sound Toggle Button (Enabled by Default) -->
     <button type="button" id="sound-toggle-btn" class="btn btn-outline btn-sm" aria-label="Toggle scan sound feedback">
-      <span id="sound-icon">&#128266;</span> <span id="sound-text">Sound: ON</span>
+      <span id="sound-icon"><?= icon('volume-2', ['width' => '14', 'height' => '14']) ?></span>
+      <span id="sound-text">Sound: ON</span>
     </button>
     <a href="<?= e(url('/admin/events/' . $event['id'] . '/attendance')) ?>" class="btn btn-outline btn-sm">
-      <span>&#128101; Roster</span>
+      <?= icon('users', ['width' => '14', 'height' => '14']) ?>
+      <span>Roster</span>
     </a>
   </div>
 </div>
 
 <!-- Operational Window Notification (if applicable) -->
 <?php if (!$isWithinWindow): ?>
-  <div class="alert alert-warning" style="margin-bottom: 1.25rem; font-size: var(--font-size-xs); padding: 0.75rem 1rem;">
-    <strong>&#9888; Timing Notice:</strong> Event is outside the standard check-in window (2h before start &ndash; 4h after end).
-    <?php if ($isCoordinator): ?>
-      Coordinators can check in attendees with a mandatory operational reason.
-    <?php else: ?>
-      Desk check-in is restricted to Program Coordinators outside this window.
-    <?php endif; ?>
+  <div class="alert alert-warning" style="margin-bottom: 1.25rem; font-size: var(--font-size-xs); padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.5rem;">
+    <div style="color: var(--color-warning); display: flex; align-items: center;">
+      <?= icon('alert-triangle', ['width' => '16', 'height' => '16']) ?>
+    </div>
+    <div>
+      <strong>Timing Notice:</strong> Event is outside the standard check-in window (2h before start &ndash; 4h after end).
+      <?php if ($isCoordinator): ?>
+        Coordinators can check in attendees with a mandatory operational reason.
+      <?php else: ?>
+        Desk check-in is restricted to Program Coordinators outside this window.
+      <?php endif; ?>
+    </div>
   </div>
 <?php endif; ?>
 
 <!-- Live KPI Summary Bar -->
-<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem;">
-  <div class="card" style="padding: 0.75rem; text-align: center;">
-    <div class="text-secondary" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Total</div>
-    <div id="stat-confirmed" style="font-size: var(--font-size-xl); font-weight: bold; color: var(--text-primary);"><?= e((string) $confirmed) ?></div>
+<section class="metric-grid mb-6" aria-label="Live Attendance Metrics">
+  <div class="card-metric">
+    <div class="card-metric-icon" style="background-color: var(--bg-surface-subtle); color: var(--text-secondary);">
+      <?= icon('users', ['width' => '18', 'height' => '18']) ?>
+    </div>
+    <div class="card-metric-value" id="stat-confirmed"><?= e((string) $confirmed) ?></div>
+    <div class="card-metric-label">Total Enrolled</div>
   </div>
-  <div class="card" style="padding: 0.75rem; text-align: center; border-bottom: 3px solid var(--color-success);">
-    <div class="text-secondary" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Attended</div>
-    <div id="stat-attended" style="font-size: var(--font-size-xl); font-weight: bold; color: var(--color-success);"><?= e((string) $attended) ?></div>
+  <div class="card-metric">
+    <div class="card-metric-icon" style="background-color: var(--bg-success); color: var(--text-success);">
+      <?= icon('check-circle', ['width' => '18', 'height' => '18']) ?>
+    </div>
+    <div class="card-metric-value" id="stat-attended" style="color: var(--color-success);"><?= e((string) $attended) ?></div>
+    <div class="card-metric-label">Attended</div>
   </div>
-  <div class="card" style="padding: 0.75rem; text-align: center;">
-    <div class="text-secondary" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Remaining</div>
-    <div id="stat-remaining" style="font-size: var(--font-size-xl); font-weight: bold; color: var(--text-secondary);"><?= e((string) $remaining) ?></div>
+  <div class="card-metric">
+    <div class="card-metric-icon" style="background-color: var(--bg-surface-subtle); color: var(--text-secondary);">
+      <?= icon('clock', ['width' => '18', 'height' => '18']) ?>
+    </div>
+    <div class="card-metric-value" id="stat-remaining"><?= e((string) $remaining) ?></div>
+    <div class="card-metric-label">Remaining Expected</div>
   </div>
-  <div class="card" style="padding: 0.75rem; text-align: center; border-bottom: 3px solid var(--color-primary);">
-    <div class="text-secondary" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;">Turnout</div>
-    <div id="stat-turnout" style="font-size: var(--font-size-xl); font-weight: bold; color: var(--color-primary);"><?= e((string) $turnout) ?>%</div>
+  <div class="card-metric">
+    <div class="card-metric-icon" style="background-color: var(--bg-info); color: var(--text-info);">
+      <?= icon('activity', ['width' => '18', 'height' => '18']) ?>
+    </div>
+    <div class="card-metric-value" id="stat-turnout" style="color: var(--color-primary);"><?= e((string) $turnout) ?>%</div>
+    <div class="card-metric-label">Turnout Rate</div>
   </div>
-</div>
+</section>
 
 <!-- Mode Navigation Tabs -->
 <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-  <button type="button" id="tab-btn-scanner" class="btn btn-primary btn-sm" onclick="switchConsoleTab('scanner')">
-    <span>&#128247; Camera Scanner</span>
+  <button type="button" id="tab-btn-scanner" class="btn btn-primary btn-sm" onclick="switchConsoleTab('scanner')" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+    <?= icon('camera', ['width' => '14', 'height' => '14']) ?>
+    <span>Camera Scanner</span>
   </button>
-  <button type="button" id="tab-btn-manual" class="btn btn-outline btn-sm" onclick="switchConsoleTab('manual')">
-    <span>&#128269; Manual Search (<?= e((string) count($attendees)) ?>)</span>
+  <button type="button" id="tab-btn-manual" class="btn btn-outline btn-sm" onclick="switchConsoleTab('manual')" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+    <?= icon('search', ['width' => '14', 'height' => '14']) ?>
+    <span>Manual Search (<?= e((string) count($attendees)) ?>)</span>
   </button>
 </div>
 
@@ -109,18 +135,23 @@
 
       <!-- Camera Loading / Prompt Placeholder -->
       <div id="camera-loading" style="position: absolute; color: #fff; font-size: var(--font-size-sm); padding: 1rem; text-align: center;">
-        <div>&#128247; Camera Initializing...</div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+          <?= icon('camera', ['width' => '16', 'height' => '16']) ?>
+          <span>Camera Initializing...</span>
+        </div>
         <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.25rem;">Please allow camera permission if prompted.</div>
       </div>
     </div>
 
     <!-- Scanner Controls -->
     <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap;">
-      <button type="button" id="switch-camera-btn" class="btn btn-outline btn-sm" style="font-size: 0.8rem;">
-        <span>&#128260; Switch Camera</span>
+      <button type="button" id="switch-camera-btn" class="btn btn-outline btn-sm" style="font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+        <?= icon('refresh-cw', ['width' => '13', 'height' => '13']) ?>
+        <span>Switch Camera</span>
       </button>
-      <button type="button" id="restart-scanner-btn" class="btn btn-outline btn-sm" style="font-size: 0.8rem;">
-        <span>&#9654; Resume Scanner</span>
+      <button type="button" id="restart-scanner-btn" class="btn btn-outline btn-sm" style="font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+        <?= icon('play', ['width' => '13', 'height' => '13']) ?>
+        <span>Resume Scanner</span>
       </button>
     </div>
 
@@ -133,7 +164,10 @@
     <div style="border-top: 1px dashed var(--border-color); padding-top: 1rem;">
       <form id="direct-code-form" onsubmit="handleDirectCodeSubmit(event)" style="display: flex; gap: 0.5rem; justify-content: center;">
         <input type="text" id="direct-code-input" class="form-input" placeholder="e.g. REG-26-8A7D3 or paste URL" style="max-width: 300px; text-transform: uppercase; font-family: monospace; font-weight: bold;" required>
-        <button type="submit" class="btn btn-primary btn-sm">Verify Pass</button>
+        <button type="submit" class="btn btn-primary btn-sm">
+          <?= icon('check', ['width' => '13', 'height' => '13']) ?>
+          <span>Verify Pass</span>
+        </button>
       </form>
     </div>
   </div>
@@ -162,17 +196,18 @@
               'attended' => 'badge-success',
               'absent'   => 'badge-danger',
               'excused'  => 'badge-warning',
-              default    => 'badge-secondary',
+              default    => 'badge-neutral',
             };
           ?>
           <div class="roster-item card" data-search="<?= e(strtolower($att['participant_name'] . ' ' . $att['registration_code'] . ' ' . $att['participant_category'])) ?>" style="padding: 0.9rem; background: <?= $cardBg ?>; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
             <div>
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                 <strong style="font-size: var(--font-size-md); color: var(--text-primary);"><?= e($att['participant_name']) ?></strong>
-                <span class="badge <?= e($badge) ?>" id="status-badge-<?= e((string) $att['id']) ?>" style="font-size: 0.7rem; text-transform: uppercase;">
+                <span class="badge badge-pill <?= e($badge) ?>" id="status-badge-<?= e((string) $att['id']) ?>" style="font-size: 0.7rem; text-transform: uppercase;">
+                  <span class="badge-dot" aria-hidden="true"></span>
                   <?= e($att['attendance_status']) ?>
                 </span>
-                <span class="badge badge-light" style="font-size: 0.7rem; text-transform: capitalize;">
+                <span class="badge badge-pill badge-neutral" style="font-size: 0.7rem; text-transform: capitalize;">
                   <?= e($att['participant_category'] ?? 'general') ?>
                 </span>
               </div>
@@ -182,18 +217,24 @@
                   &bull; <?= e($att['participant_organization']) ?>
                 <?php endif; ?>
                 <?php if (!empty($att['checked_in_at'])): ?>
-                  &bull; <span style="color: var(--color-success);">&#10003; Checked in <?= e(date('h:i A', strtotime((string) $att['checked_in_at']))) ?></span>
+                  &bull; <span style="color: var(--color-success); display: inline-flex; align-items: center; gap: 0.25rem;">
+                    <?= icon('check', ['width' => '12', 'height' => '12']) ?>
+                    <span>Checked in <?= e(date('h:i A', strtotime((string) $att['checked_in_at']))) ?></span>
+                  </span>
                 <?php endif; ?>
               </div>
             </div>
 
             <div id="btn-container-<?= e((string) $att['id']) ?>">
               <?php if (!$isAttended): ?>
-                <button type="button" class="btn btn-primary btn-sm" onclick="checkInByCode('<?= e($att['registration_code']) ?>', 'admin_manual')">
-                  <span>&#10003; Check In</span>
+                <button type="button" class="btn btn-primary btn-sm" onclick="checkInByCode('<?= e($att['registration_code']) ?>', 'admin_manual')" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                  <?= icon('check', ['width' => '13', 'height' => '13']) ?>
+                  <span>Check In</span>
                 </button>
               <?php else: ?>
-                <span class="text-secondary" style="font-size: var(--font-size-xs); font-weight: bold;">Verified</span>
+                <span class="badge badge-pill badge-success" style="font-size: var(--font-size-xs);">
+                  <span class="badge-dot" aria-hidden="true"></span> Verified
+                </span>
               <?php endif; ?>
             </div>
           </div>
@@ -264,10 +305,10 @@
     const text = document.getElementById('sound-text');
     if (icon && text) {
       if (soundEnabled) {
-        icon.innerHTML = '&#128266;';
+        icon.innerHTML = '<svg class="svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>';
         text.innerText = 'Sound: ON';
       } else {
-        icon.innerHTML = '&#128263;';
+        icon.innerHTML = '<svg class="svg-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
         text.innerText = 'Sound: MUTED';
       }
     }
@@ -337,11 +378,11 @@
     const updateStatus = () => {
       if (!badge) return;
       if (navigator.onLine) {
-        badge.className = 'badge badge-success';
-        badge.innerHTML = '&#9679; Online';
+        badge.className = 'badge badge-pill badge-success';
+        badge.innerHTML = '<span class="badge-dot" aria-hidden="true"></span> Online';
       } else {
-        badge.className = 'badge badge-warning';
-        badge.innerHTML = '&#9888; Network Paused';
+        badge.className = 'badge badge-pill badge-warning';
+        badge.innerHTML = '<span class="badge-dot" aria-hidden="true"></span> Network Paused';
       }
     };
     window.addEventListener('online', updateStatus);
@@ -399,7 +440,7 @@
       requestAnimationFrame(scanVideoFrame);
     } catch (err) {
       if (loading) {
-        loading.innerHTML = '<div style="color:#ef4444;">&#9888; Camera Unavailable</div><div style="font-size:0.75rem;margin-top:0.25rem;">Please check permissions or use manual entry.</div>';
+        loading.innerHTML = '<div style="color:#ef4444; font-weight: 600;">Camera Unavailable</div><div style="font-size:0.75rem;margin-top:0.25rem;">Please check permissions or use manual entry.</div>';
       }
     }
   }
@@ -546,28 +587,28 @@
     card.style.display = 'block';
 
     let borderCol = 'var(--color-primary)';
-    let bgCol = '#f8fafc';
-    let icon = '&#10003;';
+    let bgCol = 'var(--bg-surface-subtle)';
+    let iconSvg = '<svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>';
 
     if (type === 'success') {
-      borderCol = '#22c55e';
-      bgCol = '#f0fdf4';
-      icon = '&#9989;';
+      borderCol = 'var(--color-success)';
+      bgCol = 'var(--bg-surface-subtle)';
+      iconSvg = '<svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
     } else if (type === 'info') {
-      borderCol = '#3b82f6';
-      bgCol = '#eff6ff';
-      icon = '&#8505;';
+      borderCol = 'var(--color-info)';
+      bgCol = 'var(--bg-surface-subtle)';
+      iconSvg = '<svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-info)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
     } else {
-      borderCol = '#ef4444';
-      bgCol = '#fef2f2';
-      icon = '&#10060;';
+      borderCol = 'var(--color-danger)';
+      bgCol = 'var(--bg-surface-subtle)';
+      iconSvg = '<svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
     }
 
     card.style.border = `2px solid ${borderCol}`;
     card.style.backgroundColor = bgCol;
 
     let html = `<div style="display:flex;align-items:center;gap:0.5rem;font-weight:bold;color:${borderCol};margin-bottom:0.25rem;">
-      <span style="font-size:1.2rem;">${icon}</span> <span>${escapeHtml(message)}</span>
+      <span style="display:inline-flex;align-items:center;">${iconSvg}</span> <span>${escapeHtml(message)}</span>
     </div>`;
 
     if (data && data.attendee_name) {

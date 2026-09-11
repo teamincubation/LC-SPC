@@ -1,168 +1,207 @@
-<!-- Campaign Management Roster Header -->
-<div class="card mb-6">
-  <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
-    <div>
-      <h1 class="card-title" style="font-size: var(--font-size-xl); margin-bottom: 0.25rem;">
-        Campaign Management
-      </h1>
-      <p class="text-secondary" style="font-size: var(--font-size-sm); margin: 0;">
-        Multi-year initiatives, themes, timelines, and program governance.
-      </p>
-    </div>
+<?php
 
-    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-      <?php if (!empty($canCreate)): ?>
-        <a href="<?= e(url('/admin/campaigns/create')) ?>" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.35rem;">
-          <span aria-hidden="true">&#43;</span>
-          <span>New Campaign</span>
-        </a>
-      <?php endif; ?>
-    </div>
+declare(strict_types=1);
+
+/**
+ * Modernized Campaign Management Roster
+ * Aligned to 12-Panel Design System Reference (Panel 3: Campaigns).
+ */
+?>
+
+<!-- Campaign Page Header -->
+<div class="admin-page-header">
+  <div>
+    <h1 class="admin-page-title">Campaign Management</h1>
+    <p class="admin-page-desc">Multi-year initiatives, themes, timelines, and program governance.</p>
+  </div>
+
+  <div class="admin-page-actions">
+    <?php if (!empty($canCreate)): ?>
+      <a href="<?= e(url('/admin/campaigns/create')) ?>" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+        <?= icon('plus', ['class' => 'svg-icon-sm']) ?>
+        <span>New Campaign</span>
+      </a>
+    <?php endif; ?>
   </div>
 </div>
 
 <!-- KPI Status Metrics -->
-<section class="grid grid-cols-4 mb-6" aria-label="Campaign Overview Metrics">
-  <div class="card-metric">
-    <div class="card-metric-icon" style="background-color: var(--bg-success); color: var(--text-success);">
-      &#10003;
+<section class="metric-grid mb-6" aria-label="Campaign Overview Metrics">
+  <div class="metric-card">
+    <div class="metric-card-top">
+      <div class="metric-card-icon" style="background-color: #ECFDF5; color: #059669;">
+        <?= icon('target') ?>
+      </div>
+      <span class="badge-pill badge-pill-success">Active</span>
     </div>
-    <div class="card-metric-value"><?= e((string) ($counts['active'] ?? 0)) ?></div>
-    <div class="card-metric-label">Active Campaigns</div>
+    <div class="metric-card-body">
+      <div class="metric-card-value"><?= e((string) ($counts['active'] ?? 0)) ?></div>
+      <div class="metric-card-label">Active Campaigns</div>
+    </div>
   </div>
 
-  <div class="card-metric">
-    <div class="card-metric-icon" style="background-color: var(--bg-warning); color: var(--text-warning);">
-      &#9998;
+  <div class="metric-card">
+    <div class="metric-card-top">
+      <div class="metric-card-icon" style="background-color: #FFFBEB; color: #D97706;">
+        <?= icon('pencil') ?>
+      </div>
+      <span class="badge-pill badge-pill-warning">Draft</span>
     </div>
-    <div class="card-metric-value"><?= e((string) ($counts['draft'] ?? 0)) ?></div>
-    <div class="card-metric-label">Draft Campaigns</div>
+    <div class="metric-card-body">
+      <div class="metric-card-value"><?= e((string) ($counts['draft'] ?? 0)) ?></div>
+      <div class="metric-card-label">Draft Campaigns</div>
+    </div>
   </div>
 
-  <div class="card-metric">
-    <div class="card-metric-icon" style="background-color: var(--bg-info); color: var(--text-info);">
-      &#9733;
+  <div class="metric-card">
+    <div class="metric-card-top">
+      <div class="metric-card-icon" style="background-color: #EFF6FF; color: #2563EB;">
+        <?= icon('award') ?>
+      </div>
+      <span class="badge-pill badge-pill-info">Completed</span>
     </div>
-    <div class="card-metric-value"><?= e((string) ($counts['completed'] ?? 0)) ?></div>
-    <div class="card-metric-label">Completed</div>
+    <div class="metric-card-body">
+      <div class="metric-card-value"><?= e((string) ($counts['completed'] ?? 0)) ?></div>
+      <div class="metric-card-label">Completed</div>
+    </div>
   </div>
 
-  <div class="card-metric">
-    <div class="card-metric-icon" style="background-color: var(--bg-surface-subtle); color: var(--text-secondary);">
-      &#128193;
+  <div class="metric-card">
+    <div class="metric-card-top">
+      <div class="metric-card-icon" style="background-color: var(--bg-surface-subtle); color: var(--text-secondary);">
+        <?= icon('folder') ?>
+      </div>
+      <span class="badge-pill badge-pill-neutral">Total</span>
     </div>
-    <div class="card-metric-value"><?= e((string) ($counts['total'] ?? 0)) ?></div>
-    <div class="card-metric-label">Total Campaigns</div>
+    <div class="metric-card-body">
+      <div class="metric-card-value"><?= e((string) ($counts['total'] ?? 0)) ?></div>
+      <div class="metric-card-label">Total Campaigns</div>
+    </div>
   </div>
 </section>
 
-<!-- Filter & Search Toolbar -->
-<div class="card mb-6" style="padding: 1rem 1.25rem;">
-  <form action="<?= e(url('/admin/campaigns')) ?>" method="GET" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
-    <!-- Status Filter Pills -->
-    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+<!-- Filter Toolbar & Search -->
+<div class="admin-filter-bar mb-6">
+  <form action="<?= e(url('/admin/campaigns')) ?>" method="GET" style="display: flex; flex-direction: column; gap: 0.75rem;">
+    <!-- Status Filter Pills / Tabs -->
+    <div class="filter-tabs" role="tablist" aria-label="Filter campaigns by status">
       <a href="<?= e(url('/admin/campaigns' . ($search ? '?search=' . urlencode($search) : ''))) ?>" 
-         class="badge <?= empty($currentStatus) && empty($isTrash) ? 'badge-primary' : 'badge-neutral' ?>" 
-         style="text-decoration: none; padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);">
-        All (<?= e((string) ($counts['total'] ?? 0)) ?>)
+         class="filter-tab <?= empty($currentStatus) && empty($isTrash) ? 'is-active' : '' ?>">
+        <span>All</span>
+        <span class="badge-count"><?= e((string) ($counts['total'] ?? 0)) ?></span>
       </a>
 
       <a href="<?= e(url('/admin/campaigns?status=active' . ($search ? '&search=' . urlencode($search) : ''))) ?>" 
-         class="badge <?= ($currentStatus ?? '') === 'active' ? 'badge-primary' : 'badge-neutral' ?>" 
-         style="text-decoration: none; padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);">
-        Active (<?= e((string) ($counts['active'] ?? 0)) ?>)
+         class="filter-tab <?= ($currentStatus ?? '') === 'active' ? 'is-active' : '' ?>">
+        <span>Active</span>
+        <span class="badge-count"><?= e((string) ($counts['active'] ?? 0)) ?></span>
       </a>
 
       <a href="<?= e(url('/admin/campaigns?status=draft' . ($search ? '&search=' . urlencode($search) : ''))) ?>" 
-         class="badge <?= ($currentStatus ?? '') === 'draft' ? 'badge-primary' : 'badge-neutral' ?>" 
-         style="text-decoration: none; padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);">
-        Drafts (<?= e((string) ($counts['draft'] ?? 0)) ?>)
+         class="filter-tab <?= ($currentStatus ?? '') === 'draft' ? 'is-active' : '' ?>">
+        <span>Drafts</span>
+        <span class="badge-count"><?= e((string) ($counts['draft'] ?? 0)) ?></span>
       </a>
 
       <a href="<?= e(url('/admin/campaigns?status=completed' . ($search ? '&search=' . urlencode($search) : ''))) ?>" 
-         class="badge <?= ($currentStatus ?? '') === 'completed' ? 'badge-primary' : 'badge-neutral' ?>" 
-         style="text-decoration: none; padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);">
-        Completed (<?= e((string) ($counts['completed'] ?? 0)) ?>)
+         class="filter-tab <?= ($currentStatus ?? '') === 'completed' ? 'is-active' : '' ?>">
+        <span>Completed</span>
+        <span class="badge-count"><?= e((string) ($counts['completed'] ?? 0)) ?></span>
       </a>
 
       <a href="<?= e(url('/admin/campaigns?status=archived' . ($search ? '&search=' . urlencode($search) : ''))) ?>" 
-         class="badge <?= ($currentStatus ?? '') === 'archived' ? 'badge-primary' : 'badge-neutral' ?>" 
-         style="text-decoration: none; padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);">
-        Archived (<?= e((string) ($counts['archived'] ?? 0)) ?>)
+         class="filter-tab <?= ($currentStatus ?? '') === 'archived' ? 'is-active' : '' ?>">
+        <span>Archived</span>
+        <span class="badge-count"><?= e((string) ($counts['archived'] ?? 0)) ?></span>
       </a>
 
       <?php if (!empty($canDelete)): ?>
         <a href="<?= e(url('/admin/campaigns?trash=1' . ($search ? '&search=' . urlencode($search) : ''))) ?>" 
-           class="badge <?= !empty($isTrash) ? 'badge-danger' : 'badge-neutral' ?>" 
-           style="text-decoration: none; padding: 0.35rem 0.75rem; font-size: var(--font-size-xs);">
-          Trash &bull; Soft-Deleted
+           class="filter-tab <?= !empty($isTrash) ? 'is-active' : '' ?>" style="<?= !empty($isTrash) ? 'background-color: var(--color-danger);' : '' ?>">
+          <span>Trash</span>
         </a>
       <?php endif; ?>
     </div>
 
-    <!-- Keyword Search Form -->
-    <div style="display: flex; align-items: center; gap: 0.5rem;">
-      <?php if (!empty($currentStatus)): ?>
-        <input type="hidden" name="status" value="<?= e($currentStatus) ?>">
-      <?php endif; ?>
-      <?php if (!empty($isTrash)): ?>
-        <input type="hidden" name="trash" value="1">
-      <?php endif; ?>
+    <!-- Search Controls -->
+    <div class="filter-controls">
+      <div class="filter-controls-group">
+        <?php if (!empty($currentStatus)): ?>
+          <input type="hidden" name="status" value="<?= e($currentStatus) ?>">
+        <?php endif; ?>
+        <?php if (!empty($isTrash)): ?>
+          <input type="hidden" name="trash" value="1">
+        <?php endif; ?>
 
-      <input 
-        type="search" 
-        name="search" 
-        value="<?= e($search ?? '') ?>" 
-        placeholder="Search title, theme, slug..." 
-        class="form-control" 
-        style="min-width: 240px; padding: 0.4rem 0.75rem; font-size: var(--font-size-sm);"
-        aria-label="Search campaigns"
-      >
-      <button type="submit" class="btn btn-outline btn-sm">Search</button>
-      <?php if (!empty($search) || !empty($currentStatus) || !empty($isTrash)): ?>
-        <a href="<?= e(url('/admin/campaigns')) ?>" class="btn btn-outline btn-sm" title="Clear all filters">Reset</a>
-      <?php endif; ?>
+        <div class="search-input-wrapper">
+          <span class="search-icon" aria-hidden="true"><?= icon('search') ?></span>
+          <input 
+            type="search" 
+            name="search" 
+            value="<?= e($search ?? '') ?>" 
+            placeholder="Search campaigns..." 
+            class="form-control" 
+            aria-label="Search campaigns"
+          >
+        </div>
+
+        <button type="submit" class="btn btn-secondary btn-auto">
+          <?= icon('filter', ['class' => 'svg-icon-sm']) ?>
+          <span>Filter</span>
+        </button>
+
+        <?php if (!empty($search) || !empty($currentStatus) || !empty($isTrash)): ?>
+          <a href="<?= e(url('/admin/campaigns')) ?>" class="btn btn-outline btn-auto" title="Clear filters">
+            Reset
+          </a>
+        <?php endif; ?>
+      </div>
     </div>
   </form>
 </div>
 
 <!-- Campaign Roster Table -->
-<div class="table-responsive">
-  <table class="table table-hover" aria-label="Campaigns list">
-    <thead>
-      <tr>
-        <th style="width: 28%;">Campaign Title &amp; Theme</th>
-        <th style="width: 18%;">Slug Identifier</th>
-        <th style="width: 18%;">Schedule Timeline</th>
-        <th style="width: 12%;">Status</th>
-        <th style="width: 12%;">Attribution</th>
-        <th style="width: 12%; text-align: right;">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php if (empty($campaigns)): ?>
+<?php if (empty($campaigns)): ?>
+  <div class="empty-state">
+    <div class="empty-state-icon">
+      <?= icon('target') ?>
+    </div>
+    <h2 class="empty-state-title">No campaigns found</h2>
+    <p class="empty-state-desc">
+      <?= !empty($search) ? 'No campaign matches the given search keyword or filter.' : 'Create your first campaign initiative to begin managing LC-SPC activities.' ?>
+    </p>
+    <?php if (!empty($canCreate)): ?>
+      <a href="<?= e(url('/admin/campaigns/create')) ?>" class="btn btn-primary btn-auto">
+        <?= icon('plus', ['class' => 'svg-icon-sm']) ?>
+        <span>Create Campaign</span>
+      </a>
+    <?php endif; ?>
+  </div>
+<?php else: ?>
+  <div class="table-responsive">
+    <table class="table" aria-label="Campaigns list">
+      <thead>
         <tr>
-          <td colspan="6" style="text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;" aria-hidden="true">&#128194;</div>
-            <p style="font-weight: var(--font-weight-medium); margin-bottom: 0.25rem;">No campaigns found.</p>
-            <span class="text-caption text-muted">
-              <?= !empty($search) ? 'Try refining your search keyword or clearing filters.' : 'Click "New Campaign" to create the first campaign initiative.' ?>
-            </span>
-          </td>
+          <th style="width: 28%;">Title &amp; Theme</th>
+          <th style="width: 18%;">Slug Identifier</th>
+          <th style="width: 20%;">Timeline</th>
+          <th style="width: 14%;">Status</th>
+          <th style="width: 20%; text-align: right;">Actions</th>
         </tr>
-      <?php else: ?>
+      </thead>
+      <tbody>
         <?php foreach ($campaigns as $camp): ?>
           <?php
             $st = $camp['status'] ?? 'draft';
-            $badgeClass = match ($st) {
-                'active'    => 'badge-success',
-                'completed' => 'badge-info',
-                'archived'  => 'badge-neutral',
-                default     => 'badge-warning',
+            $pillClass = match ($st) {
+                'active'    => 'badge-pill-success',
+                'completed' => 'badge-pill-info',
+                'archived'  => 'badge-pill-neutral',
+                default     => 'badge-pill-warning',
             };
             $isSoftDeleted = !empty($camp['deleted_at']);
           ?>
-          <tr style="<?= $isSoftDeleted ? 'opacity: 0.7; background-color: var(--bg-surface-subtle);' : '' ?>">
+          <tr style="<?= $isSoftDeleted ? 'opacity: 0.65; background-color: var(--bg-surface-subtle);' : '' ?>">
             <td>
               <div style="font-weight: var(--font-weight-semibold); color: var(--text-primary);">
                 <a href="<?= e(url('/admin/campaigns/' . $camp['id'])) ?>" style="color: inherit; text-decoration: none;">
@@ -177,14 +216,14 @@
             </td>
 
             <td>
-              <code style="font-size: var(--font-size-xs); background: var(--bg-surface-subtle); padding: 0.15rem 0.4rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+              <code style="font-size: var(--font-size-xs); background: var(--bg-surface-subtle); padding: 0.2rem 0.45rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
                 <?= e($camp['slug']) ?>
               </code>
             </td>
 
             <td>
-              <div style="font-size: var(--font-size-xs);">
-                <strong><?= e($camp['start_date']) ?></strong> &rarr; <strong><?= e($camp['end_date']) ?></strong>
+              <div style="font-size: var(--font-size-xs); font-weight: var(--font-weight-medium);">
+                <?= e(date('M d', strtotime((string) $camp['start_date']))) ?> &ndash; <?= e(date('M d, Y', strtotime((string) $camp['end_date']))) ?>
               </div>
               <div class="text-caption text-muted">
                 <?php
@@ -196,41 +235,35 @@
 
             <td>
               <?php if ($isSoftDeleted): ?>
-                <span class="badge badge-danger">
-                  <span class="badge-dot" aria-hidden="true"></span>
+                <span class="badge-pill badge-pill-danger">
+                  <span class="badge-pill-dot" aria-hidden="true"></span>
                   Deleted
                 </span>
               <?php else: ?>
-                <span class="badge <?= e($badgeClass) ?>">
-                  <span class="badge-dot" aria-hidden="true"></span>
+                <span class="badge-pill <?= e($pillClass) ?>">
+                  <span class="badge-pill-dot" aria-hidden="true"></span>
                   <?= e(ucfirst($st)) ?>
                 </span>
               <?php endif; ?>
             </td>
 
-            <td>
-              <span class="text-caption text-secondary" title="<?= e($camp['creator_email'] ?? 'System') ?>">
-                <?= e($camp['creator_name'] ?? ($camp['creator_email'] ?? 'System')) ?>
-              </span>
-            </td>
-
-            <td style="text-align: right; white-space: nowrap;">
-              <div style="display: inline-flex; align-items: center; gap: 0.35rem;">
-                <a href="<?= e(url('/admin/campaigns/' . $camp['id'])) ?>" class="btn btn-outline btn-sm" title="View Campaign Details">
-                  View
+            <td style="text-align: right;">
+              <div class="table-actions">
+                <a href="<?= e(url('/admin/campaigns/' . $camp['id'])) ?>" class="btn-icon" title="View Campaign" aria-label="View campaign <?= e($camp['title']) ?>">
+                  <?= icon('eye') ?>
                 </a>
 
                 <?php if (!$isSoftDeleted && !empty($canEdit)): ?>
-                  <a href="<?= e(url('/admin/campaigns/' . $camp['id'] . '/edit')) ?>" class="btn btn-outline btn-sm" title="Edit Campaign">
-                    Edit
+                  <a href="<?= e(url('/admin/campaigns/' . $camp['id'] . '/edit')) ?>" class="btn-icon btn-icon-primary" title="Edit Campaign" aria-label="Edit campaign <?= e($camp['title']) ?>">
+                    <?= icon('pencil') ?>
                   </a>
                 <?php endif; ?>
 
                 <?php if (!$isSoftDeleted && !empty($canDelete)): ?>
-                  <form action="<?= e(url('/admin/campaigns/' . $camp['id'] . '/delete')) ?>" method="POST" style="margin: 0; display: inline;" onsubmit="return confirm('Are you sure you want to soft-delete campaign &quot;<?= e(addslashes($camp['title'])) ?>&quot;?');">
+                  <form action="<?= e(url('/admin/campaigns/' . $camp['id'] . '/delete')) ?>" method="POST" style="margin: 0; display: inline;" onsubmit="return confirm('Are you sure you want to delete campaign &quot;<?= e(addslashes($camp['title'])) ?>&quot;?');">
                     <?= csrf_field() ?>
-                    <button type="submit" class="btn btn-outline btn-sm" style="color: var(--color-danger); border-color: var(--border-danger);" title="Soft-delete Campaign">
-                      Delete
+                    <button type="submit" class="btn-icon btn-icon-danger" title="Delete Campaign" aria-label="Delete campaign <?= e($camp['title']) ?>">
+                      <?= icon('trash') ?>
                     </button>
                   </form>
                 <?php endif; ?>
@@ -238,8 +271,8 @@
                 <?php if ($isSoftDeleted && !empty($canDelete)): ?>
                   <form action="<?= e(url('/admin/campaigns/' . $camp['id'] . '/restore')) ?>" method="POST" style="margin: 0; display: inline;">
                     <?= csrf_field() ?>
-                    <button type="submit" class="btn btn-primary btn-sm" title="Restore soft-deleted campaign">
-                      Restore
+                    <button type="submit" class="btn-icon btn-icon-primary" title="Restore Campaign" aria-label="Restore campaign <?= e($camp['title']) ?>">
+                      <?= icon('refresh') ?>
                     </button>
                   </form>
                 <?php endif; ?>
@@ -247,7 +280,7 @@
             </td>
           </tr>
         <?php endforeach; ?>
-      <?php endif; ?>
-    </tbody>
-  </table>
-</div>
+      </tbody>
+    </table>
+  </div>
+<?php endif; ?>

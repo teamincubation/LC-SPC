@@ -138,7 +138,10 @@
 
   <div class="no-print-bar">
     <button onclick="window.close()" class="btn btn-close">Close</button>
-    <button onclick="window.print()" class="btn btn-print">&#128424; Print Pass</button>
+    <button onclick="window.print()" class="btn btn-print" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+      <?= icon('printer', ['width' => '14', 'height' => '14']) ?>
+      <span>Print Pass</span>
+    </button>
   </div>
 
   <div class="print-container">

@@ -67,6 +67,11 @@
       }
     });
 
+    var closeBtn = sidebar.querySelector('.admin-sidebar-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', closeSidebar);
+    }
+
     backdrop.addEventListener('click', closeSidebar);
 
     document.addEventListener('keydown', function (e) {

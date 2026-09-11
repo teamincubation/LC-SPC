@@ -1,3 +1,53 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Institutional Admin Layout Template for LC-SPC
+ * Responsive SaaS Administration Shell with SVG Icon System and Unified Design Hierarchy.
+ */
+
+// Active navigation detection
+$currentUri = $_SERVER['REQUEST_URI'] ?? '';
+$activeNavSlug = $activeNav ?? null;
+$isNavActive = function (string $slug) use ($currentUri, $activeNavSlug): bool {
+    if (!empty($activeNavSlug) && $activeNavSlug === $slug) {
+        return true;
+    }
+    $basePath = url('/admin' . ($slug === 'dashboard' ? '' : '/' . $slug));
+    if ($slug === 'dashboard') {
+        $exactPath = rtrim(url('/admin'), '/');
+        $cleanUri = rtrim(explode('?', $currentUri)[0], '/');
+        return $cleanUri === $exactPath || $cleanUri === $exactPath . '/';
+    }
+    return str_starts_with(explode('?', $currentUri)[0], $basePath);
+};
+
+// User identity extraction
+$authUserId = session('_auth_user_id');
+$authUser = null;
+if (!empty($authUserId)) {
+    try {
+        $authUser = (new \App\Repositories\UserRepository())->findById((int) $authUserId);
+    } catch (\Throwable $e) {
+        // Fallback gracefully if database context differs
+    }
+}
+$adminName = $authUser['name'] ?? ($user['name'] ?? 'Admin User');
+$adminRoleSlug = $authUser['role'] ?? ($user['role'] ?? session('_auth_user_role', 'viewer'));
+$adminRoleLabel = \App\Services\RoleService::getRoleLabel($adminRoleSlug);
+
+// Avatar initials
+$nameParts = preg_split('/\s+/', trim((string) $adminName));
+$initials = '';
+if (!empty($nameParts[0])) {
+    $initials .= mb_substr($nameParts[0], 0, 1);
+}
+if (count($nameParts) > 1 && !empty($nameParts[1])) {
+    $initials .= mb_substr($nameParts[1], 0, 1);
+}
+$initials = strtoupper($initials ?: 'LC');
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,66 +69,69 @@
   <a href="#admin-main-content" class="skip-link">Skip to main content</a>
 
   <div class="admin-layout">
-    <!-- Admin Sidebar Navigation -->
+    <!-- Admin Sidebar Navigation Drawer -->
     <aside class="admin-sidebar" id="adminSidebar" role="navigation" aria-label="Admin Sidebar Navigation">
       <div class="admin-sidebar-header">
-        <a href="<?= e(url('/')) ?>" aria-label="<?= e(config('app.name')) ?> Dashboard">
+        <a href="<?= e(url('/admin')) ?>" aria-label="<?= e(config('app.name')) ?> Dashboard" style="display: flex; align-items: center;">
           <img src="<?= e(asset('images/listening-community-logo.png')) ?>" alt="<?= e(config('app.name')) ?>" class="brand-logo-sm">
         </a>
+        <button type="button" class="admin-sidebar-close" aria-label="Close navigation menu">
+          <?= icon('x') ?>
+        </button>
       </div>
 
       <ul class="admin-nav" role="menubar">
         <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin')) ?>" class="admin-nav-link" role="menuitem">
-            <span class="admin-nav-icon" aria-hidden="true">&#9638;</span>
+          <a href="<?= e(url('/admin')) ?>" class="admin-nav-link <?= $isNavActive('dashboard') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('dashboard') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('layout-dashboard') ?></span>
             <span>Dashboard</span>
           </a>
         </li>
         <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/campaigns')) ?>" class="admin-nav-link" role="menuitem">
-            <span class="admin-nav-icon" aria-hidden="true">&#127919;</span>
+          <a href="<?= e(url('/admin/campaigns')) ?>" class="admin-nav-link <?= $isNavActive('campaigns') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('campaigns') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('target') ?></span>
             <span>Campaigns</span>
           </a>
         </li>
         <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/events')) ?>" class="admin-nav-link" role="menuitem">
-            <span class="admin-nav-icon" aria-hidden="true">&#128197;</span>
+          <a href="<?= e(url('/admin/events')) ?>" class="admin-nav-link <?= $isNavActive('events') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('events') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('calendar') ?></span>
             <span>Events</span>
           </a>
         </li>
         <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/participants')) ?>" class="admin-nav-link" role="menuitem">
-            <span class="admin-nav-icon" aria-hidden="true">&#128100;</span>
+          <a href="<?= e(url('/admin/participants')) ?>" class="admin-nav-link <?= $isNavActive('participants') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('participants') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('users') ?></span>
             <span>Participants</span>
           </a>
         </li>
         <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/registrations')) ?>" class="admin-nav-link" role="menuitem">
-            <span class="admin-nav-icon" aria-hidden="true">&#128101;</span>
+          <a href="<?= e(url('/admin/registrations')) ?>" class="admin-nav-link <?= $isNavActive('registrations') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('registrations') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('clipboard-list') ?></span>
             <span>Registrations</span>
           </a>
         </li>
         <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/checkin')) ?>" class="admin-nav-link" role="menuitem">
-            <span class="admin-nav-icon" aria-hidden="true">&#9989;</span>
+          <a href="<?= e(url('/admin/checkin')) ?>" class="admin-nav-link <?= $isNavActive('checkin') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('checkin') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('scan-line') ?></span>
             <span>Check-in</span>
           </a>
         </li>
         <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/certificates')) ?>" class="admin-nav-link" role="menuitem">
-            <span class="admin-nav-icon" aria-hidden="true">&#127891;</span>
+          <a href="<?= e(url('/admin/certificates')) ?>" class="admin-nav-link <?= $isNavActive('certificates') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('certificates') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('award') ?></span>
             <span>Certificates</span>
           </a>
         </li>
         <li class="admin-nav-item" role="none">
-          <a href="#" class="admin-nav-link" role="menuitem" tabindex="-1" aria-disabled="true">
-            <span class="admin-nav-icon" aria-hidden="true">&#128202;</span>
+          <a href="<?= e(url('/admin/reports')) ?>" class="admin-nav-link <?= $isNavActive('reports') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('reports') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('bar-chart') ?></span>
             <span>Reports</span>
           </a>
         </li>
         <li class="admin-nav-item" role="none">
-          <a href="#" class="admin-nav-link" role="menuitem" tabindex="-1" aria-disabled="true">
-            <span class="admin-nav-icon" aria-hidden="true">&#9881;</span>
+          <a href="<?= e(url('/admin/settings')) ?>" class="admin-nav-link <?= $isNavActive('settings') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('settings') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('settings') ?></span>
             <span>Settings</span>
           </a>
         </li>
@@ -90,51 +143,63 @@
       </div>
     </aside>
 
-    <!-- Admin Main Shell -->
+    <!-- Admin Main Content Shell -->
     <div class="admin-main">
       <!-- Top Bar -->
       <header class="admin-header" role="banner">
         <div class="admin-header-left">
           <button type="button" class="admin-sidebar-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="adminSidebar">
-            &#9776;
+            <?= icon('menu') ?>
           </button>
-          <div class="text-caption text-secondary">
-            <span>Admin</span> &rsaquo; <strong><?= e($breadcrumb ?? 'Overview') ?></strong>
+          <div class="admin-header-search">
+            <?= icon('search') ?>
+            <input type="text" class="admin-header-search-input" placeholder="Search portal..." aria-label="Quick search">
           </div>
         </div>
 
         <div class="admin-header-right">
-          <a href="<?= e(url('/health')) ?>" class="badge badge-success" title="System Status: Healthy">
+          <a href="<?= e(url('/health')) ?>" class="badge badge-success" title="System Status: Healthy" style="text-decoration: none;">
             <span class="badge-dot" aria-hidden="true"></span>
             <span>Live Health</span>
           </a>
-          <div class="admin-user-menu" tabindex="0" role="button" aria-label="Admin profile">
-            <div class="admin-avatar" aria-hidden="true">LC</div>
-            <div style="display: flex; flex-direction: column;">
-              <span style="font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); line-height: 1.2;">Admin User</span>
-              <span class="text-caption text-muted" style="line-height: 1;">Administrator</span>
+
+          <div class="admin-user-profile" aria-label="Current user: <?= e($adminName) ?> (<?= e($adminRoleLabel) ?>)">
+            <div class="admin-avatar" aria-hidden="true"><?= e($initials) ?></div>
+            <div class="admin-user-meta">
+              <span class="admin-user-name"><?= e($adminName) ?></span>
+              <span class="admin-user-role"><?= e($adminRoleLabel) ?></span>
             </div>
           </div>
+
+          <form action="<?= e(url('/logout')) ?>" method="POST" style="margin: 0; display: inline;">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn-logout" aria-label="Sign out of portal" title="Sign Out">
+              <?= icon('log-out') ?>
+              <span class="btn-logout-text">Logout</span>
+            </button>
+          </form>
         </div>
       </header>
 
       <!-- Content Area -->
       <main id="admin-main-content" class="admin-content" role="main">
         <?php if ($flashSuccess = flash('success')): ?>
-          <div class="alert alert-success" data-dismissible="true" role="status">
-            <div class="alert-content">
+          <div class="alert alert-success" data-dismissible="true" role="status" style="display: flex; align-items: center; gap: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+            <?= icon('check-circle', ['class' => 'text-success', 'style' => 'width: 20px; height: 20px;']) ?>
+            <div class="alert-content" style="flex: 1;">
               <?= e($flashSuccess) ?>
             </div>
-            <button type="button" class="alert-close" data-dismiss="alert" aria-label="Close message">&times;</button>
+            <button type="button" class="alert-close" data-dismiss="alert" aria-label="Close message" style="background: transparent; border: none; cursor: pointer; color: inherit; font-size: 1.25rem;">&times;</button>
           </div>
         <?php endif; ?>
 
         <?php if ($flashError = flash('error')): ?>
-          <div class="alert alert-danger" data-dismissible="true" role="alert">
-            <div class="alert-content">
+          <div class="alert alert-danger" data-dismissible="true" role="alert" style="display: flex; align-items: center; gap: 0.75rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+            <?= icon('alert-triangle', ['class' => 'text-danger', 'style' => 'width: 20px; height: 20px;']) ?>
+            <div class="alert-content" style="flex: 1;">
               <?= e($flashError) ?>
             </div>
-            <button type="button" class="alert-close" data-dismiss="alert" aria-label="Close alert">&times;</button>
+            <button type="button" class="alert-close" data-dismiss="alert" aria-label="Close alert" style="background: transparent; border: none; cursor: pointer; color: inherit; font-size: 1.25rem;">&times;</button>
           </div>
         <?php endif; ?>
 

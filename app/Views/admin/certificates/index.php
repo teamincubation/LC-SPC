@@ -4,198 +4,222 @@
 ?>
 
 <!-- Certificate Directory Header -->
-<div class="card mb-6">
-  <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-    <div>
-      <h1 class="card-title" style="font-size: var(--font-size-xl); margin: 0;">
-        &#127891; Certificates Directory
-      </h1>
-      <p class="text-secondary" style="font-size: var(--font-size-sm); margin-top: 0.25rem;">
-        Official verifiable credentials issued for verified event participation and service.
-      </p>
-    </div>
+<div class="admin-page-header">
+  <div class="admin-page-header-title">
+    <h1>
+      <?= icon('award', ['width' => '24', 'height' => '24']) ?>
+      <span>Certificates Directory</span>
+    </h1>
+    <p>Official verifiable credentials issued for verified event participation and service.</p>
+  </div>
 
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-      <a href="<?= e(url('/admin/events')) ?>" class="btn btn-outline btn-sm">
-        <span>&#128197; Select Event to Issue</span>
-      </a>
-    </div>
+  <div class="admin-page-header-actions">
+    <a href="<?= e(url('/admin/events')) ?>" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+      <?= icon('calendar', ['width' => '14', 'height' => '14']) ?>
+      <span>Select Event to Issue</span>
+    </a>
   </div>
 </div>
 
 <!-- Metrics Overview Cards -->
-<div class="grid grid-cols-4 gap-4 mb-6">
-  <div class="card" style="padding: 1.25rem; text-align: center;">
-    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 600;">Total Issued</div>
-    <div style="font-size: 1.8rem; font-weight: 700; color: var(--color-primary-dark); margin-top: 0.25rem;">
-      <?= e((string) ($metrics['total'] ?? 0)) ?>
+<div class="metric-grid mb-6">
+  <div class="card-metric">
+    <div class="card-metric-header">
+      <span class="card-metric-title">Total Issued</span>
+      <div class="card-metric-icon" style="background: rgba(26, 86, 219, 0.1); color: var(--primary);">
+        <?= icon('award', ['width' => '18', 'height' => '18']) ?>
+      </div>
     </div>
+    <div class="card-metric-value"><?= e((string) ($metrics['total'] ?? 0)) ?></div>
+    <div class="card-metric-subtitle">All generated credentials</div>
   </div>
 
-  <div class="card" style="padding: 1.25rem; text-align: center;">
-    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 600;">Active Credentials</div>
-    <div style="font-size: 1.8rem; font-weight: 700; color: #15803d; margin-top: 0.25rem;">
-      <?= e((string) ($metrics['active_count'] ?? 0)) ?>
+  <div class="card-metric">
+    <div class="card-metric-header">
+      <span class="card-metric-title">Active Credentials</span>
+      <div class="card-metric-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+        <?= icon('check-circle', ['width' => '18', 'height' => '18']) ?>
+      </div>
     </div>
+    <div class="card-metric-value" style="color: var(--success);"><?= e((string) ($metrics['active_count'] ?? 0)) ?></div>
+    <div class="card-metric-subtitle">Valid &amp; publicly verifiable</div>
   </div>
 
-  <div class="card" style="padding: 1.25rem; text-align: center;">
-    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 600;">Participation</div>
-    <div style="font-size: 1.8rem; font-weight: 700; color: var(--color-primary); margin-top: 0.25rem;">
-      <?= e((string) ($metrics['participation_count'] ?? 0)) ?>
+  <div class="card-metric">
+    <div class="card-metric-header">
+      <span class="card-metric-title">Participation</span>
+      <div class="card-metric-icon" style="background: rgba(59, 130, 246, 0.1); color: var(--primary-light);">
+        <?= icon('users', ['width' => '18', 'height' => '18']) ?>
+      </div>
     </div>
+    <div class="card-metric-value"><?= e((string) ($metrics['participation_count'] ?? 0)) ?></div>
+    <div class="card-metric-subtitle">Standard attendee awards</div>
   </div>
 
-  <div class="card" style="padding: 1.25rem; text-align: center;">
-    <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 600;">Revoked / Superseded</div>
-    <div style="font-size: 1.8rem; font-weight: 700; color: #b91c1c; margin-top: 0.25rem;">
-      <?= e((string) ($metrics['revoked_count'] ?? 0)) ?>
+  <div class="card-metric">
+    <div class="card-metric-header">
+      <span class="card-metric-title">Revoked / Void</span>
+      <div class="card-metric-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">
+        <?= icon('x-circle', ['width' => '18', 'height' => '18']) ?>
+      </div>
     </div>
+    <div class="card-metric-value" style="color: var(--danger);"><?= e((string) ($metrics['revoked_count'] ?? 0)) ?></div>
+    <div class="card-metric-subtitle">Superseded or invalidated</div>
   </div>
 </div>
 
 <!-- Filters & Search Toolbar -->
-<div class="card mb-6">
-  <div class="card-body" style="padding: 1rem 1.25rem;">
-    <form action="<?= e(url('/admin/certificates')) ?>" method="GET" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
-      <div style="flex: 1; min-width: 220px;">
-        <label for="search" class="form-label" style="font-size: var(--font-size-xs);">Search Credential</label>
-        <input type="text" name="search" id="search" class="form-control" placeholder="Certificate No, Recipient Name, Pass Code..." value="<?= e($filters['search'] ?? '') ?>">
-      </div>
+<div class="admin-filter-bar">
+  <form action="<?= e(url('/admin/certificates')) ?>" method="GET" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; width: 100%;">
+    <div style="flex: 1; min-width: 240px; position: relative; display: flex; align-items: center;">
+      <span style="position: absolute; left: 0.75rem; color: var(--text-muted); pointer-events: none; display: flex;">
+        <?= icon('search', ['width' => '14', 'height' => '14']) ?>
+      </span>
+      <input type="text" name="search" id="search" class="form-input" placeholder="Search Certificate No, Recipient, Pass Code..." value="<?= e($filters['search'] ?? '') ?>" style="padding-left: 2.25rem; font-size: var(--font-size-xs); width: 100%;">
+    </div>
 
-      <div style="min-width: 160px;">
-        <label for="status" class="form-label" style="font-size: var(--font-size-xs);">Status</label>
-        <select name="status" id="status" class="form-control">
-          <option value="">All Statuses</option>
-          <option value="active" <?= ($filters['status'] ?? '') === 'active' ? 'selected' : '' ?>>Active</option>
-          <option value="revoked" <?= ($filters['status'] ?? '') === 'revoked' ? 'selected' : '' ?>>Revoked</option>
-        </select>
-      </div>
+    <div style="min-width: 150px;">
+      <select name="status" id="status" class="form-input" style="font-size: var(--font-size-xs);">
+        <option value="">All Statuses</option>
+        <option value="active" <?= ($filters['status'] ?? '') === 'active' ? 'selected' : '' ?>>Active</option>
+        <option value="revoked" <?= ($filters['status'] ?? '') === 'revoked' ? 'selected' : '' ?>>Revoked</option>
+      </select>
+    </div>
 
-      <div style="min-width: 180px;">
-        <label for="type" class="form-label" style="font-size: var(--font-size-xs);">Type</label>
-        <select name="type" id="type" class="form-control">
-          <option value="">All Types</option>
-          <option value="participation" <?= ($filters['type'] ?? '') === 'participation' ? 'selected' : '' ?>>Participation</option>
-          <option value="volunteer" <?= ($filters['type'] ?? '') === 'volunteer' ? 'selected' : '' ?>>Volunteer</option>
-          <option value="speaker" <?= ($filters['type'] ?? '') === 'speaker' ? 'selected' : '' ?>>Speaker / Facilitation</option>
-          <option value="appreciation" <?= ($filters['type'] ?? '') === 'appreciation' ? 'selected' : '' ?>>Appreciation</option>
-        </select>
-      </div>
+    <div style="min-width: 160px;">
+      <select name="type" id="type" class="form-input" style="font-size: var(--font-size-xs);">
+        <option value="">All Types</option>
+        <option value="participation" <?= ($filters['type'] ?? '') === 'participation' ? 'selected' : '' ?>>Participation</option>
+        <option value="volunteer" <?= ($filters['type'] ?? '') === 'volunteer' ? 'selected' : '' ?>>Volunteer</option>
+        <option value="speaker" <?= ($filters['type'] ?? '') === 'speaker' ? 'selected' : '' ?>>Speaker / Facilitation</option>
+        <option value="appreciation" <?= ($filters['type'] ?? '') === 'appreciation' ? 'selected' : '' ?>>Appreciation</option>
+      </select>
+    </div>
 
-      <div style="display: flex; gap: 0.5rem;">
-        <button type="submit" class="btn btn-primary">Filter</button>
-        <a href="<?= e(url('/admin/certificates')) ?>" class="btn btn-outline">Reset</a>
-      </div>
-    </form>
-  </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+      <?php if (!empty($filters['search']) || !empty($filters['status']) || !empty($filters['type'])): ?>
+        <a href="<?= e(url('/admin/certificates')) ?>" class="btn btn-outline btn-sm">Reset</a>
+      <?php endif; ?>
+    </div>
+  </form>
 </div>
 
 <!-- Certificates Table -->
-<div class="card">
-  <div class="card-body" style="padding: 0;">
-    <div class="table-responsive">
-      <table class="table" style="margin: 0;">
-        <thead>
+<div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); margin-bottom: 1.5rem;">
+  <div class="table-responsive">
+    <table class="table" style="margin: 0; width: 100%; border-collapse: collapse;">
+      <thead>
+        <tr style="border-bottom: 1px solid var(--border-color); background: var(--bg-surface-subtle); text-align: left; font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted);">
+          <th style="padding: 0.75rem 1rem;">Certificate No</th>
+          <th style="padding: 0.75rem 1rem;">Recipient Legal Name</th>
+          <th style="padding: 0.75rem 1rem;">Type</th>
+          <th style="padding: 0.75rem 1rem;">Event Session</th>
+          <th style="padding: 0.75rem 1rem;">Issue Date</th>
+          <th style="padding: 0.75rem 1rem;">Status</th>
+          <th style="padding: 0.75rem 1rem; text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php if (empty($certificates)): ?>
           <tr>
-            <th>Certificate No</th>
-            <th>Recipient Legal Name</th>
-            <th>Type</th>
-            <th>Event Session</th>
-            <th>Issue Date</th>
-            <th>Status</th>
-            <th style="text-align: right;">Actions</th>
+            <td colspan="7" style="padding: 0;">
+              <div class="empty-state" style="padding: 3rem 1.5rem;">
+                <div class="empty-state-icon"><?= icon('award', ['width' => '40', 'height' => '40']) ?></div>
+                <h4 style="margin: 0.5rem 0 0.25rem 0; font-size: var(--font-size-base); font-weight: 600;">No Certificates Found</h4>
+                <p style="margin: 0; font-size: var(--font-size-sm); color: var(--text-muted);">No certificate records match your search or filter criteria.</p>
+              </div>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          <?php if (empty($certificates)): ?>
-            <tr>
-              <td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-secondary);">
-                No certificates found matching your criteria.
+        <?php else: ?>
+          <?php foreach ($certificates as $cert): ?>
+            <?php
+              $isRevoked = ($cert['status'] ?? '') === 'revoked';
+              $statusBadgeClass = $isRevoked ? 'badge-pill badge-danger' : 'badge-pill badge-success';
+              $typeBadgeClass = match ($cert['type'] ?? '') {
+                'volunteer'    => 'badge-pill badge-info',
+                'speaker'      => 'badge-pill badge-primary',
+                'appreciation' => 'badge-pill badge-warning',
+                default        => 'badge-pill badge-neutral',
+              };
+            ?>
+            <tr style="border-bottom: 1px solid var(--border-color); font-size: var(--font-size-sm);">
+              <td style="padding: 0.75rem 1rem;">
+                <a href="<?= e(url('/admin/certificates/' . $cert['id'])) ?>" style="font-weight: 600; font-family: var(--font-mono); color: var(--primary); font-size: 0.8rem;">
+                  <?= e($cert['certificate_number']) ?>
+                </a>
               </td>
-            </tr>
-          <?php else: ?>
-            <?php foreach ($certificates as $cert): ?>
-              <?php
-                $isRevoked = ($cert['status'] ?? '') === 'revoked';
-                $statusBadgeClass = $isRevoked ? 'badge-danger' : 'badge-success';
-                $typeBadgeClass = match ($cert['type'] ?? '') {
-                  'volunteer'    => 'badge-info',
-                  'speaker'      => 'badge-primary',
-                  'appreciation' => 'badge-warning',
-                  default        => 'badge-light',
-                };
-              ?>
-              <tr>
-                <td>
-                  <a href="<?= e(url('/admin/certificates/' . $cert['id'])) ?>" style="font-weight: 600; font-family: monospace; color: var(--color-primary-dark);">
-                    <?= e($cert['certificate_number']) ?>
-                  </a>
-                </td>
-                <td>
-                  <strong style="font-size: 0.95rem;"><?= e($cert['recipient_name_snapshot']) ?></strong>
-                  <?php if (!empty($cert['registration_code'])): ?>
-                    <div style="font-size: var(--font-size-xs); color: var(--text-secondary);">
-                      Pass: <?= e($cert['registration_code']) ?>
-                    </div>
-                  <?php endif; ?>
-                </td>
-                <td>
-                  <span class="badge <?= e($typeBadgeClass) ?>" style="font-size: 0.75rem; text-transform: capitalize;">
-                    <?= e($cert['type']) ?>
-                  </span>
-                </td>
-                <td>
-                  <a href="<?= e(url('/admin/events/' . $cert['event_id'])) ?>" style="font-size: var(--font-size-sm); color: var(--text-primary);">
-                    <?= e($cert['event_title']) ?>
-                  </a>
-                </td>
-                <td>
-                  <span style="font-size: var(--font-size-sm);"><?= e(date('M d, Y', strtotime((string) $cert['issue_date']))) ?></span>
-                </td>
-                <td>
-                  <span class="badge <?= e($statusBadgeClass) ?>" style="font-size: 0.75rem; text-transform: uppercase;">
-                    <?= e($cert['status']) ?>
-                  </span>
-                </td>
-                <td style="text-align: right; white-space: nowrap;">
+              <td style="padding: 0.75rem 1rem;">
+                <div style="font-weight: 600; color: var(--text-primary);"><?= e($cert['recipient_name_snapshot']) ?></div>
+                <?php if (!empty($cert['registration_code'])): ?>
+                  <div style="font-size: var(--font-size-xs); color: var(--text-muted); font-family: var(--font-mono);">
+                    Pass: <?= e($cert['registration_code']) ?>
+                  </div>
+                <?php endif; ?>
+              </td>
+              <td style="padding: 0.75rem 1rem;">
+                <span class="<?= e($typeBadgeClass) ?>" style="font-size: 0.65rem; text-transform: capitalize; font-weight: 600;">
+                  <?= e($cert['type']) ?>
+                </span>
+              </td>
+              <td style="padding: 0.75rem 1rem;">
+                <a href="<?= e(url('/admin/events/' . $cert['event_id'])) ?>" style="font-size: var(--font-size-sm); color: var(--text-primary); font-weight: 500;">
+                  <?= e($cert['event_title']) ?>
+                </a>
+              </td>
+              <td style="padding: 0.75rem 1rem; font-size: var(--font-size-xs); color: var(--text-secondary);">
+                <?= e(date('M d, Y', strtotime((string) $cert['issue_date']))) ?>
+              </td>
+              <td style="padding: 0.75rem 1rem;">
+                <span class="<?= e($statusBadgeClass) ?>" style="font-size: 0.65rem; text-transform: uppercase; font-weight: 600;">
+                  <?= e($cert['status']) ?>
+                </span>
+              </td>
+              <td style="padding: 0.75rem 1rem; text-align: right; white-space: nowrap;">
+                <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
                   <a href="<?= e(url('/admin/certificates/' . $cert['id'])) ?>" class="btn btn-outline btn-sm" title="Inspect Credential">
                     View
                   </a>
                   <?php if (!$isRevoked && in_array($userRole, ['staff', 'coordinator', 'super_admin'], true)): ?>
-                    <a href="<?= e(url('/admin/certificates/' . $cert['id'] . '/print')) ?>" target="_blank" class="btn btn-outline btn-sm" title="Print PDF Layout">
-                      &#128424;
+                    <a href="<?= e(url('/admin/certificates/' . $cert['id'] . '/print')) ?>" target="_blank" class="btn btn-outline btn-sm" title="Print PDF Layout" style="padding: 0.35rem 0.5rem; display: inline-flex; align-items: center;">
+                      <?= icon('printer', ['width' => '13', 'height' => '13']) ?>
                     </a>
-                    <a href="<?= e(url('/admin/certificates/' . $cert['id'] . '/jpg')) ?>" class="btn btn-outline btn-sm" title="Download High-Res JPG">
-                      &#128190;
+                    <a href="<?= e(url('/admin/certificates/' . $cert['id'] . '/jpg')) ?>" class="btn btn-outline btn-sm" title="Download High-Res JPG" style="padding: 0.35rem 0.5rem; display: inline-flex; align-items: center;">
+                      <?= icon('download', ['width' => '13', 'height' => '13']) ?>
                     </a>
                   <?php endif; ?>
-                </td>
-              </tr>
-            <?php endforeach; ?>
-          <?php endif; ?>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination -->
-    <?php if (($pagination['total_pages'] ?? 1) > 1): ?>
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-top: 1px solid var(--border-color);">
-        <span class="text-caption text-secondary">
-          Showing <?= e((string) count($certificates)) ?> of <?= e((string) $pagination['total']) ?> certificates
-        </span>
-        <div style="display: flex; gap: 0.5rem;">
-          <?php if ($pagination['has_previous']): ?>
-            <a href="<?= e(url('/admin/certificates?' . http_build_query(array_merge($filters, ['page' => $pagination['page'] - 1])))) ?>" class="btn btn-outline btn-sm">&larr; Previous</a>
-          <?php endif; ?>
-          <span class="btn btn-outline btn-sm" style="pointer-events: none;">
-            Page <?= e((string) $pagination['page']) ?> of <?= e((string) $pagination['total_pages']) ?>
-          </span>
-          <?php if ($pagination['has_next']): ?>
-            <a href="<?= e(url('/admin/certificates?' . http_build_query(array_merge($filters, ['page' => $pagination['page'] + 1])))) ?>" class="btn btn-outline btn-sm">Next &rarr;</a>
-          <?php endif; ?>
-        </div>
-      </div>
-    <?php endif; ?>
+                </div>
+              </td>
+            </tr>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </tbody>
+    </table>
   </div>
+
+  <!-- Pagination -->
+  <?php if (($pagination['total_pages'] ?? 1) > 1): ?>
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; border-top: 1px solid var(--border-color); font-size: var(--font-size-xs);">
+      <span class="text-secondary">
+        Showing <?= e((string) count($certificates)) ?> of <?= e((string) $pagination['total']) ?> certificates
+      </span>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <?php if ($pagination['has_previous']): ?>
+          <a href="<?= e(url('/admin/certificates?' . http_build_query(array_merge($filters, ['page' => $pagination['page'] - 1])))) ?>" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+            <?= icon('chevron-left', ['width' => '12', 'height' => '12']) ?>
+            <span>Previous</span>
+          </a>
+        <?php endif; ?>
+        <span class="text-secondary" style="font-weight: 500;">
+          Page <?= e((string) $pagination['page']) ?> of <?= e((string) $pagination['total_pages']) ?>
+        </span>
+        <?php if ($pagination['has_next']): ?>
+          <a href="<?= e(url('/admin/certificates?' . http_build_query(array_merge($filters, ['page' => $pagination['page'] + 1])))) ?>" class="btn btn-outline btn-sm" style="display: inline-flex; align-items: center; gap: 0.25rem;">
+            <span>Next</span>
+            <?= icon('chevron-right', ['width' => '12', 'height' => '12']) ?>
+          </a>
+        <?php endif; ?>
+      </div>
+    </div>
+  <?php endif; ?>
 </div>
