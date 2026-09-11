@@ -151,10 +151,14 @@ $initials = strtoupper($initials ?: 'LC');
           <button type="button" class="admin-sidebar-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="adminSidebar">
             <?= icon('menu') ?>
           </button>
-          <div class="admin-header-search">
-            <?= icon('search') ?>
-            <input type="text" class="admin-header-search-input" placeholder="Search portal..." aria-label="Quick search">
-          </div>
+          <nav class="admin-header-breadcrumb" aria-label="Breadcrumb">
+            <a href="<?= e(url('/admin')) ?>" class="admin-breadcrumb-root">
+              <?= icon('home', ['width' => '14', 'height' => '14']) ?>
+              <span>Admin</span>
+            </a>
+            <span class="admin-breadcrumb-sep" aria-hidden="true">&rsaquo;</span>
+            <span class="admin-breadcrumb-current" aria-current="page"><?= e($breadcrumb ?? ($title ?? 'Overview')) ?></span>
+          </nav>
         </div>
 
         <div class="admin-header-right">

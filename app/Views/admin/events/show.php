@@ -283,8 +283,8 @@
       </div>
 
       <div class="pt-3 text-caption text-muted" style="border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 0.25rem;">
-        <div>Created: <?= e(date('M j, Y h:i A', strtotime($event['created_at']))) ?></div>
-        <div>Updated: <?= e(date('M j, Y h:i A', strtotime($event['updated_at']))) ?></div>
+        <div>Created: <?= !empty($event['created_at']) ? e(date('M j, Y h:i A', strtotime($event['created_at']))) : '&mdash;' ?></div>
+        <div>Updated: <?= !empty($event['updated_at']) ? e(date('M j, Y h:i A', strtotime($event['updated_at']))) : '&mdash;' ?></div>
         <?php if (!empty($event['deleted_at'])): ?>
           <div style="color: var(--color-danger); font-weight: var(--font-weight-semibold);">
             Deleted: <?= e(date('M j, Y h:i A', strtotime($event['deleted_at']))) ?>

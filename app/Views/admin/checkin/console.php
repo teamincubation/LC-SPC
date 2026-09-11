@@ -55,7 +55,7 @@
 </div>
 
 <!-- Operational Window Notification (if applicable) -->
-<?php if (!$isWithinWindow): ?>
+<?php if (empty($isWithinWindow)): ?>
   <div class="alert alert-warning" style="margin-bottom: 1.25rem; font-size: var(--font-size-xs); padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.5rem;">
     <div style="color: var(--color-warning); display: flex; align-items: center;">
       <?= icon('alert-triangle', ['width' => '16', 'height' => '16']) ?>
@@ -704,6 +704,6 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+      .replace(/'/g, '&apos;');
   }
 </script>

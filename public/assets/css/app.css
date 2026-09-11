@@ -2214,40 +2214,44 @@ code, kbd, samp, pre {
   gap: 1rem;
 }
 
-.admin-header-search {
-  position: relative;
+.admin-header-breadcrumb {
   display: flex;
   align-items: center;
-  min-width: 200px;
-  max-width: 300px;
-}
-
-.admin-header-search .svg-icon {
-  position: absolute;
-  left: 0.75rem;
-  width: 16px;
-  height: 16px;
-  color: var(--text-muted);
-  pointer-events: none;
-}
-
-.admin-header-search-input {
-  width: 100%;
-  height: 36px;
-  padding: 0.375rem 0.75rem 0.375rem 2.25rem;
+  gap: 0.5rem;
   font-size: var(--font-size-xs);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background-color: #F9FAFB;
-  color: var(--text-primary);
-  transition: all var(--transition-fast);
+  min-width: 0;
 }
 
-.admin-header-search-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  background-color: #FFFFFF;
-  box-shadow: 0 0 0 3px var(--color-primary-ring);
+.admin-breadcrumb-root {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.admin-breadcrumb-root:hover {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.admin-breadcrumb-sep {
+  color: var(--border-strong);
+  font-size: 0.85rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.admin-breadcrumb-current {
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
 }
 
 .admin-sidebar-toggle {
@@ -2496,6 +2500,14 @@ code, kbd, samp, pre {
 
   .admin-user-meta {
     display: none;
+  }
+
+  .admin-breadcrumb-root span {
+    display: none;
+  }
+
+  .admin-breadcrumb-current {
+    max-width: 140px;
   }
 }
 

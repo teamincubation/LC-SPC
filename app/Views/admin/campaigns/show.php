@@ -147,7 +147,7 @@ $isSoftDeleted = !empty($campaign['deleted_at']);
       <div>
         <span class="text-caption text-secondary">Last Modified</span>
         <div style="font-weight: var(--font-weight-medium);">
-          <?= e($campaign['updated_at']) ?>
+          <?= !empty($campaign['updated_at']) ? e(date('M j, Y h:i A', strtotime($campaign['updated_at']))) : '&mdash;' ?>
         </div>
       </div>
 
