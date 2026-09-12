@@ -87,12 +87,14 @@ $initials = strtoupper($initials ?: 'LC');
             <span>Dashboard</span>
           </a>
         </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/campaigns')) ?>" class="admin-nav-link <?= $isNavActive('campaigns') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('campaigns') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('target') ?></span>
-            <span>Campaigns</span>
-          </a>
-        </li>
+        <?php if ($adminRoleSlug === 'super_admin'): ?>
+          <li class="admin-nav-item" role="none">
+            <a href="<?= e(url('/admin/admins')) ?>" class="admin-nav-link <?= $isNavActive('admins') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('admins') ? 'aria-current="page"' : '' ?>>
+              <span class="admin-nav-icon" aria-hidden="true"><?= icon('shield') ?></span>
+              <span>Admin Management</span>
+            </a>
+          </li>
+        <?php endif; ?>
         <li class="admin-nav-item" role="none">
           <a href="<?= e(url('/admin/events')) ?>" class="admin-nav-link <?= $isNavActive('events') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('events') ? 'aria-current="page"' : '' ?>>
             <span class="admin-nav-icon" aria-hidden="true"><?= icon('calendar') ?></span>
@@ -100,9 +102,9 @@ $initials = strtoupper($initials ?: 'LC');
           </a>
         </li>
         <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/participants')) ?>" class="admin-nav-link <?= $isNavActive('participants') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('participants') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('users') ?></span>
-            <span>Participants</span>
+          <a href="<?= e(url('/admin/forms')) ?>" class="admin-nav-link <?= $isNavActive('forms') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('forms') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('file-text') ?></span>
+            <span>Event Reg. Form</span>
           </a>
         </li>
         <li class="admin-nav-item" role="none">
@@ -118,6 +120,12 @@ $initials = strtoupper($initials ?: 'LC');
           </a>
         </li>
         <li class="admin-nav-item" role="none">
+          <a href="<?= e(url('/admin/analytics')) ?>" class="admin-nav-link <?= $isNavActive('analytics') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('analytics') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('trending-up') ?></span>
+            <span>Analytics</span>
+          </a>
+        </li>
+        <li class="admin-nav-item" role="none">
           <a href="<?= e(url('/admin/certificates')) ?>" class="admin-nav-link <?= $isNavActive('certificates') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('certificates') ? 'aria-current="page"' : '' ?>>
             <span class="admin-nav-icon" aria-hidden="true"><?= icon('award') ?></span>
             <span>Certificates</span>
@@ -130,9 +138,15 @@ $initials = strtoupper($initials ?: 'LC');
           </a>
         </li>
         <li class="admin-nav-item" role="none">
+          <a href="<?= e(url('/admin/form-settings')) ?>" class="admin-nav-link <?= $isNavActive('form-settings') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('form-settings') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('sliders') ?></span>
+            <span>Form Settings</span>
+          </a>
+        </li>
+        <li class="admin-nav-item" role="none">
           <a href="<?= e(url('/admin/settings')) ?>" class="admin-nav-link <?= $isNavActive('settings') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('settings') ? 'aria-current="page"' : '' ?>>
             <span class="admin-nav-icon" aria-hidden="true"><?= icon('settings') ?></span>
-            <span>Settings</span>
+            <span>System Settings</span>
           </a>
         </li>
       </ul>

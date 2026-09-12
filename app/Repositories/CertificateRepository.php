@@ -50,8 +50,8 @@ class CertificateRepository
                 FROM `certificates` c
                 JOIN `event_registrations` r ON c.registration_id = r.id
                 JOIN `events` e ON r.event_id = e.id
-                JOIN `campaigns` camp ON e.campaign_id = camp.id
-                JOIN `participants` p ON r.participant_id = p.id
+                LEFT JOIN `campaigns` camp ON e.campaign_id = camp.id
+                LEFT JOIN `participants` p ON r.participant_id = p.id
                 LEFT JOIN `users` u_coord ON e.coordinator_id = u_coord.id
                 LEFT JOIN `users` u_issued ON c.issued_by = u_issued.id
                 LEFT JOIN `users` u_revoked ON c.revoked_by = u_revoked.id
@@ -87,7 +87,7 @@ class CertificateRepository
                 FROM `certificates` c
                 JOIN `event_registrations` r ON c.registration_id = r.id
                 JOIN `events` e ON r.event_id = e.id
-                JOIN `campaigns` camp ON e.campaign_id = camp.id
+                LEFT JOIN `campaigns` camp ON e.campaign_id = camp.id
                 LEFT JOIN `users` u_coord ON e.coordinator_id = u_coord.id
                 LEFT JOIN `users` u_issued ON c.issued_by = u_issued.id
                 WHERE c.verification_token = :token
@@ -110,8 +110,8 @@ class CertificateRepository
                 FROM `certificates` c
                 JOIN `event_registrations` r ON c.registration_id = r.id
                 JOIN `events` e ON r.event_id = e.id
-                JOIN `campaigns` camp ON e.campaign_id = camp.id
-                JOIN `participants` p ON r.participant_id = p.id
+                LEFT JOIN `campaigns` camp ON e.campaign_id = camp.id
+                LEFT JOIN `participants` p ON r.participant_id = p.id
                 WHERE c.certificate_number = :number
                 LIMIT 1";
 
@@ -281,8 +281,8 @@ class CertificateRepository
                      FROM `certificates` c
                      JOIN `event_registrations` r ON c.`registration_id` = r.`id`
                      JOIN `events` e ON r.`event_id` = e.`id`
-                     JOIN `campaigns` camp ON e.`campaign_id` = camp.`id`
-                     JOIN `participants` p ON r.`participant_id` = p.`id`" . $where;
+                     LEFT JOIN `campaigns` camp ON e.`campaign_id` = camp.`id`
+                     LEFT JOIN `participants` p ON r.`participant_id` = p.`id`" . $where;
         $totalRow = Database::fetch($countSql, $params);
         $total = (int) ($totalRow['total'] ?? 0);
 
@@ -304,8 +304,8 @@ class CertificateRepository
                     FROM `certificates` c
                     JOIN `event_registrations` r ON c.`registration_id` = r.`id`
                     JOIN `events` e ON r.`event_id` = e.`id`
-                    JOIN `campaigns` camp ON e.`campaign_id` = camp.`id`
-                    JOIN `participants` p ON r.`participant_id` = p.`id`
+                    LEFT JOIN `campaigns` camp ON e.`campaign_id` = camp.`id`
+                    LEFT JOIN `participants` p ON r.`participant_id` = p.`id`
                     LEFT JOIN `users` u_issued ON c.`issued_by` = u_issued.`id`
                     LEFT JOIN `users` u_revoked ON c.`revoked_by` = u_revoked.`id`"
                     . $where . " ORDER BY c.`id` DESC LIMIT " . (int) $perPage . " OFFSET " . (int) $offset;

@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Core\Exceptions\ValidationException;
 use App\Repositories\CampaignRepository;
 use App\Repositories\EventRepository;
+use App\Repositories\RegistrationRepository;
 use App\Repositories\UserRepository;
 use DateTime;
 use InvalidArgumentException;
@@ -22,6 +23,8 @@ class EventService
     private CampaignRepository $campaignRepo;
     private UserRepository $userRepo;
     private AuditService $auditService;
+    private EventFormService $formService;
+    private RegistrationRepository $regRepo;
 
     public const ALLOWED_CATEGORIES = [
         'workshop',
@@ -33,6 +36,12 @@ class EventService
 
     public const ALLOWED_FORMATS = [
         'in_person',
+        'online',
+        'hybrid',
+    ];
+
+    public const ALLOWED_EVENT_TYPES = [
+        'offline',
         'online',
         'hybrid',
     ];
@@ -55,12 +64,16 @@ class EventService
         ?EventRepository $eventRepo = null,
         ?CampaignRepository $campaignRepo = null,
         ?UserRepository $userRepo = null,
-        ?AuditService $auditService = null
+        ?AuditService $auditService = null,
+        ?EventFormService $formService = null,
+        ?RegistrationRepository $regRepo = null
     ) {
         $this->eventRepo = $eventRepo ?? new EventRepository();
         $this->campaignRepo = $campaignRepo ?? new CampaignRepository();
         $this->userRepo = $userRepo ?? new UserRepository();
         $this->auditService = $auditService ?? new AuditService();
+        $this->formService = $formService ?? new EventFormService();
+        $this->regRepo = $regRepo ?? new RegistrationRepository();
     }
 
     /**
@@ -103,11 +116,9 @@ class EventService
     {
         $errors = [];
 
-        // 1. Campaign Validation: required, must exist, must not be soft-deleted
-        $campaignId = isset($data['campaign_id']) ? (int) $data['campaign_id'] : 0;
-        if ($campaignId <= 0) {
-            $errors['campaign_id'] = 'Please select a valid parent campaign.';
-        } else {
+        // 1. Campaign Validation: optional under V2 (Event-centric). If provided and > 0, must exist.
+        $campaignId = isset($data['campaign_id']) && $data['campaign_id'] !== '' ? (int) $data['campaign_id'] : null;
+        if ($campaignId !== null && $campaignId > 0) {
             $campaign = $this->campaignRepo->findById($campaignId);
             if (!$campaign) {
                 $errors['campaign_id'] = 'The selected campaign does not exist or has been soft-deleted.';
@@ -136,7 +147,7 @@ class EventService
             $errors['title'] = 'Event title may not exceed 191 characters.';
         }
 
-        // 4. Slug: optional/auto-generated; if provided, must be valid and unique within campaign
+        // 4. Slug: optional/auto-generated; if provided, must be valid and globally unique
         $slug = trim((string) ($data['slug'] ?? ''));
         if ($slug !== '') {
             $slug = strtolower($slug);
@@ -144,8 +155,8 @@ class EventService
                 $errors['slug'] = 'Slug may only contain lowercase letters, numbers, and single hyphens.';
             } elseif (strlen($slug) > 191) {
                 $errors['slug'] = 'Slug may not exceed 191 characters.';
-            } elseif ($campaignId > 0 && $this->eventRepo->slugExistsInCampaign($campaignId, $slug, $id)) {
-                $errors['slug'] = "The slug '{$slug}' is already in use by another event in this campaign.";
+            } elseif ($this->eventRepo->slugExists($slug, $id)) {
+                $errors['slug'] = "The slug '{$slug}' is already in use by another event.";
             }
         }
 
@@ -165,7 +176,13 @@ class EventService
             $errors['format'] = 'Invalid format selected. Must be in_person, online, or hybrid.';
         }
 
-        // 7. Modality fields (Venue vs. Online URL)
+        // 7. Event Type: optional|in:offline,online,hybrid (default offline)
+        $eventType = trim((string) ($data['event_type'] ?? 'offline'));
+        if (!in_array($eventType, self::ALLOWED_EVENT_TYPES, true)) {
+            $errors['event_type'] = 'Invalid event type selected. Must be offline, online, or hybrid.';
+        }
+
+        // 8. Modality fields (Venue vs. Online URL)
         $venueName = trim((string) ($data['venue_name'] ?? ''));
         $onlineUrl = trim((string) ($data['online_meeting_url'] ?? ''));
 
@@ -189,7 +206,7 @@ class EventService
             }
         }
 
-        // 8. Schedule Date/Time Validation
+        // 9. Schedule Date/Time Validation
         $startTime = self::parseDateTime($data['start_time'] ?? null);
         $endTime = self::parseDateTime($data['end_time'] ?? null);
 
@@ -205,7 +222,7 @@ class EventService
             $errors['end_time'] = 'Event conclusion time must be strictly after the start time.';
         }
 
-        // 9. Registration Deadline Validation
+        // 10. Registration Deadline Validation
         if (!empty($data['registration_deadline'])) {
             $regDeadline = self::parseDateTime($data['registration_deadline']);
             if ($regDeadline === null) {
@@ -215,8 +232,27 @@ class EventService
             }
         }
 
-        // 10. Capacity Validation (Exact user clarification):
-        // Blank/empty = 0 (unlimited); explicit 0 = unlimited; positive integer (>0) = capped; negative/invalid = rejected
+        // 11. Geofencing validation
+        if (isset($data['latitude']) && $data['latitude'] !== '') {
+            $lat = (float) $data['latitude'];
+            if ($lat < -90.0 || $lat > 90.0) {
+                $errors['latitude'] = 'Latitude must be between -90 and 90 degrees.';
+            }
+        }
+        if (isset($data['longitude']) && $data['longitude'] !== '') {
+            $lng = (float) $data['longitude'];
+            if ($lng < -180.0 || $lng > 180.0) {
+                $errors['longitude'] = 'Longitude must be between -180 and 180 degrees.';
+            }
+        }
+        if (isset($data['geofence_radius_meters']) && $data['geofence_radius_meters'] !== '') {
+            $radius = (int) $data['geofence_radius_meters'];
+            if ($radius <= 0) {
+                $errors['geofence_radius_meters'] = 'Geofence radius must be a positive integer in meters.';
+            }
+        }
+
+        // 12. Capacity Validation
         $rawCapacity = isset($data['capacity']) ? trim((string) $data['capacity']) : '';
         if ($rawCapacity === '' || $rawCapacity === '0') {
             // Valid unlimited
@@ -226,7 +262,7 @@ class EventService
             $errors['capacity'] = 'Capacity must be a positive integer, 0, or left blank for unlimited.';
         }
 
-        // 11. Status Validation: optional (defaults to 'draft')|in:draft,published,ongoing,completed,cancelled
+        // 13. Status Validation
         $status = trim((string) ($data['status'] ?? 'draft'));
         if ($status === '') {
             $status = 'draft';
@@ -235,7 +271,7 @@ class EventService
             $errors['status'] = 'Invalid status selected. Must be draft, published, ongoing, completed, or cancelled.';
         }
 
-        // 12. Description: optional|max:10000
+        // 14. Description
         if (!empty($data['description']) && mb_strlen((string) $data['description']) > 10000) {
             $errors['description'] = 'Description may not exceed 10000 characters.';
         }
@@ -244,15 +280,18 @@ class EventService
     }
 
     /**
-     * Generate unique slug within a specific campaign.
+     * Generate unique slug globally for an event.
      */
-    public function generateUniqueSlug(int $campaignId, string $title, ?int $excludeId = null): string
+    public function generateUniqueSlug(?int $campaignId, string $title, ?int $excludeId = null): string
     {
         $baseSlug = CampaignService::slugify($title);
+        if (empty($baseSlug)) {
+            $baseSlug = 'event-' . bin2hex(random_bytes(3));
+        }
         $slug = $baseSlug;
         $counter = 2;
 
-        while ($this->eventRepo->slugExistsInCampaign($campaignId, $slug, $excludeId)) {
+        while ($this->eventRepo->slugExists($slug, $excludeId)) {
             $slug = $baseSlug . '-' . $counter;
             $counter++;
         }
@@ -261,9 +300,10 @@ class EventService
     }
 
     /**
-     * Create a new event with full business validation and audit trail.
+     * Create a new event with full business validation, atomic form provisioning, and audit trail.
+     * Enforces: ONE EVENT = ONE REGISTRATION FORM inside a single database transaction.
      *
-     * @throws InvalidArgumentException When validation fails
+     * @throws ValidationException When validation fails
      */
     public function createEvent(array $data, int $actorId): array
     {
@@ -273,9 +313,9 @@ class EventService
             throw new ValidationException($firstError, $errors);
         }
 
-        $campaignId = (int) $data['campaign_id'];
+        $campaignId = isset($data['campaign_id']) && $data['campaign_id'] !== '' ? (int) $data['campaign_id'] : null;
 
-        // Resolve slug
+        // Resolve global unique slug
         $slug = trim((string) ($data['slug'] ?? ''));
         if ($slug === '') {
             $slug = $this->generateUniqueSlug($campaignId, (string) $data['title']);
@@ -293,48 +333,67 @@ class EventService
             'title'                 => trim((string) $data['title']),
             'slug'                  => $slug,
             'category'              => $data['category'],
+            'event_type'            => $data['event_type'] ?? 'offline',
+            'collaboration_with'    => !empty($data['collaboration_with']) ? trim((string) $data['collaboration_with']) : null,
+            'collaboration_logo'    => !empty($data['collaboration_logo']) ? trim((string) $data['collaboration_logo']) : null,
             'description'           => !empty($data['description']) ? trim((string) $data['description']) : null,
             'format'                => $data['format'],
             'venue_name'            => !empty($data['venue_name']) ? trim((string) $data['venue_name']) : null,
             'venue_address'         => !empty($data['venue_address']) ? trim((string) $data['venue_address']) : null,
+            'timezone'              => !empty($data['timezone']) ? trim((string) $data['timezone']) : 'Asia/Kolkata',
             'online_meeting_url'    => !empty($data['online_meeting_url']) ? trim((string) $data['online_meeting_url']) : null,
             'start_time'            => self::parseDateTime($data['start_time']),
             'end_time'              => self::parseDateTime($data['end_time']),
+            'checkin_start_date'    => !empty($data['checkin_start_date']) ? $data['checkin_start_date'] : null,
+            'checkin_start_time'    => !empty($data['checkin_start_time']) ? $data['checkin_start_time'] : null,
+            'latitude'              => isset($data['latitude']) && $data['latitude'] !== '' ? (float) $data['latitude'] : null,
+            'longitude'             => isset($data['longitude']) && $data['longitude'] !== '' ? (float) $data['longitude'] : null,
+            'geofence_radius_meters'=> isset($data['geofence_radius_meters']) && $data['geofence_radius_meters'] !== '' ? (int) $data['geofence_radius_meters'] : null,
             'capacity'              => $capacity,
             'registration_deadline' => self::parseDateTime($data['registration_deadline'] ?? null),
             'requires_approval'     => !empty($data['requires_approval']) ? 1 : 0,
             'status'                => $data['status'] ?? 'draft',
         ];
 
-        $eventId = $this->eventRepo->create($insertData);
-        $event = $this->eventRepo->findById($eventId);
+        // ATOMIC TRANSACTION: 1 EVENT = 1 REGISTRATION FORM
+        return \App\Core\Database::transaction(function () use ($insertData, $campaignId, $slug, $actorId) {
+            $eventId = $this->eventRepo->create($insertData);
 
-        // Audit Trail
-        $this->auditService->log(
-            'event.create',
-            'event',
-            $eventId,
-            [
-                'campaign_id'    => $campaignId,
-                'title'          => $insertData['title'],
-                'slug'           => $slug,
-                'category'       => $insertData['category'],
-                'format'         => $insertData['format'],
-                'status'         => $insertData['status'],
-                'start_time'     => $insertData['start_time'],
-                'end_time'       => $insertData['end_time'],
-                'coordinator_id' => $insertData['coordinator_id'],
-            ],
-            $actorId
-        );
+            // Automatically provision unique registration form with dedicated stable URL
+            $formId = $this->formService->createFormForEvent($eventId, $insertData['title'], $slug);
 
-        return $event ?? [];
+            $event = $this->eventRepo->findById($eventId);
+
+            // Audit Trail
+            $this->auditService->log(
+                'event.create',
+                'event',
+                $eventId,
+                [
+                    'campaign_id'    => $campaignId,
+                    'title'          => $insertData['title'],
+                    'slug'           => $slug,
+                    'form_id'        => $formId,
+                    'category'       => $insertData['category'],
+                    'event_type'     => $insertData['event_type'],
+                    'format'         => $insertData['format'],
+                    'status'         => $insertData['status'],
+                    'start_time'     => $insertData['start_time'],
+                    'end_time'       => $insertData['end_time'],
+                    'coordinator_id' => $insertData['coordinator_id'],
+                ],
+                $actorId
+            );
+
+            return $event ?? [];
+        });
     }
 
     /**
      * Update an existing event with validation and audit logging.
+     * Architectural guarantee: Event edits do NOT mutate existing public registration URLs or form slugs.
      *
-     * @throws InvalidArgumentException When validation fails
+     * @throws ValidationException When validation fails
      * @throws RuntimeException When event not found
      */
     public function updateEvent(int $id, array $data, int $actorId): array
@@ -350,14 +409,31 @@ class EventService
             throw new ValidationException($firstError, $errors);
         }
 
-        $campaignId = (int) $data['campaign_id'];
+        $campaignId = isset($data['campaign_id']) && $data['campaign_id'] !== '' ? (int) $data['campaign_id'] : null;
 
-        // Resolve slug
+        // Resolve slug (maintain existing slug unless explicitly altered and unique)
         $slug = trim((string) ($data['slug'] ?? ''));
         if ($slug === '') {
-            $slug = $this->generateUniqueSlug($campaignId, (string) $data['title'], $id);
+            $slug = $existing['slug'];
         } else {
             $slug = strtolower($slug);
+        }
+
+        // CRITICAL FIX 2: Slug Immutability & Synchronization Enforcement
+        if ($slug !== $existing['slug']) {
+            $regCount = $this->regRepo->countByEvent($id);
+            if ($regCount > 0) {
+                throw new ValidationException(
+                    'Event URL slug cannot be modified because registrations have already been received for this event.',
+                    ['slug' => 'Event URL slug cannot be modified after registrations have begun.']
+                );
+            }
+
+            // When allowed (0 registrations), keep the corresponding event_forms.slug synchronized
+            $form = $this->formService->getFormByEventId($id);
+            if ($form && ($form['slug'] ?? '') !== $slug) {
+                $this->formService->updateForm((int) $form['id'], ['slug' => $slug]);
+            }
         }
 
         // Normalize capacity
@@ -373,13 +449,22 @@ class EventService
             'title'                 => trim((string) $data['title']),
             'slug'                  => $slug,
             'category'              => $data['category'],
+            'event_type'            => $data['event_type'] ?? ($existing['event_type'] ?? 'offline'),
+            'collaboration_with'    => !empty($data['collaboration_with']) ? trim((string) $data['collaboration_with']) : null,
+            'collaboration_logo'    => !empty($data['collaboration_logo']) ? trim((string) $data['collaboration_logo']) : null,
             'description'           => !empty($data['description']) ? trim((string) $data['description']) : null,
             'format'                => $data['format'],
             'venue_name'            => !empty($data['venue_name']) ? trim((string) $data['venue_name']) : null,
             'venue_address'         => !empty($data['venue_address']) ? trim((string) $data['venue_address']) : null,
+            'timezone'              => !empty($data['timezone']) ? trim((string) $data['timezone']) : ($existing['timezone'] ?? 'Asia/Kolkata'),
             'online_meeting_url'    => !empty($data['online_meeting_url']) ? trim((string) $data['online_meeting_url']) : null,
             'start_time'            => self::parseDateTime($data['start_time']),
             'end_time'              => self::parseDateTime($data['end_time']),
+            'checkin_start_date'    => !empty($data['checkin_start_date']) ? $data['checkin_start_date'] : null,
+            'checkin_start_time'    => !empty($data['checkin_start_time']) ? $data['checkin_start_time'] : null,
+            'latitude'              => isset($data['latitude']) && $data['latitude'] !== '' ? (float) $data['latitude'] : null,
+            'longitude'             => isset($data['longitude']) && $data['longitude'] !== '' ? (float) $data['longitude'] : null,
+            'geofence_radius_meters'=> isset($data['geofence_radius_meters']) && $data['geofence_radius_meters'] !== '' ? (int) $data['geofence_radius_meters'] : null,
             'capacity'              => $capacity,
             'registration_deadline' => self::parseDateTime($data['registration_deadline'] ?? null),
             'requires_approval'     => !empty($data['requires_approval']) ? 1 : 0,

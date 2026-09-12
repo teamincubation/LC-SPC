@@ -7,6 +7,8 @@ declare(strict_types=1);
  * All registered routes resolve consistently both locally (/) and under Hostinger (/LC/).
  */
 
+use App\Controllers\Admin\AdminManagementController;
+use App\Controllers\Admin\AnalyticsController;
 use App\Controllers\Admin\AttendanceController;
 use App\Controllers\Admin\AuthController;
 use App\Controllers\Admin\CampaignController;
@@ -14,6 +16,8 @@ use App\Controllers\Admin\CertificateController;
 use App\Controllers\Admin\CheckInController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\EventController;
+use App\Controllers\Admin\EventFormController;
+use App\Controllers\Admin\FormSettingsController;
 use App\Controllers\Admin\ParticipantController;
 use App\Controllers\Admin\RegistrationController;
 use App\Controllers\Admin\ReportController;
@@ -22,7 +26,9 @@ use App\Controllers\HealthController;
 use App\Controllers\HomeController;
 use App\Controllers\Public\CertificateVerifyController;
 use App\Controllers\Public\PublicCampaignController;
+use App\Controllers\Public\PublicCheckInController;
 use App\Controllers\Public\PublicEventController;
+use App\Controllers\Public\PublicEventRegistrationController;
 use App\Controllers\Public\PublicRegistrationController;
 use App\Controllers\Public\RegistrationPassController;
 use App\Core\Middleware\AuthMiddleware;
@@ -61,6 +67,15 @@ $router->post('/registration/status', [PublicRegistrationController::class, 'che
 $router->get('/registration/pass/{code}', [RegistrationPassController::class, 'show']);
 $router->get('/verify/{token}', [CertificateVerifyController::class, 'show']);
 $router->get('/certificate/verify/{token}', [CertificateVerifyController::class, 'show']);
+
+// Event-Centric V2: Dedicated Public Event Registration Form & Pass
+$router->get('/register/{slug}', [PublicEventRegistrationController::class, 'show']);
+$router->post('/register/{slug}', [PublicEventRegistrationController::class, 'submit'], [CsrfMiddleware::class]);
+$router->get('/register/pass/{code}', [PublicEventRegistrationController::class, 'pass']);
+
+// Event-Centric V2: Dedicated Public Check-In Portal & GPS Geofencing Verification
+$router->get('/check-in/{slug}', [PublicCheckInController::class, 'show']);
+$router->post('/check-in/{slug}', [PublicCheckInController::class, 'submit'], [CsrfMiddleware::class]);
 
 // -----------------------------------------------------------------------------
 // Authentication Routes (Phase 1A)
@@ -265,6 +280,49 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
     // Platform Settings Routes
     // -------------------------------------------------------------------------
     $adminRouter->get('/settings', [SettingsController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+
+    // -------------------------------------------------------------------------
+    // Admin Management Routes (Super Administrator Only)
+    // -------------------------------------------------------------------------
+    $adminRouter->get('/admins', [AdminManagementController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN)]);
+    $adminRouter->get('/admins/create', [AdminManagementController::class, 'create'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN)]);
+    $adminRouter->post('/admins', [AdminManagementController::class, 'store'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
+    $adminRouter->get('/admins/{id}/edit', [AdminManagementController::class, 'edit'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN)]);
+    $adminRouter->post('/admins/{id}', [AdminManagementController::class, 'update'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
+    $adminRouter->get('/admins/{id}/password', [AdminManagementController::class, 'password'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN)]);
+    $adminRouter->post('/admins/{id}/password', [AdminManagementController::class, 'updatePassword'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
+    $adminRouter->get('/admins/{id}/permissions', [AdminManagementController::class, 'permissions'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN)]);
+    $adminRouter->post('/admins/{id}/permissions', [AdminManagementController::class, 'updatePermissions'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
+
+    // -------------------------------------------------------------------------
+    // Event Registration Form Engine (1 Event = 1 Form)
+    // -------------------------------------------------------------------------
+    $adminRouter->get('/forms', [EventFormController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+    $adminRouter->get('/forms/{id}', [EventFormController::class, 'show'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
+    $adminRouter->post('/forms/{id}', [EventFormController::class, 'update'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+    $adminRouter->post('/forms/{id}/fields', [EventFormController::class, 'addField'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+    $adminRouter->post('/forms/{id}/fields/{field_id}/delete', [EventFormController::class, 'deleteField'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+
+    // -------------------------------------------------------------------------
+    // Global Form Settings
+    // -------------------------------------------------------------------------
+    $adminRouter->get('/form-settings', [FormSettingsController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_ADMIN)]);
+    $adminRouter->post('/form-settings', [FormSettingsController::class, 'update'], [new RoleMiddleware(RoleService::ROLE_ADMIN), CsrfMiddleware::class]);
+
+    // -------------------------------------------------------------------------
+    // Real-Time Registration & Attendance Analytics
+    // -------------------------------------------------------------------------
+    $adminRouter->get('/analytics', [AnalyticsController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+    $adminRouter->get('/analytics/event/{id}', [AnalyticsController::class, 'eventAnalytics'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+    $adminRouter->get('/analytics/event/{id}/export', [AnalyticsController::class, 'export'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
+
+    // -------------------------------------------------------------------------
+    // Certificate Template Designer & Final Event Reports
+    // -------------------------------------------------------------------------
+    $adminRouter->get('/events/{id}/certificates/designer', [CertificateController::class, 'designer'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
+    $adminRouter->post('/events/{id}/certificates/designer', [CertificateController::class, 'saveDesigner'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+    $adminRouter->get('/reports/event/{id}', [ReportController::class, 'eventReport'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+    $adminRouter->get('/reports/event/{id}/export', [ReportController::class, 'exportEventReport'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
 
     // -------------------------------------------------------------------------
     // RBAC Capability Gate Routes (Phase 1A Foundation & Verification)

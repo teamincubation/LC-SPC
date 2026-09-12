@@ -14,6 +14,7 @@ class RoleService
     public const ROLE_VIEWER = 'viewer';
     public const ROLE_STAFF = 'staff';
     public const ROLE_COORDINATOR = 'coordinator';
+    public const ROLE_ADMIN = 'admin';
     public const ROLE_SUPER_ADMIN = 'super_admin';
 
     /**
@@ -23,6 +24,7 @@ class RoleService
         self::ROLE_VIEWER      => 10,
         self::ROLE_STAFF       => 20,
         self::ROLE_COORDINATOR => 30,
+        self::ROLE_ADMIN       => 35,
         self::ROLE_SUPER_ADMIN => 40,
     ];
 

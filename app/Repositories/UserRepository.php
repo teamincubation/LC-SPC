@@ -178,4 +178,62 @@ class UserRepository
         $sql = "UPDATE `users` SET `deleted_at` = :deleted_at, `updated_at` = :updated_at WHERE `id` = :id";
         return Database::execute($sql, [':id' => $id, ':deleted_at' => $now, ':updated_at' => $now]) > 0;
     }
+
+    /**
+     * Retrieve all non-deleted administrative users for Admin Management.
+     */
+    public function getAllAdmins(): array
+    {
+        $sql = "SELECT `id`, `name`, `email`, `phone`, `role`, `status`, `last_login_at`, `created_at` 
+                FROM `users` 
+                WHERE `deleted_at` IS NULL 
+                ORDER BY `created_at` ASC";
+        return Database::fetchAll($sql);
+    }
+
+    /**
+     * Update an administrative user profile.
+     */
+    public function updateAdmin(int $id, array $data): bool
+    {
+        $now = date('Y-m-d H:i:s');
+        $fields = ['updated_at = :now'];
+        $params = [':id' => $id, ':now' => $now];
+
+        if (isset($data['name'])) {
+            $fields[] = '`name` = :name';
+            $params[':name'] = trim((string) $data['name']);
+        }
+        if (isset($data['email'])) {
+            $fields[] = '`email` = :email';
+            $params[':email'] = strtolower(trim((string) $data['email']));
+        }
+        if (array_key_exists('phone', $data)) {
+            $fields[] = '`phone` = :phone';
+            $params[':phone'] = !empty($data['phone']) ? trim((string) $data['phone']) : null;
+        }
+        if (isset($data['role'])) {
+            $fields[] = '`role` = :role';
+            $params[':role'] = (string) $data['role'];
+        }
+        if (isset($data['status'])) {
+            $fields[] = '`status` = :status';
+            $params[':status'] = (string) $data['status'];
+        }
+
+        $sql = "UPDATE `users` SET " . implode(', ', $fields) . " WHERE `id` = :id";
+        return Database::execute($sql, $params) > 0;
+    }
+
+    /**
+     * Change user password hash and clear lockout counters.
+     */
+    public function resetPassword(int $id, string $passwordHash): bool
+    {
+        $now = date('Y-m-d H:i:s');
+        $sql = "UPDATE `users` 
+                SET `password_hash` = :hash, `failed_logins` = 0, `locked_until` = NULL, `updated_at` = :now 
+                WHERE `id` = :id";
+        return Database::execute($sql, [':id' => $id, ':hash' => $passwordHash, ':now' => $now]) > 0;
+    }
 }

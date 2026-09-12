@@ -104,18 +104,27 @@ $testPdo->exec("
 
     CREATE TABLE events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        campaign_id INTEGER NOT NULL,
+        campaign_id INTEGER NULL,
         coordinator_id INTEGER NULL,
         title VARCHAR(191) NOT NULL,
-        slug VARCHAR(191) NOT NULL,
+        slug VARCHAR(191) NOT NULL UNIQUE,
         category VARCHAR(50) NOT NULL DEFAULT 'workshop',
+        event_type VARCHAR(20) NOT NULL DEFAULT 'offline',
+        collaboration_with VARCHAR(255) NULL,
+        collaboration_logo VARCHAR(255) NULL,
         description TEXT NULL,
         format VARCHAR(20) NOT NULL DEFAULT 'in_person',
         venue_name VARCHAR(255) NULL,
         venue_address TEXT NULL,
+        timezone VARCHAR(64) NOT NULL DEFAULT 'Asia/Kolkata',
         online_meeting_url VARCHAR(255) NULL,
         start_time DATETIME NOT NULL,
         end_time DATETIME NOT NULL,
+        checkin_start_date DATE NULL,
+        checkin_start_time TIME NULL,
+        latitude DECIMAL(10, 8) NULL,
+        longitude DECIMAL(11, 8) NULL,
+        geofence_radius_meters INTEGER NULL,
         capacity INTEGER NOT NULL DEFAULT 0,
         registration_deadline DATETIME NULL,
         requires_approval INTEGER NOT NULL DEFAULT 0,
@@ -123,6 +132,40 @@ $testPdo->exec("
         created_at DATETIME NOT NULL,
         updated_at DATETIME NOT NULL,
         deleted_at DATETIME NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS event_forms (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id INTEGER NOT NULL UNIQUE,
+        form_title VARCHAR(255) NOT NULL,
+        slug VARCHAR(191) NOT NULL UNIQUE,
+        banner_path VARCHAR(255) NULL,
+        photo_upload_enabled INTEGER NOT NULL DEFAULT 0,
+        location_access_required INTEGER NOT NULL DEFAULT 0,
+        whatsapp_group_url VARCHAR(255) NULL,
+        whatsapp_auto_redirect INTEGER NOT NULL DEFAULT 0,
+        whatsapp_countdown_seconds INTEGER NOT NULL DEFAULT 5,
+        custom_success_message TEXT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'published',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS form_fields (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        form_id INTEGER NOT NULL,
+        field_key VARCHAR(64) NOT NULL,
+        field_label VARCHAR(100) NOT NULL,
+        field_type VARCHAR(30) NOT NULL DEFAULT 'text',
+        is_required INTEGER NOT NULL DEFAULT 0,
+        is_locked INTEGER NOT NULL DEFAULT 0,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        options_json TEXT NULL,
+        placeholder VARCHAR(255) NULL,
+        help_text VARCHAR(255) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (form_id, field_key)
     );
 
     CREATE TABLE participants (
@@ -144,14 +187,25 @@ $testPdo->exec("
         registration_code VARCHAR(40) NOT NULL UNIQUE,
         event_id INTEGER NOT NULL,
         participant_id INTEGER NOT NULL,
+        form_id INTEGER NULL,
+        phone_normalized VARCHAR(20) NULL,
+        country_code VARCHAR(10) NOT NULL DEFAULT '+91',
+        photo_path VARCHAR(255) NULL,
         status VARCHAR(20) NOT NULL DEFAULT 'confirmed',
         attendance_status VARCHAR(20) NOT NULL DEFAULT 'unmarked',
         checked_in_at DATETIME NULL DEFAULT NULL,
         checked_in_by INTEGER NULL DEFAULT NULL,
         check_in_method VARCHAR(30) NULL DEFAULT NULL,
+        attended_at DATETIME NULL,
+        checkin_latitude DECIMAL(10, 8) NULL,
+        checkin_longitude DECIMAL(11, 8) NULL,
+        checkin_distance_meters DECIMAL(8, 2) NULL,
+        checkin_geofence_verified INTEGER NOT NULL DEFAULT 0,
+        custom_data TEXT NULL,
         admin_notes VARCHAR(255) NULL DEFAULT NULL,
         created_at DATETIME NOT NULL,
         updated_at DATETIME NOT NULL,
+        deleted_at DATETIME NULL,
         UNIQUE (event_id, participant_id)
     );
 

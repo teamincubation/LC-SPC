@@ -17,8 +17,12 @@ class ValidationException extends InvalidArgumentException
      */
     public array $errors = [];
 
-    public function __construct(string $message = '', array $errors = [], int $code = 0, ?\Throwable $previous = null)
+    public function __construct(string|array $message = '', array $errors = [], int $code = 0, ?\Throwable $previous = null)
     {
+        if (is_array($message)) {
+            $errors = $message;
+            $message = !empty($errors) ? (string) reset($errors) : 'Validation failed.';
+        }
         parent::__construct($message, $code, $previous);
         $this->errors = $errors;
     }

@@ -9,6 +9,7 @@ use App\Core\Exceptions\CertificateException;
 use App\Core\Exceptions\ValidationException;
 use App\Core\QrCode;
 use App\Repositories\CertificateRepository;
+use App\Repositories\CertificateTemplateRepository;
 use App\Repositories\EventRepository;
 use App\Repositories\RegistrationRepository;
 use InvalidArgumentException;
@@ -38,18 +39,30 @@ class CertificateService
     private CertificateRepository $certRepo;
     private RegistrationRepository $regRepo;
     private EventRepository $eventRepo;
+    private CertificateTemplateRepository $templateRepo;
     private AuditService $auditService;
 
     public function __construct(
         ?CertificateRepository $certRepo = null,
         ?RegistrationRepository $regRepo = null,
         ?EventRepository $eventRepo = null,
+        mixed $templateRepo = null,
         ?AuditService $auditService = null
     ) {
         $this->certRepo = $certRepo ?? new CertificateRepository();
         $this->regRepo = $regRepo ?? new RegistrationRepository();
         $this->eventRepo = $eventRepo ?? new EventRepository();
-        $this->auditService = $auditService ?? new AuditService();
+
+        if ($templateRepo instanceof AuditService) {
+            $this->auditService = $templateRepo;
+            $this->templateRepo = new CertificateTemplateRepository();
+        } elseif ($templateRepo instanceof CertificateTemplateRepository) {
+            $this->templateRepo = $templateRepo;
+            $this->auditService = $auditService ?? new AuditService();
+        } else {
+            $this->templateRepo = new CertificateTemplateRepository();
+            $this->auditService = $auditService ?? new AuditService();
+        }
     }
 
     /**
@@ -82,27 +95,26 @@ class CertificateService
     }
 
     /**
-     * Generate non-sequential, Crockford Base32 human-readable certificate number.
-     * Format: LC-{YYYY}-SPC-{5_CROCKFORD}
+     * Generate non-sequential, 10-character cryptographically random uppercase alphanumeric ID.
+     * Format: 10 chars [0-9A-Z] (e.g., A7K92P4XQ1).
      */
     public function generateCertificateNumber(): string
     {
-        $year = date('Y');
-        $charsetLen = strlen(self::CROCKFORD_CHARS);
+        $charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charsetLen = strlen($charset);
 
-        for ($attempt = 0; $attempt < 10; $attempt++) {
+        for ($attempt = 0; $attempt < 20; $attempt++) {
             $code = '';
-            for ($i = 0; $i < 5; $i++) {
-                $code .= self::CROCKFORD_CHARS[random_int(0, $charsetLen - 1)];
+            for ($i = 0; $i < 10; $i++) {
+                $code .= $charset[random_int(0, $charsetLen - 1)];
             }
 
-            $candidate = "LC-{$year}-SPC-{$code}";
-            if ($this->certRepo->findByNumber($candidate) === null) {
-                return $candidate;
+            if ($this->certRepo->findByNumber($code) === null) {
+                return $code;
             }
         }
 
-        throw new CertificateException('Failed to generate unique certificate number after multiple attempts.', 500);
+        throw new CertificateException('Failed to generate unique 10-character certificate number after multiple attempts.', 500);
     }
 
     /**
@@ -131,7 +143,7 @@ class CertificateService
             throw new CertificateException("Invalid certificate type: {$type}", 422);
         }
 
-        // 2. Event Eligibility Checks
+        // 2. Event Eligibility Checks: MUST be 'completed'
         $eventId = (int) ($registration['event_id'] ?? 0);
         $event = $this->eventRepo->findById($eventId);
         if (!$event || !empty($event['deleted_at'])) {
@@ -139,21 +151,14 @@ class CertificateService
         }
 
         $eventStatus = $event['status'] ?? 'draft';
-        if (!in_array($eventStatus, ['published', 'ongoing', 'completed'], true)) {
-            throw new CertificateException("Cannot issue certificates for an event in '{$eventStatus}' status.", 403);
+        if ($eventStatus !== 'completed') {
+            throw new CertificateException("Certificates can ONLY be generated or downloaded once the event is marked as 'completed'. Current event status is '{$eventStatus}'.", 403);
         }
 
-        // Event timeline check: event must have started
-        $now = time();
-        $startTime = strtotime((string) $event['start_time']);
-        if ($now < $startTime) {
-            throw new CertificateException('Cannot issue certificates before the event has started.', 422);
-        }
-
-        // 3. Registration Status Check: strictly 'confirmed'
+        // 3. Registration Status Check: strictly 'confirmed' and not 'cancelled'
         $regStatus = $registration['status'] ?? '';
-        if ($regStatus !== 'confirmed') {
-            throw new CertificateException("Registration status is '{$regStatus}'. Only confirmed registrations are eligible for certificates.", 403);
+        if ($regStatus !== 'confirmed' || $regStatus === 'cancelled') {
+            throw new CertificateException("Registration status is '{$regStatus}'. Cancelled or unconfirmed registrations are not eligible for certificates.", 403);
         }
 
         // 4. Participant Status Check
@@ -178,23 +183,15 @@ class CertificateService
             self::validateNonClinicalReason($reason, 'flag_override_reason');
         }
 
-        // 5. Attendance Status Check
+        // 5. Attendance Status Check: MUST be 'attended'
         $attStatus = $registration['attendance_status'] ?? 'unmarked';
-        if ($type === self::TYPE_APPRECIATION) {
-            // Appreciation requires confirmed attendance or presence; absent or cancelled is prohibited
-            if (in_array($attStatus, ['absent'], true)) {
-                throw new CertificateException("Cannot issue certificate of appreciation to attendees marked absent.", 422);
-            }
-        } else {
-            // Participation, volunteer, and speaker strictly require attended
-            if ($attStatus !== 'attended') {
-                $statusDesc = match ($attStatus) {
-                    'absent'   => 'marked absent',
-                    'excused'  => 'excused from attendance',
-                    default    => 'unmarked (did not check in)',
-                };
-                throw new CertificateException("Participant was {$statusDesc}. Attendance is mandatory for {$type} certificates.", 422);
-            }
+        if ($attStatus !== 'attended') {
+            $statusDesc = match ($attStatus) {
+                'absent'   => 'marked absent',
+                'excused'  => 'excused from attendance',
+                default    => 'unmarked (did not check in)',
+            };
+            throw new CertificateException("Participant was {$statusDesc}. Certificate generation and download is strictly restricted to participants who attended the event.", 403);
         }
 
         // 6. Active Uniqueness Check
@@ -301,12 +298,8 @@ class CertificateService
             throw new CertificateException('Event not found or has been deleted.', 404);
         }
 
-        if (!in_array($event['status'] ?? '', ['published', 'ongoing', 'completed'], true)) {
-            throw new CertificateException("Event status '{$event['status']}' is not eligible for certificate issuance.", 403);
-        }
-
-        if (time() < strtotime((string) $event['start_time'])) {
-            throw new CertificateException('Cannot issue certificates before the event has started.', 422);
+        if (($event['status'] ?? '') !== 'completed') {
+            throw new CertificateException("Certificates can ONLY be issued once the event is marked as 'completed'. Current status: '{$event['status']}'.", 403);
         }
 
         // Cap batch size at 100
@@ -659,29 +652,52 @@ class CertificateService
         $textMuted = imagecolorallocate($im, 100, 116, 139);  // Slate #64748B
         $lineColor = imagecolorallocate($im, 203, 213, 225);  // #CBD5E1
 
-        // Background
-        imagefilledrectangle($im, 0, 0, $w, $h, $bg);
+        // Check if event has a custom certificate template
+        $eventId = (int) ($certificate['event_id'] ?? 0);
+        $template = $eventId > 0 ? $this->templateRepo->findByEventId($eventId) : null;
 
-        // Elegant double borders
-        imagesetthickness($im, 12);
-        imagerectangle($im, 70, 70, $w - 70, $h - 70, $primaryDark);
-        imagesetthickness($im, 4);
-        imagerectangle($im, 90, 90, $w - 90, $h - 90, $accentGold);
+        // Custom Background from template if uploaded
+        $hasCustomBg = false;
+        if ($template && !empty($template['background_image_path'])) {
+            $bgFile = (defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__, 2)) . '/' . ltrim($template['background_image_path'], '/');
+            if (file_exists($bgFile)) {
+                $bgContent = @file_get_contents($bgFile);
+                if ($bgContent) {
+                    $bgImg = @imagecreatefromstring($bgContent);
+                    if ($bgImg) {
+                        imagecopyresampled($im, $bgImg, 0, 0, 0, 0, $w, $h, imagesx($bgImg), imagesy($bgImg));
+                        imagedestroy($bgImg);
+                        $hasCustomBg = true;
+                    }
+                }
+            }
+        }
 
-        // Corner ornaments
-        imagesetthickness($im, 6);
-        $cornerLen = 60;
-        imageline($im, 110, 110, 110 + $cornerLen, 110, $accentGold);
-        imageline($im, 110, 110, 110, 110 + $cornerLen, $accentGold);
+        if (!$hasCustomBg) {
+            // Background
+            imagefilledrectangle($im, 0, 0, $w, $h, $bg);
 
-        imageline($im, $w - 110, 110, $w - 110 - $cornerLen, 110, $accentGold);
-        imageline($im, $w - 110, 110, $w - 110, 110 + $cornerLen, $accentGold);
+            // Elegant double borders
+            imagesetthickness($im, 12);
+            imagerectangle($im, 70, 70, $w - 70, $h - 70, $primaryDark);
+            imagesetthickness($im, 4);
+            imagerectangle($im, 90, 90, $w - 90, $h - 90, $accentGold);
 
-        imageline($im, 110, $h - 110, 110 + $cornerLen, $h - 110, $accentGold);
-        imageline($im, 110, $h - 110, 110, $h - 110 - $cornerLen, $accentGold);
+            // Corner ornaments
+            imagesetthickness($im, 6);
+            $cornerLen = 60;
+            imageline($im, 110, 110, 110 + $cornerLen, 110, $accentGold);
+            imageline($im, 110, 110, 110, 110 + $cornerLen, $accentGold);
 
-        imageline($im, $w - 110, $h - 110, $w - 110 - $cornerLen, $h - 110, $accentGold);
-        imageline($im, $w - 110, $h - 110, $w - 110, $h - 110 - $cornerLen, $accentGold);
+            imageline($im, $w - 110, 110, $w - 110 - $cornerLen, 110, $accentGold);
+            imageline($im, $w - 110, 110, $w - 110, 110 + $cornerLen, $accentGold);
+
+            imageline($im, 110, $h - 110, 110 + $cornerLen, $h - 110, $accentGold);
+            imageline($im, 110, $h - 110, 110, $h - 110 - $cornerLen, $accentGold);
+
+            imageline($im, $w - 110, $h - 110, $w - 110 - $cornerLen, $h - 110, $accentGold);
+            imageline($im, $w - 110, $h - 110, $w - 110, $h - 110 - $cornerLen, $accentGold);
+        }
 
         // Determine font paths
         $fontRegular = $this->resolveFont(false);
@@ -697,7 +713,7 @@ class CertificateService
 
         // Header Text
         $this->drawCenteredText($im, 'LISTENING COMMUNITY', 48, 220, $primaryDark, $fontBold);
-        $this->drawCenteredText($im, 'SUICIDE PREVENTION CAMPAIGN &bull; OFFICIAL CREDENTIAL', 24, 275, $accentGold, $fontBold);
+        $this->drawCenteredText($im, 'SUICIDE PREVENTION CAMPAIGN • OFFICIAL CREDENTIAL', 24, 275, $accentGold, $fontBold);
 
         // Certificate Title
         $this->drawCenteredText($im, $typeLabel, 64, 430, $primaryDark, $fontBold);
@@ -719,34 +735,87 @@ class CertificateService
         // Schedule & Venue details
         $schedule = date('F d, Y', strtotime((string) ($certificate['event_start_time'] ?? $certificate['issue_date'])));
         if (!empty($certificate['event_venue_name'])) {
-            $schedule .= ' &bull; ' . $certificate['event_venue_name'];
+            $schedule .= ' • ' . $certificate['event_venue_name'];
         }
         $this->drawCenteredText($im, $schedule, 26, 920, $textMuted, $fontRegular);
 
         // Signatories Section
         $signatories = $this->getSignatories($certificate);
+        if ($template && !empty($template['signature1_name'])) {
+            $signatories['coordinator']['name'] = $template['signature1_name'];
+            $signatories['coordinator']['title'] = $template['signature1_designation'] ?? 'Event Coordinator';
+        }
+        if ($template && !empty($template['signature2_name'])) {
+            $signatories['organization']['name'] = $template['signature2_name'];
+            $signatories['organization']['title'] = $template['signature2_designation'] ?? 'Executive Director';
+        }
 
-        // Left Signatory (Coordinator)
+        // Left Signatory (Coordinator / Signature 1)
         $sigLeftX = 400;
         $sigY = 1250;
+        if ($template && !empty($template['signature1_image_path'])) {
+            $sig1File = (defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__, 2)) . '/' . ltrim($template['signature1_image_path'], '/');
+            if (file_exists($sig1File)) {
+                $sig1Content = @file_get_contents($sig1File);
+                if ($sig1Content) {
+                    $sig1Img = @imagecreatefromstring($sig1Content);
+                    if ($sig1Img) {
+                        imagecopyresampled($im, $sig1Img, $sigLeftX - 100, $sigY - 100, 0, 0, 200, 80, imagesx($sig1Img), imagesy($sig1Img));
+                        imagedestroy($sig1Img);
+                    }
+                }
+            }
+        }
         imagesetthickness($im, 3);
         imageline($im, $sigLeftX - 200, $sigY, $sigLeftX + 200, $sigY, $lineColor);
         $this->drawCenteredTextAt($im, $signatories['coordinator']['name'], 28, $sigLeftX, $sigY + 45, $primaryDark, $fontBold);
         $this->drawCenteredTextAt($im, $signatories['coordinator']['title'], 22, $sigLeftX, $sigY + 80, $textMuted, $fontRegular);
 
-        // Right Signatory (Organization Director)
+        // Right Signatory (Organization Director / Signature 2)
         $sigRightX = $w - 400;
+        if ($template && !empty($template['signature2_image_path'])) {
+            $sig2File = (defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__, 2)) . '/' . ltrim($template['signature2_image_path'], '/');
+            if (file_exists($sig2File)) {
+                $sig2Content = @file_get_contents($sig2File);
+                if ($sig2Content) {
+                    $sig2Img = @imagecreatefromstring($sig2Content);
+                    if ($sig2Img) {
+                        imagecopyresampled($im, $sig2Img, $sigRightX - 100, $sigY - 100, 0, 0, 200, 80, imagesx($sig2Img), imagesy($sig2Img));
+                        imagedestroy($sig2Img);
+                    }
+                }
+            }
+        }
         imageline($im, $sigRightX - 200, $sigY, $sigRightX + 200, $sigY, $lineColor);
         $this->drawCenteredTextAt($im, $signatories['organization']['name'], 28, $sigRightX, $sigY + 45, $primaryDark, $fontBold);
         $this->drawCenteredTextAt($im, $signatories['organization']['title'], 22, $sigRightX, $sigY + 80, $textMuted, $fontRegular);
 
+        // Organization Seal (if uploaded)
+        if ($template && !empty($template['seal_image_path'])) {
+            $sealFile = (defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__, 2)) . '/' . ltrim($template['seal_image_path'], '/');
+            if (file_exists($sealFile)) {
+                $sealContent = @file_get_contents($sealFile);
+                if ($sealContent) {
+                    $sealImg = @imagecreatefromstring($sealContent);
+                    if ($sealImg) {
+                        $sealSize = 150;
+                        $sealX = (int) ($w / 2 - ($sealSize / 2));
+                        $sealY = 960;
+                        imagecopyresampled($im, $sealImg, $sealX, $sealY, 0, 0, $sealSize, $sealSize, imagesx($sealImg), imagesy($sealImg));
+                        imagedestroy($sealImg);
+                    }
+                }
+            }
+        }
+
         // High-Density QR Verification Code (Center Bottom)
         $token = $certificate['verification_token'] ?? '';
-        $verifyUrl = "https://teami.in/LC/verify/{$token}";
+        $certNumber = $certificate['certificate_number'] ?? 'LC-2026-SPC-00000';
+        $verifyUrl = "https://teami.in/LC/verify/{$certNumber}";
         $qr = new QrCode($verifyUrl);
-        $qrSize = 260;
+        $qrSize = 240;
         $qrX = (int) ($w / 2 - ($qrSize / 2));
-        $qrY = 1100;
+        $qrY = 1130;
         $qr->drawOnGd($im, $qrX, $qrY, $qrSize, 2);
 
         // QR Border
@@ -754,11 +823,10 @@ class CertificateService
         imagerectangle($im, $qrX - 2, $qrY - 2, $qrX + $qrSize + 2, $qrY + $qrSize + 2, $lineColor);
 
         // Certificate Number & Issue Date below QR
-        $certNumber = $certificate['certificate_number'] ?? 'LC-2026-SPC-00000';
         $issueDate = date('M d, Y', strtotime((string) $certificate['issue_date']));
-        $this->drawCenteredText($im, "Certificate No: {$certNumber}", 24, 1410, $primaryDark, $fontBold);
-        $this->drawCenteredText($im, "Issued on: {$issueDate}", 20, 1445, $textMuted, $fontRegular);
-        $this->drawCenteredText($im, "Scan QR to verify authentic credential at teami.in/LC", 18, 1475, $textMuted, $fontRegular);
+        $this->drawCenteredText($im, "Certificate ID: {$certNumber}", 24, 1400, $primaryDark, $fontBold);
+        $this->drawCenteredText($im, "Issued on: {$issueDate}", 20, 1435, $textMuted, $fontRegular);
+        $this->drawCenteredText($im, "Scan QR to verify authentic credential at teami.in/LC", 18, 1465, $textMuted, $fontRegular);
 
         // Footer disclaimer
         $this->drawCenteredText($im, 'Official Credential &bull; Listening Community – Suicide Prevention Campaign &bull; All Rights Reserved', 16, 1630, $textMuted, $fontRegular);

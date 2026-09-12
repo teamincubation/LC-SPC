@@ -102,27 +102,68 @@ $testPdo->exec("
 
     CREATE TABLE events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        campaign_id INTEGER NOT NULL,
+        campaign_id INTEGER NULL,
         coordinator_id INTEGER NULL,
         title VARCHAR(191) NOT NULL,
-        slug VARCHAR(191) NOT NULL,
+        slug VARCHAR(191) NOT NULL UNIQUE,
         category VARCHAR(50) NOT NULL DEFAULT 'workshop',
+        event_type VARCHAR(20) NOT NULL DEFAULT 'offline',
+        collaboration_with VARCHAR(255) NULL,
+        collaboration_logo VARCHAR(255) NULL,
         description TEXT NULL,
         format VARCHAR(20) NOT NULL DEFAULT 'in_person',
         venue_name VARCHAR(255) NULL,
         venue_address TEXT NULL,
+        timezone VARCHAR(64) NOT NULL DEFAULT 'Asia/Kolkata',
         online_meeting_url VARCHAR(255) NULL,
         start_time DATETIME NOT NULL,
         end_time DATETIME NOT NULL,
+        checkin_start_date DATE NULL,
+        checkin_start_time TIME NULL,
+        latitude DECIMAL(10, 8) NULL,
+        longitude DECIMAL(11, 8) NULL,
+        geofence_radius_meters INTEGER NULL,
         capacity INTEGER NOT NULL DEFAULT 0,
         registration_deadline DATETIME NULL,
         requires_approval INTEGER NOT NULL DEFAULT 0,
         status VARCHAR(20) NOT NULL DEFAULT 'draft',
         created_at DATETIME NOT NULL,
         updated_at DATETIME NOT NULL,
-        deleted_at DATETIME NULL,
-        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE,
-        FOREIGN KEY (coordinator_id) REFERENCES users(id) ON DELETE SET NULL
+        deleted_at DATETIME NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS event_forms (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id INTEGER NOT NULL UNIQUE,
+        form_title VARCHAR(255) NOT NULL,
+        slug VARCHAR(191) NOT NULL UNIQUE,
+        banner_path VARCHAR(255) NULL,
+        photo_upload_enabled INTEGER NOT NULL DEFAULT 0,
+        location_access_required INTEGER NOT NULL DEFAULT 0,
+        whatsapp_group_url VARCHAR(255) NULL,
+        whatsapp_auto_redirect INTEGER NOT NULL DEFAULT 0,
+        whatsapp_countdown_seconds INTEGER NOT NULL DEFAULT 5,
+        custom_success_message TEXT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'published',
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS form_fields (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        form_id INTEGER NOT NULL,
+        field_key VARCHAR(64) NOT NULL,
+        field_label VARCHAR(100) NOT NULL,
+        field_type VARCHAR(30) NOT NULL DEFAULT 'text',
+        is_required INTEGER NOT NULL DEFAULT 0,
+        is_locked INTEGER NOT NULL DEFAULT 0,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        options_json TEXT NULL,
+        placeholder VARCHAR(255) NULL,
+        help_text VARCHAR(255) NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE (form_id, field_key)
     );
 
     CREATE TABLE audit_logs (
@@ -287,24 +328,20 @@ assertEventTest(
 );
 
 // -----------------------------------------------------------------------------
-// Test 3: Event creation failure on missing campaign_id
+// Test 3: Standalone event creation with nullable campaign_id (V2 Feature)
 // -----------------------------------------------------------------------------
-$caughtMissingCampaign = false;
-try {
-    $eventService->createEvent([
-        'title'      => 'Missing Campaign Event',
-        'category'   => 'workshop',
-        'format'     => 'in_person',
-        'venue_name' => 'Hall X',
-        'start_time' => '2026-09-15 09:00:00',
-        'end_time'   => '2026-09-15 12:00:00',
-    ], $superAdminId);
-} catch (InvalidArgumentException $e) {
-    $caughtMissingCampaign = isset($e->errors['campaign_id']);
-}
+$standaloneEvent = $eventService->createEvent([
+    'title'      => 'Standalone Community Circle',
+    'category'   => 'listening_circle',
+    'format'     => 'in_person',
+    'venue_name' => 'Community Hall X',
+    'start_time' => '2026-09-15 09:00:00',
+    'end_time'   => '2026-09-15 12:00:00',
+], $superAdminId);
+
 assertEventTest(
-    "3. Event creation failure on missing campaign_id",
-    $caughtMissingCampaign
+    "3. Standalone event creation without campaign_id succeeds in Event-Centric V2",
+    !empty($standaloneEvent['id']) && $standaloneEvent['campaign_id'] === null
 );
 
 // -----------------------------------------------------------------------------
@@ -718,24 +755,27 @@ assertEventTest(
 );
 
 // -----------------------------------------------------------------------------
-// Test 19: Same slug allowed in DIFFERENT campaigns (campaign-scoped uniqueness!)
+// Test 19: Duplicate slug rejected across different campaigns (Global Uniqueness in V2)
 // -----------------------------------------------------------------------------
-$eventInDifferentCampaign = $eventService->createEvent([
-    'campaign_id' => $campaignBId, // Campaign B!
-    'title'       => 'Pledge Drive for Campus',
-    'slug'        => 'my-custom-pledge-slug', // Same slug as in Campaign A!
-    'category'    => 'pledge_drive',
-    'format'      => 'in_person',
-    'venue_name'  => 'Student Center',
-    'start_time'  => '2026-10-10 10:00:00',
-    'end_time'    => '2026-10-10 18:00:00',
-], $coordinatorId);
+$caughtGlobalDuplicateSlug = false;
+try {
+    $eventService->createEvent([
+        'campaign_id' => $campaignBId, // Campaign B!
+        'title'       => 'Pledge Drive for Campus',
+        'slug'        => 'my-custom-pledge-slug', // Same slug as in Campaign A!
+        'category'    => 'pledge_drive',
+        'format'      => 'in_person',
+        'venue_name'  => 'Student Center',
+        'start_time'  => '2026-10-10 10:00:00',
+        'end_time'    => '2026-10-10 18:00:00',
+    ], $coordinatorId);
+} catch (InvalidArgumentException $e) {
+    $caughtGlobalDuplicateSlug = isset($e->errors['slug']);
+}
 
 assertEventTest(
-    "19. Same slug allowed in DIFFERENT campaigns (campaign-scoped uniqueness)",
-    !empty($eventInDifferentCampaign['id']) &&
-    $eventInDifferentCampaign['slug'] === 'my-custom-pledge-slug' &&
-    $eventInDifferentCampaign['campaign_id'] === $campaignBId
+    "19. Duplicate slug rejected globally across different campaigns (V2 global unique slug requirement)",
+    $caughtGlobalDuplicateSlug
 );
 
 echo PHP_EOL . "4. Testing Coordinator Verification & Assignment..." . PHP_EOL;

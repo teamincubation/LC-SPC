@@ -226,6 +226,28 @@
           </div>
         </div>
 
+        <?php if (!$isRevoked): ?>
+          <!-- Social Share & LinkedIn Credential Addition -->
+          <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 0.75rem;">
+            <a href="https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=<?= urlencode(($verification['type_label'] ?? 'Certificate') . ' - ' . ($verification['event_title'] ?? '')) ?>&organizationName=<?= urlencode('Listening Community') ?>&issueYear=<?= date('Y', strtotime((string) ($verification['issue_date'] ?? 'now'))) ?>&issueMonth=<?= date('n', strtotime((string) ($verification['issue_date'] ?? 'now'))) ?>&certUrl=<?= urlencode($canonicalUrl) ?>&certId=<?= urlencode($verification['certificate_number'] ?? '') ?>" 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: #0077b5; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 0.9rem; padding: 0.75rem 1.25rem; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.2s;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248-.822 0-1.359.54-1.359 1.248 0 .694.521 1.248 1.327 1.248h.016zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016a5.54 5.54 0 0 1 .016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225h2.4z"/>
+              </svg>
+              Add Certificate to LinkedIn Profile
+            </a>
+
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=<?= urlencode($canonicalUrl) ?>" 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: #f1f5f9; color: #334155; text-decoration: none; font-weight: 500; font-size: 0.85rem; padding: 0.6rem 1.25rem; border-radius: 6px; border: 1px solid #cbd5e1; transition: background 0.2s;">
+              Share Credential on LinkedIn Feed
+            </a>
+          </div>
+        <?php endif; ?>
+
         <?php if ($isRevoked): ?>
           <!-- Generic Revocation Invalidation Statement -->
           <div class="revocation-notice">

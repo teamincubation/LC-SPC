@@ -27,7 +27,7 @@ class EventRepository
                        u.name AS coordinator_name, 
                        u.email AS coordinator_email 
                 FROM `events` e 
-                JOIN `campaigns` c ON e.campaign_id = c.id 
+                LEFT JOIN `campaigns` c ON e.campaign_id = c.id 
                 LEFT JOIN `users` u ON e.coordinator_id = u.id 
                 WHERE 1=1";
         $params = [];
@@ -77,10 +77,35 @@ class EventRepository
                        u.name AS coordinator_name, 
                        u.email AS coordinator_email 
                 FROM `events` e 
-                JOIN `campaigns` c ON e.campaign_id = c.id 
+                LEFT JOIN `campaigns` c ON e.campaign_id = c.id 
                 LEFT JOIN `users` u ON e.coordinator_id = u.id 
                 WHERE e.`id` = :id";
         $params = [':id' => $id];
+
+        if (!$includeDeleted) {
+            $sql .= " AND e.`deleted_at` IS NULL";
+        }
+
+        $sql .= " LIMIT 1";
+
+        return Database::fetch($sql, $params);
+    }
+
+    /**
+     * Find an event globally by its unique slug.
+     */
+    public function findBySlug(string $slug, bool $includeDeleted = false): ?array
+    {
+        $sql = "SELECT e.*, 
+                       c.title AS campaign_title, 
+                       c.slug AS campaign_slug, 
+                       u.name AS coordinator_name, 
+                       u.email AS coordinator_email 
+                FROM `events` e 
+                LEFT JOIN `campaigns` c ON e.campaign_id = c.id 
+                LEFT JOIN `users` u ON e.coordinator_id = u.id 
+                WHERE e.`slug` = :slug";
+        $params = [':slug' => strtolower(trim($slug))];
 
         if (!$includeDeleted) {
             $sql .= " AND e.`deleted_at` IS NULL";
@@ -102,7 +127,7 @@ class EventRepository
                        u.name AS coordinator_name, 
                        u.email AS coordinator_email 
                 FROM `events` e 
-                JOIN `campaigns` c ON e.campaign_id = c.id 
+                LEFT JOIN `campaigns` c ON e.campaign_id = c.id 
                 LEFT JOIN `users` u ON e.coordinator_id = u.id 
                 WHERE e.`campaign_id` = :campaign_id AND e.`slug` = :slug";
         $params = [
@@ -117,6 +142,23 @@ class EventRepository
         $sql .= " LIMIT 1";
 
         return Database::fetch($sql, $params);
+    }
+
+    /**
+     * Check if a slug already exists globally.
+     */
+    public function slugExists(string $slug, ?int $excludeId = null): bool
+    {
+        $sql = "SELECT COUNT(*) AS `total` FROM `events` WHERE `slug` = :slug";
+        $params = [':slug' => strtolower(trim($slug))];
+
+        if ($excludeId !== null) {
+            $sql .= " AND `id` != :exclude_id";
+            $params[':exclude_id'] = $excludeId;
+        }
+
+        $row = Database::fetch($sql, $params);
+        return (int) ($row['total'] ?? 0) > 0;
     }
 
     /**
@@ -150,33 +192,46 @@ class EventRepository
         $now = date('Y-m-d H:i:s');
         $sql = "INSERT INTO `events` (
                     `campaign_id`, `coordinator_id`, `title`, `slug`, 
-                    `category`, `description`, `format`, 
-                    `venue_name`, `venue_address`, `online_meeting_url`, 
-                    `start_time`, `end_time`, `capacity`, 
-                    `registration_deadline`, `requires_approval`, 
+                    `category`, `event_type`, `collaboration_with`, `collaboration_logo`,
+                    `description`, `format`, `venue_name`, `venue_address`, 
+                    `timezone`, `online_meeting_url`, `start_time`, `end_time`, 
+                    `checkin_start_date`, `checkin_start_time`,
+                    `latitude`, `longitude`, `geofence_radius_meters`,
+                    `capacity`, `registration_deadline`, `requires_approval`, 
                     `status`, `created_at`, `updated_at`, `deleted_at`
                 ) VALUES (
                     :campaign_id, :coordinator_id, :title, :slug, 
-                    :category, :description, :format, 
-                    :venue_name, :venue_address, :online_meeting_url, 
-                    :start_time, :end_time, :capacity, 
-                    :registration_deadline, :requires_approval, 
+                    :category, :event_type, :collaboration_with, :collaboration_logo,
+                    :description, :format, :venue_name, :venue_address, 
+                    :timezone, :online_meeting_url, :start_time, :end_time, 
+                    :checkin_start_date, :checkin_start_time,
+                    :latitude, :longitude, :geofence_radius_meters,
+                    :capacity, :registration_deadline, :requires_approval, 
                     :status, :created_at, :updated_at, NULL
                 )";
 
         $params = [
-            ':campaign_id'          => (int) $data['campaign_id'],
+            ':campaign_id'          => !empty($data['campaign_id']) ? (int) $data['campaign_id'] : null,
             ':coordinator_id'       => !empty($data['coordinator_id']) ? (int) $data['coordinator_id'] : null,
             ':title'                => trim((string) ($data['title'] ?? '')),
             ':slug'                 => strtolower(trim((string) ($data['slug'] ?? ''))),
             ':category'             => $data['category'] ?? 'workshop',
+            ':event_type'           => $data['event_type'] ?? 'offline',
+            ':collaboration_with'   => !empty($data['collaboration_with']) ? trim((string) $data['collaboration_with']) : null,
+            ':collaboration_logo'   => !empty($data['collaboration_logo']) ? trim((string) $data['collaboration_logo']) : null,
             ':description'          => !empty($data['description']) ? trim((string) $data['description']) : null,
             ':format'               => $data['format'] ?? 'in_person',
             ':venue_name'           => !empty($data['venue_name']) ? trim((string) $data['venue_name']) : null,
             ':venue_address'        => !empty($data['venue_address']) ? trim((string) $data['venue_address']) : null,
+            ':timezone'             => !empty($data['timezone']) ? trim((string) $data['timezone']) : 'Asia/Kolkata',
             ':online_meeting_url'   => !empty($data['online_meeting_url']) ? trim((string) $data['online_meeting_url']) : null,
             ':start_time'           => $data['start_time'],
             ':end_time'             => $data['end_time'],
+            ':checkin_start_date'   => !empty($data['checkin_start_date']) ? $data['checkin_start_date'] : null,
+            ':checkin_start_time'   => !empty($data['checkin_start_time']) ? $data['checkin_start_time'] : null,
+            ':latitude'             => isset($data['latitude']) && $data['latitude'] !== '' ? (float) $data['latitude'] : null,
+            ':longitude'            => isset($data['longitude']) && $data['longitude'] !== '' ? (float) $data['longitude'] : null,
+            ':geofence_radius_meters'=> isset($data['geofence_radius_meters']) && $data['geofence_radius_meters'] !== '' ? (int) $data['geofence_radius_meters'] : null,
             ':capacity'             => isset($data['capacity']) ? (int) $data['capacity'] : 0,
             ':registration_deadline'=> !empty($data['registration_deadline']) ? $data['registration_deadline'] : null,
             ':requires_approval'    => !empty($data['requires_approval']) ? 1 : 0,
@@ -201,13 +256,22 @@ class EventRepository
                     `title` = :title,
                     `slug` = :slug,
                     `category` = :category,
+                    `event_type` = :event_type,
+                    `collaboration_with` = :collaboration_with,
+                    `collaboration_logo` = :collaboration_logo,
                     `description` = :description,
                     `format` = :format,
                     `venue_name` = :venue_name,
                     `venue_address` = :venue_address,
+                    `timezone` = :timezone,
                     `online_meeting_url` = :online_meeting_url,
                     `start_time` = :start_time,
                     `end_time` = :end_time,
+                    `checkin_start_date` = :checkin_start_date,
+                    `checkin_start_time` = :checkin_start_time,
+                    `latitude` = :latitude,
+                    `longitude` = :longitude,
+                    `geofence_radius_meters` = :geofence_radius_meters,
                     `capacity` = :capacity,
                     `registration_deadline` = :registration_deadline,
                     `requires_approval` = :requires_approval,
@@ -217,18 +281,27 @@ class EventRepository
 
         $params = [
             ':id'                   => $id,
-            ':campaign_id'          => (int) $data['campaign_id'],
+            ':campaign_id'          => !empty($data['campaign_id']) ? (int) $data['campaign_id'] : null,
             ':coordinator_id'       => !empty($data['coordinator_id']) ? (int) $data['coordinator_id'] : null,
             ':title'                => trim((string) ($data['title'] ?? '')),
             ':slug'                 => strtolower(trim((string) ($data['slug'] ?? ''))),
             ':category'             => $data['category'] ?? 'workshop',
+            ':event_type'           => $data['event_type'] ?? 'offline',
+            ':collaboration_with'   => !empty($data['collaboration_with']) ? trim((string) $data['collaboration_with']) : null,
+            ':collaboration_logo'   => !empty($data['collaboration_logo']) ? trim((string) $data['collaboration_logo']) : null,
             ':description'          => !empty($data['description']) ? trim((string) $data['description']) : null,
             ':format'               => $data['format'] ?? 'in_person',
             ':venue_name'           => !empty($data['venue_name']) ? trim((string) $data['venue_name']) : null,
             ':venue_address'        => !empty($data['venue_address']) ? trim((string) $data['venue_address']) : null,
+            ':timezone'             => !empty($data['timezone']) ? trim((string) $data['timezone']) : 'Asia/Kolkata',
             ':online_meeting_url'   => !empty($data['online_meeting_url']) ? trim((string) $data['online_meeting_url']) : null,
             ':start_time'           => $data['start_time'],
             ':end_time'             => $data['end_time'],
+            ':checkin_start_date'   => !empty($data['checkin_start_date']) ? $data['checkin_start_date'] : null,
+            ':checkin_start_time'   => !empty($data['checkin_start_time']) ? $data['checkin_start_time'] : null,
+            ':latitude'             => isset($data['latitude']) && $data['latitude'] !== '' ? (float) $data['latitude'] : null,
+            ':longitude'            => isset($data['longitude']) && $data['longitude'] !== '' ? (float) $data['longitude'] : null,
+            ':geofence_radius_meters'=> isset($data['geofence_radius_meters']) && $data['geofence_radius_meters'] !== '' ? (int) $data['geofence_radius_meters'] : null,
             ':capacity'             => isset($data['capacity']) ? (int) $data['capacity'] : 0,
             ':registration_deadline'=> !empty($data['registration_deadline']) ? $data['registration_deadline'] : null,
             ':requires_approval'    => !empty($data['requires_approval']) ? 1 : 0,

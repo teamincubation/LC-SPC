@@ -83,7 +83,7 @@ class RegistrationRepository
                            u.`name` AS `checked_in_by_name`
                     FROM `event_registrations` r
                     JOIN `events` e ON r.`event_id` = e.`id`
-                    JOIN `campaigns` c ON e.`campaign_id` = c.`id`
+                    LEFT JOIN `campaigns` c ON e.`campaign_id` = c.`id`
                     JOIN `participants` p ON r.`participant_id` = p.`id`
                     LEFT JOIN `users` u ON r.`checked_in_by` = u.`id`"
                     . $where . " ORDER BY r.`id` DESC LIMIT " . (int) $perPage . " OFFSET " . (int) $offset;
@@ -134,7 +134,7 @@ class RegistrationRepository
                        u.`name` AS `checked_in_by_name`
                 FROM `event_registrations` r
                 JOIN `events` e ON r.`event_id` = e.`id`
-                JOIN `campaigns` c ON e.`campaign_id` = c.`id`
+                LEFT JOIN `campaigns` c ON e.`campaign_id` = c.`id`
                 JOIN `participants` p ON r.`participant_id` = p.`id`
                 LEFT JOIN `users` u ON r.`checked_in_by` = u.`id`
                 WHERE r.`id` = :id
@@ -173,7 +173,7 @@ class RegistrationRepository
                        u.`name` AS `checked_in_by_name`
                 FROM `event_registrations` r
                 JOIN `events` e ON r.`event_id` = e.`id`
-                JOIN `campaigns` c ON e.`campaign_id` = c.`id`
+                LEFT JOIN `campaigns` c ON e.`campaign_id` = c.`id`
                 JOIN `participants` p ON r.`participant_id` = p.`id`
                 LEFT JOIN `users` u ON r.`checked_in_by` = u.`id`
                 WHERE r.`registration_code` = :code
@@ -260,6 +260,18 @@ class RegistrationRepository
     }
 
     /**
+     * Count all registrations for a specific event.
+     */
+    public function countByEvent(int $eventId): int
+    {
+        $sql = "SELECT COUNT(*) AS `total` 
+                FROM `event_registrations` 
+                WHERE `event_id` = :event_id";
+        $row = Database::fetch($sql, [':event_id' => $eventId]);
+        return (int) ($row['total'] ?? 0);
+    }
+
+    /**
      * Count waitlisted registrations for a specific event.
      */
     public function countWaitlistedByEvent(int $eventId): int
@@ -286,10 +298,22 @@ class RegistrationRepository
      */
     public function create(array $data): int
     {
+        $customDataJson = null;
+        if (isset($data['custom_data'])) {
+            $customDataJson = is_array($data['custom_data']) 
+                ? json_encode($data['custom_data'], JSON_UNESCAPED_UNICODE) 
+                : (string) $data['custom_data'];
+        }
+
         $sql = "INSERT INTO `event_registrations` (
                     `registration_code`,
                     `event_id`,
                     `participant_id`,
+                    `form_id`,
+                    `custom_data`,
+                    `phone_normalized`,
+                    `country_code`,
+                    `photo_path`,
                     `status`,
                     `attendance_status`,
                     `admin_notes`,
@@ -299,6 +323,11 @@ class RegistrationRepository
                     :registration_code,
                     :event_id,
                     :participant_id,
+                    :form_id,
+                    :custom_data,
+                    :phone_normalized,
+                    :country_code,
+                    :photo_path,
                     :status,
                     :attendance_status,
                     :admin_notes,
@@ -311,6 +340,11 @@ class RegistrationRepository
             ':registration_code' => trim((string) $data['registration_code']),
             ':event_id'          => (int) $data['event_id'],
             ':participant_id'    => (int) $data['participant_id'],
+            ':form_id'           => !empty($data['form_id']) ? (int) $data['form_id'] : null,
+            ':custom_data'       => $customDataJson,
+            ':phone_normalized'  => !empty($data['phone_normalized']) ? trim((string) $data['phone_normalized']) : null,
+            ':country_code'      => !empty($data['country_code']) ? trim((string) $data['country_code']) : '+91',
+            ':photo_path'        => !empty($data['photo_path']) ? trim((string) $data['photo_path']) : null,
             ':status'            => $data['status'] ?? 'confirmed',
             ':attendance_status' => $data['attendance_status'] ?? 'unmarked',
             ':admin_notes'       => !empty($data['admin_notes']) ? trim((string) $data['admin_notes']) : null,
@@ -320,6 +354,52 @@ class RegistrationRepository
 
         Database::execute($sql, $params);
         return (int) Database::lastInsertId();
+    }
+
+    /**
+     * Find a registration by event ID and normalized phone number.
+     */
+    public function findByEventAndPhone(int $eventId, string $phoneNormalized): ?array
+    {
+        $sql = "SELECT r.*, p.full_name, p.email, p.phone 
+                FROM `event_registrations` r
+                JOIN `participants` p ON r.participant_id = p.id
+                WHERE r.`event_id` = :event_id AND r.`phone_normalized` = :phone 
+                LIMIT 1";
+        return Database::fetch($sql, [
+            ':event_id' => $eventId,
+            ':phone'    => $phoneNormalized,
+        ]);
+    }
+
+    /**
+     * Update check-in status and physical telemetry.
+     */
+    public function updateCheckin(int $id, array $data): bool
+    {
+        $now = date('Y-m-d H:i:s');
+        $sql = "UPDATE `event_registrations` SET 
+                    `attendance_status` = :attendance_status,
+                    `check_in_method` = :check_in_method,
+                    `attended_at` = :attended_at,
+                    `checkin_latitude` = :lat,
+                    `checkin_longitude` = :lng,
+                    `checkin_distance_meters` = :dist,
+                    `checkin_geofence_verified` = :geofence_verified,
+                    `updated_at` = :updated_at
+                WHERE `id` = :id";
+
+        return Database::execute($sql, [
+            ':id'                 => $id,
+            ':attendance_status'  => $data['attendance_status'] ?? 'attended',
+            ':check_in_method'    => $data['check_in_method'] ?? 'qr_scanner',
+            ':attended_at'        => $data['attended_at'] ?? $now,
+            ':lat'                => isset($data['checkin_latitude']) && $data['checkin_latitude'] !== '' ? (float) $data['checkin_latitude'] : null,
+            ':lng'                => isset($data['checkin_longitude']) && $data['checkin_longitude'] !== '' ? (float) $data['checkin_longitude'] : null,
+            ':dist'               => isset($data['checkin_distance_meters']) && $data['checkin_distance_meters'] !== '' ? (float) $data['checkin_distance_meters'] : null,
+            ':geofence_verified'  => (int) ($data['checkin_geofence_verified'] ?? 0),
+            ':updated_at'         => $now,
+        ]) > 0;
     }
 
     /**

@@ -29,6 +29,7 @@ class CertificateController
     private CertificateRepository $certRepo;
     private EventRepository $eventRepo;
     private RegistrationRepository $regRepo;
+    private \App\Repositories\CertificateTemplateRepository $templateRepo;
     private AuditService $auditService;
 
     public function __construct(
@@ -36,12 +37,14 @@ class CertificateController
         ?CertificateRepository $certRepo = null,
         ?EventRepository $eventRepo = null,
         ?RegistrationRepository $regRepo = null,
+        ?\App\Repositories\CertificateTemplateRepository $templateRepo = null,
         ?AuditService $auditService = null
     ) {
         $this->certService = $certService ?? new CertificateService();
         $this->certRepo = $certRepo ?? new CertificateRepository();
         $this->eventRepo = $eventRepo ?? new EventRepository();
         $this->regRepo = $regRepo ?? new RegistrationRepository();
+        $this->templateRepo = $templateRepo ?? new \App\Repositories\CertificateTemplateRepository();
         $this->auditService = $auditService ?? new AuditService();
     }
 
@@ -302,6 +305,20 @@ class CertificateController
             return Response::html(View::render('errors/403', ['title' => 'Certificate Revoked', 'message' => 'This certificate has been officially revoked and cannot be exported as an active credential.']), 403);
         }
 
+        if (($cert['event_status'] ?? '') !== 'completed') {
+            return Response::html(View::render('errors/403', [
+                'title'   => 'Certificate Gated',
+                'message' => 'Certificates can strictly only be downloaded once the event is marked as completed.',
+            ]), 403);
+        }
+
+        if (($cert['attendance_status'] ?? '') !== 'attended') {
+            return Response::html(View::render('errors/403', [
+                'title'   => 'Ineligible Attendee',
+                'message' => 'Certificates are only available for attendees who checked in and attended the event.',
+            ]), 403);
+        }
+
         // Render official PDF binary
         $pdfData = $this->certService->renderPdf($cert);
 
@@ -347,6 +364,20 @@ class CertificateController
 
         if (($cert['status'] ?? '') === 'revoked') {
             return Response::html(View::render('errors/403', ['title' => 'Certificate Revoked', 'message' => 'This certificate has been officially revoked and cannot be exported as an active credential.']), 403);
+        }
+
+        if (($cert['event_status'] ?? '') !== 'completed') {
+            return Response::html(View::render('errors/403', [
+                'title'   => 'Certificate Gated',
+                'message' => 'Certificates can strictly only be downloaded once the event is marked as completed.',
+            ]), 403);
+        }
+
+        if (($cert['attendance_status'] ?? '') !== 'attended') {
+            return Response::html(View::render('errors/403', [
+                'title'   => 'Ineligible Attendee',
+                'message' => 'Certificates are only available for attendees who checked in and attended the event.',
+            ]), 403);
         }
 
         // Render high-resolution JPG binary
@@ -426,5 +457,106 @@ class CertificateController
         }
 
         return Response::redirect(url("/admin/certificates/{$id}"));
+    }
+
+    /**
+     * Certificate Template Designer.
+     * GET /admin/events/{id}/certificates/designer
+     * Role: coordinator+
+     */
+    public function designer(Request $request, array $vars): Response
+    {
+        $eventId = (int) ($vars['id'] ?? 0);
+        $event = $this->eventRepo->findById($eventId);
+        if (!$event) {
+            Session::flash('error', 'Event not found.');
+            return Response::redirect(url('/admin/certificates'));
+        }
+
+        $template = $this->templateRepo->findByEventId($eventId);
+        $defaultConfig = $this->templateRepo->getDefaultLayoutConfig();
+
+        return Response::html(
+            View::render('admin/certificates/designer', [
+                'title'         => 'Certificate Template Designer — ' . ($event['title'] ?? ''),
+                'event'         => $event,
+                'template'      => $template,
+                'defaultConfig' => $defaultConfig,
+            ], 'layouts/admin')
+        );
+    }
+
+    /**
+     * Save Certificate Template Configuration & Assets.
+     * POST /admin/events/{id}/certificates/designer
+     * Role: coordinator+
+     */
+    public function saveDesigner(Request $request, array $vars): Response
+    {
+        $eventId = (int) ($vars['id'] ?? 0);
+        $event = $this->eventRepo->findById($eventId);
+        if (!$event) {
+            Session::flash('error', 'Event not found.');
+            return Response::redirect(url('/admin/certificates'));
+        }
+
+        $uploadBase = (defined('APP_ROOT') ? APP_ROOT : dirname(__DIR__, 3)) . '/public/uploads/certificates';
+        if (!is_dir($uploadBase)) {
+            @mkdir($uploadBase, 0755, true);
+        }
+
+        $templateData = [
+            'signature1_name'        => trim((string) $request->input('signature1_name', '')),
+            'signature1_designation' => trim((string) $request->input('signature1_designation', '')),
+            'signature2_name'        => trim((string) $request->input('signature2_name', '')),
+            'signature2_designation' => trim((string) $request->input('signature2_designation', '')),
+        ];
+
+        // Handle File Uploads
+        $uploadFields = [
+            'background_image' => 'background_image_path',
+            'seal_image'       => 'seal_image_path',
+            'signature1_image' => 'signature1_image_path',
+            'signature2_image' => 'signature2_image_path',
+        ];
+
+        $maxBytes = 5 * 1024 * 1024; // 5 MB per asset limit
+
+        foreach ($uploadFields as $inputKey => $dbKey) {
+            if (isset($_FILES[$inputKey]) && $_FILES[$inputKey]['error'] === UPLOAD_ERR_OK) {
+                $file = $_FILES[$inputKey];
+
+                // Enforce maximum 5MB per uploaded certificate asset BEFORE moving/processing
+                if (($file['size'] ?? 0) > $maxBytes) {
+                    $assetLabel = str_replace('_', ' ', $inputKey);
+                    Session::flash('error', "The uploaded {$assetLabel} exceeds the maximum allowed file size of 5 MB.");
+                    return Response::redirect(url("/admin/events/{$eventId}/certificates/designer"));
+                }
+
+                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                $mime = $finfo->file($file['tmp_name']);
+                $allowedMimes = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+
+                if (isset($allowedMimes[$mime])) {
+                    $ext = $allowedMimes[$mime];
+                    $filename = "cert_{$eventId}_{$inputKey}_" . bin2hex(random_bytes(6)) . ".{$ext}";
+                    $destPath = $uploadBase . '/' . $filename;
+                    if (move_uploaded_file($file['tmp_name'], $destPath)) {
+                        $templateData[$dbKey] = '/uploads/certificates/' . $filename;
+                    }
+                }
+            }
+        }
+
+        // Layout Config
+        $layoutConfig = $request->input('layout_config');
+        if (!empty($layoutConfig) && is_array($layoutConfig)) {
+            $templateData['layout_config'] = $layoutConfig;
+        }
+
+        $this->templateRepo->saveOrUpdate($eventId, $templateData);
+
+        Session::flash('success', 'Certificate template and layout saved successfully.');
+        return Response::redirect(url("/admin/events/{$eventId}/certificates/designer"));
     }
 }

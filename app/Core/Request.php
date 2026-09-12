@@ -191,6 +191,11 @@ class Request
         return '127.0.0.1';
     }
 
+    public function getIp(): string
+    {
+        return $this->ip();
+    }
+
     /**
      * Retrieve client user agent.
      */
