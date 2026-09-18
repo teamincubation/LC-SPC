@@ -3,126 +3,199 @@
 declare(strict_types=1);
 
 /**
- * Public Certificate Search Portal View
+ * Public Certificate Search Portal View (Mobile-First Redesign)
  */
 ?>
 
-<div class="auth-card" style="max-width: 680px; margin: 2rem auto; width: 100%;">
-  <div class="auth-card-header" style="text-align: center; padding: 2rem 1.5rem 1.5rem; border-bottom: 1px solid var(--border-color);">
-    <div style="font-size: 2.5rem; color: var(--color-primary); margin-bottom: 0.5rem;">
-      <?= icon('award') ?>
+<div class="cert-portal-card" style="max-width: 680px; margin: 1.5rem auto;">
+  <!-- Header & Institutional Branding -->
+  <header class="cert-portal-header">
+    <div class="cert-portal-badge">
+      <?= icon('award', ['style' => 'width: 14px; height: 14px;']) ?>
+      <span>Official Credential Verification</span>
     </div>
-    <h1 style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); margin: 0 0 0.5rem 0; color: var(--text-primary);">
+    <h1 class="cert-portal-title">
       Find Your Certificate
     </h1>
-    <p class="text-secondary" style="font-size: var(--font-size-sm); margin: 0;">
-      Verify and download your official Listening Community participation credential.
+    <p class="cert-portal-subtitle">
+      Verify authenticity and download high-resolution certificates issued by Listening Community.
     </p>
-  </div>
+  </header>
 
-  <div class="auth-card-body" style="padding: 1.5rem;">
-    <!-- Tabs: Phone Search vs Certificate ID Search -->
-    <div style="display: flex; border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem;">
-      <button type="button" id="tabPhone" class="btn" style="flex: 1; border: none; border-radius: 0; border-bottom: 2px solid <?= $mode === 'phone' ? 'var(--color-primary)' : 'transparent' ?>; background: none; color: <?= $mode === 'phone' ? 'var(--color-primary)' : 'var(--text-secondary)' ?>; font-weight: var(--font-weight-semibold); padding: 0.75rem;">
+  <div class="cert-portal-body">
+    <!-- Segmented Navigation Tabs (Phone Search vs Certificate ID Search) -->
+    <div class="cert-tabs-nav" role="tablist" aria-label="Certificate Search Mode">
+      <button 
+        type="button" 
+        id="tabPhone" 
+        role="tab" 
+        aria-selected="<?= $mode === 'phone' ? 'true' : 'false' ?>" 
+        aria-controls="formPhone" 
+        tabindex="<?= $mode === 'phone' ? '0' : '-1' ?>" 
+        class="cert-tab-btn <?= $mode === 'phone' ? 'active' : '' ?>"
+      >
         <?= icon('phone') ?>
         <span>Search by Phone</span>
       </button>
-      <button type="button" id="tabCertId" class="btn" style="flex: 1; border: none; border-radius: 0; border-bottom: 2px solid <?= $mode === 'cert_id' ? 'var(--color-primary)' : 'transparent' ?>; background: none; color: <?= $mode === 'cert_id' ? 'var(--color-primary)' : 'var(--text-secondary)' ?>; font-weight: var(--font-weight-semibold); padding: 0.75rem;">
+      <button 
+        type="button" 
+        id="tabCertId" 
+        role="tab" 
+        aria-selected="<?= $mode === 'cert_id' ? 'true' : 'false' ?>" 
+        aria-controls="formCertId" 
+        tabindex="<?= $mode === 'cert_id' ? '0' : '-1' ?>" 
+        class="cert-tab-btn <?= $mode === 'cert_id' ? 'active' : '' ?>"
+      >
         <?= icon('hash') ?>
         <span>Search by Certificate ID</span>
       </button>
     </div>
 
-    <!-- Phone Search Form -->
-    <form id="formPhone" method="GET" action="<?= e(url('/certificates')) ?>" style="display: <?= $mode === 'phone' ? 'block' : 'none' ?>;">
-      <div class="form-group mb-4">
-        <label for="phoneInput" class="form-label font-semibold">Phone Number</label>
-        <div style="position: relative;">
+    <!-- Phone Search Form Panel -->
+    <form 
+      id="formPhone" 
+      role="tabpanel" 
+      aria-labelledby="tabPhone" 
+      method="GET" 
+      action="<?= e(url('/certificates')) ?>" 
+      style="display: <?= $mode === 'phone' ? 'block' : 'none' ?>;"
+      class="cert-search-form"
+    >
+      <div class="cert-form-group">
+        <label for="phoneInput" class="cert-form-label">Registered Mobile Number</label>
+        <div class="cert-input-wrapper">
+          <span class="cert-input-icon" aria-hidden="true"><?= icon('phone') ?></span>
           <input 
             type="tel" 
             id="phoneInput" 
             name="phone" 
-            class="form-control" 
+            class="cert-input" 
             placeholder="e.g. +91 98765 43210 or 9876543210" 
             value="<?= e($phoneInput) ?>" 
             required
             autocomplete="tel"
+            inputmode="tel"
+            aria-describedby="phoneHelp"
           >
         </div>
-        <div class="form-text text-muted" style="font-size: var(--font-size-xs);">
-          Enter the mobile number provided during participation.
+        <div id="phoneHelp" class="cert-help-text">
+          Enter the mobile number provided during program registration.
         </div>
       </div>
-      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+
+      <button type="submit" id="btnSubmitPhone" class="cert-btn-primary">
         <?= icon('search') ?>
-        <span>Find My Certificates</span>
+        <span class="btn-text">Find My Certificates</span>
       </button>
     </form>
 
-    <!-- Certificate ID Form -->
-    <form id="formCertId" method="GET" action="<?= e(url('/certificates')) ?>" style="display: <?= $mode === 'cert_id' ? 'block' : 'none' ?>;">
-      <div class="form-group mb-4">
-        <label for="certIdInput" class="form-label font-semibold">Certificate ID</label>
-        <input 
-          type="text" 
-          id="certIdInput" 
-          name="certificate_id" 
-          class="form-control" 
-          placeholder="e.g. CERT-2026-AB3X9K7M" 
-          value="<?= e($certIdInput) ?>" 
-          required
-          style="font-family: var(--font-mono); text-transform: uppercase;"
-        >
-        <div class="form-text text-muted" style="font-size: var(--font-size-xs);">
-          Enter the exact Certificate ID printed on your document.
+    <!-- Certificate ID Form Panel -->
+    <form 
+      id="formCertId" 
+      role="tabpanel" 
+      aria-labelledby="tabCertId" 
+      method="GET" 
+      action="<?= e(url('/certificates')) ?>" 
+      style="display: <?= $mode === 'cert_id' ? 'block' : 'none' ?>;"
+      class="cert-search-form"
+    >
+      <div class="cert-form-group">
+        <label for="certIdInput" class="cert-form-label">Official Certificate ID</label>
+        <div class="cert-input-wrapper">
+          <span class="cert-input-icon" aria-hidden="true"><?= icon('hash') ?></span>
+          <input 
+            type="text" 
+            id="certIdInput" 
+            name="certificate_id" 
+            class="cert-input cert-input-mono" 
+            placeholder="e.g. CERT-2026-AB3X9K7M" 
+            value="<?= e($certIdInput) ?>" 
+            required
+            autocomplete="off"
+            spellcheck="false"
+            aria-describedby="certIdHelp"
+          >
+        </div>
+        <div id="certIdHelp" class="cert-help-text">
+          Enter the exact alphanumeric Certificate ID printed on your document.
         </div>
       </div>
-      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+
+      <button type="submit" id="btnSubmitCertId" class="cert-btn-primary">
         <?= icon('search') ?>
-        <span>Verify Certificate</span>
+        <span class="btn-text">Verify Certificate ID</span>
       </button>
     </form>
 
-    <!-- Results Display -->
+    <!-- Live Status Announcement for Accessibility -->
+    <div id="searchLiveRegion" class="sr-only" aria-live="polite"></div>
+
+    <!-- Search Results / Feedback Display -->
     <?php if ($searched): ?>
-      <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+      <section class="cert-results-section" aria-label="Search Results">
         <?php if (!empty($errorMessage)): ?>
-          <div class="alert alert-warning" style="margin-bottom: 0;">
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <!-- No Results / User Reassurance State -->
+          <div class="cert-empty-state" role="alert">
+            <div class="cert-empty-icon" aria-hidden="true">
               <?= icon('alert-circle') ?>
-              <span><?= e($errorMessage) ?></span>
+            </div>
+            <div class="cert-empty-content">
+              <h2 class="cert-empty-title"><?= e($errorMessage) ?></h2>
+              <p class="cert-empty-desc">
+                Please double check the entered phone number (including country code) or Certificate ID. If you recently attended, please allow a few minutes for generation to finalize.
+              </p>
             </div>
           </div>
         <?php elseif (!empty($results)): ?>
-          <h3 style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin-bottom: 1rem;">
-            Matching Certificates Found (<?= count($results) ?>):
-          </h3>
-          <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Matching Results List -->
+          <h2 class="cert-results-title">
+            <?= icon('check-circle', ['style' => 'color: #059669;']) ?>
+            <span>Matching Verified Credentials (<?= count($results) ?>)</span>
+          </h2>
+          <div class="cert-results-list">
             <?php foreach ($results as $cert): ?>
-              <div class="card" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; background: var(--bg-surface-subtle);">
-                <div>
-                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                    <span class="badge badge-success" style="font-size: 0.7rem;">Active</span>
-                    <strong style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-primary);"><?= e($cert['certificate_id']) ?></strong>
+              <article class="cert-result-card">
+                <div class="cert-result-info">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+                    <span class="cert-badge-active">
+                      <?= icon('check-circle', ['style' => 'width: 12px; height: 12px;']) ?>
+                      <span>Active</span>
+                    </span>
+                    <span class="cert-result-id"><?= e($cert['certificate_id']) ?></span>
                   </div>
-                  <h4 style="font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); margin: 0 0 0.25rem 0;"><?= e($cert['recipient_name']) ?></h4>
-                  <div class="text-secondary" style="font-size: var(--font-size-xs);">
-                    <span><?= e($cert['event_title']) ?></span> &bull; <span>Issued: <?= e($cert['issue_date']) ?></span>
+                  <h3 class="cert-result-name"><?= e($cert['recipient_name']) ?></h3>
+                  <div class="cert-result-meta">
+                    <span><?= icon('calendar', ['style' => 'width: 13px; height: 13px; display: inline-block; vertical-align: -1px;']) ?> Issued: <?= e($cert['issue_date']) ?></span>
+                    <span>&bull;</span>
+                    <span><?= e($cert['event_title']) ?></span>
                   </div>
                 </div>
-                <div style="display: flex; gap: 0.5rem;">
-                  <a href="<?= e(url('/certificates/verify/' . $cert['verification_token'])) ?>" class="btn btn-primary btn-sm">
+                <div class="cert-result-action">
+                  <a href="<?= e(url('/certificates/verify/' . $cert['verification_token'])) ?>" class="cert-btn-verify-now" aria-label="View and verify certificate for <?= e($cert['recipient_name']) ?>">
                     <?= icon('award') ?>
                     <span>View &amp; Verify</span>
                   </a>
                 </div>
-              </div>
+              </article>
             <?php endforeach; ?>
           </div>
         <?php endif; ?>
-      </div>
+      </section>
     <?php endif; ?>
   </div>
+
+  <!-- Trust Guarantee Sub-footer -->
+  <footer class="cert-trust-footer">
+    <div class="cert-trust-inner">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 0.35rem; font-weight: 600; color: #475569;">
+        <?= icon('shield', ['style' => 'color: #059669; width: 15px; height: 15px;']) ?>
+        <span>Institutional Certificate Verification System</span>
+      </div>
+      <div>
+        Every credential is cryptographically protected with 256-bit hash validation and registered in the Listening Community SPC database.
+      </div>
+    </div>
+  </footer>
 </div>
 
 <script>
@@ -131,23 +204,73 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabCertId = document.getElementById('tabCertId');
   const formPhone = document.getElementById('formPhone');
   const formCertId = document.getElementById('formCertId');
+  const phoneInput = document.getElementById('phoneInput');
+  const certIdInput = document.getElementById('certIdInput');
+  const liveRegion = document.getElementById('searchLiveRegion');
 
-  tabPhone.addEventListener('click', () => {
-    tabPhone.style.borderBottom = '2px solid var(--color-primary)';
-    tabPhone.style.color = 'var(--color-primary)';
-    tabCertId.style.borderBottom = '2px solid transparent';
-    tabCertId.style.color = 'var(--text-secondary)';
-    formPhone.style.display = 'block';
-    formCertId.style.display = 'none';
+  function setMode(mode, focusInput = false) {
+    if (mode === 'phone') {
+      tabPhone.classList.add('active');
+      tabPhone.setAttribute('aria-selected', 'true');
+      tabPhone.setAttribute('tabindex', '0');
+      tabCertId.classList.remove('active');
+      tabCertId.setAttribute('aria-selected', 'false');
+      tabCertId.setAttribute('tabindex', '-1');
+      formPhone.style.display = 'block';
+      formCertId.style.display = 'none';
+      if (focusInput) phoneInput.focus();
+    } else {
+      tabCertId.classList.add('active');
+      tabCertId.setAttribute('aria-selected', 'true');
+      tabCertId.setAttribute('tabindex', '0');
+      tabPhone.classList.remove('active');
+      tabPhone.setAttribute('aria-selected', 'false');
+      tabPhone.setAttribute('tabindex', '-1');
+      formCertId.style.display = 'block';
+      formPhone.style.display = 'none';
+      if (focusInput) certIdInput.focus();
+    }
+  }
+
+  tabPhone.addEventListener('click', () => setMode('phone', true));
+  tabCertId.addEventListener('click', () => setMode('cert_id', true));
+
+  // Keyboard arrow navigation between tabs (WAI-ARIA Tab pattern)
+  const tabs = [tabPhone, tabCertId];
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const nextTab = tabs[(index + 1) % tabs.length];
+        nextTab.click();
+        nextTab.focus();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const prevTab = tabs[(index - 1 + tabs.length) % tabs.length];
+        prevTab.click();
+        prevTab.focus();
+      }
+    });
   });
 
-  tabCertId.addEventListener('click', () => {
-    tabCertId.style.borderBottom = '2px solid var(--color-primary)';
-    tabCertId.style.color = 'var(--color-primary)';
-    tabPhone.style.borderBottom = '2px solid transparent';
-    tabPhone.style.color = 'var(--text-secondary)';
-    formCertId.style.display = 'block';
-    formPhone.style.display = 'none';
-  });
+  // Loading state handling on form submissions
+  function handleFormSubmit(form, btn) {
+    form.addEventListener('submit', () => {
+      btn.disabled = true;
+      const btnText = btn.querySelector('.btn-text');
+      if (btnText) {
+        btnText.textContent = 'Searching credential registry...';
+      }
+      if (liveRegion) {
+        liveRegion.textContent = 'Searching credential repository, please wait...';
+      }
+    });
+  }
+
+  const btnSubmitPhone = document.getElementById('btnSubmitPhone');
+  if (formPhone && btnSubmitPhone) handleFormSubmit(formPhone, btnSubmitPhone);
+
+  const btnSubmitCertId = document.getElementById('btnSubmitCertId');
+  if (formCertId && btnSubmitCertId) handleFormSubmit(formCertId, btnSubmitCertId);
 });
 </script>
