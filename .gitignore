@@ -17,6 +17,12 @@
 !/storage/uploads/.gitkeep
 /storage/private/*
 !/storage/private/.gitkeep
+/storage/certificates/*
+!/storage/certificates/.gitkeep
+/storage/batches/*
+!/storage/batches/.gitkeep
+/storage/fonts/*
+!/storage/fonts/.gitkeep
 
 # Logs and Databases
 *.log

@@ -8,54 +8,38 @@ use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
 use App\Repositories\AuditLogRepository;
-use App\Repositories\CampaignRepository;
-use App\Repositories\EventRepository;
-use App\Repositories\ParticipantRepository;
-use App\Repositories\RegistrationRepository;
+use App\Repositories\V3CertificateRepository;
 use App\Services\AuthService;
 use App\Services\RoleService;
 
 /**
- * Administrative Dashboard Controller
- * Serves the foundational authenticated overview in Phase 1.
+ * Administrative Dashboard Controller (V3 Automated Certificate Platform)
+ * High-level overview of certificate metrics, active templates, recent batches, and system logs.
  */
 class DashboardController extends Controller
 {
     private AuthService $authService;
-    private CampaignRepository $campaignRepo;
-    private EventRepository $eventRepo;
-    private ParticipantRepository $participantRepo;
-    private RegistrationRepository $regRepo;
+    private V3CertificateRepository $certRepo;
     private AuditLogRepository $auditRepo;
 
     public function __construct(
         ?AuthService $authService = null,
-        ?CampaignRepository $campaignRepo = null,
-        ?EventRepository $eventRepo = null,
-        ?ParticipantRepository $participantRepo = null,
-        ?RegistrationRepository $regRepo = null,
+        ?V3CertificateRepository $certRepo = null,
         ?AuditLogRepository $auditRepo = null
     ) {
         $this->authService = $authService ?? new AuthService();
-        $this->campaignRepo = $campaignRepo ?? new CampaignRepository();
-        $this->eventRepo = $eventRepo ?? new EventRepository();
-        $this->participantRepo = $participantRepo ?? new ParticipantRepository();
-        $this->regRepo = $regRepo ?? new RegistrationRepository();
+        $this->certRepo = $certRepo ?? new V3CertificateRepository();
         $this->auditRepo = $auditRepo ?? new AuditLogRepository();
     }
 
     /**
-     * Show administrative overview dashboard.
+     * Show administrative certificate overview dashboard.
      */
     public function index(Request $request): Response
     {
         $user = $this->authService->getCurrentUser();
-
-        $campCounts = $this->campaignRepo->countByStatus();
-        $eventCounts = $this->eventRepo->countByStatus();
-        $partCounts = $this->participantRepo->countByStatus();
-        $regCounts = $this->regRepo->countByStatus();
-        $recentLogs = $this->auditRepo->getRecent(5);
+        $metrics = $this->certRepo->getDashboardMetrics();
+        $recentLogs = $this->auditRepo->getRecent(6);
 
         return $this->render('admin/dashboard/index', [
             'title'       => 'Administrative Overview',
@@ -63,11 +47,9 @@ class DashboardController extends Controller
             'user'        => $user,
             'roleLabel'   => RoleService::getRoleLabel($user['role'] ?? 'viewer'),
             'roleBadge'   => RoleService::getBadgeClass($user['role'] ?? 'viewer'),
-            'campCounts'  => $campCounts,
-            'eventCounts' => $eventCounts,
-            'partCounts'  => $partCounts,
-            'regCounts'   => $regCounts,
+            'metrics'     => $metrics,
             'recentLogs'  => $recentLogs,
+            'activeNav'   => 'dashboard',
         ], 'layouts/admin');
     }
 }
