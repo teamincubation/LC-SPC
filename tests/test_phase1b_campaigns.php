@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Phase 1B — Campaign Management Automated Test Suite
+ * Phase 1B - Campaign Management Automated Test Suite
  * Run via: php tests/test_phase1b_campaigns.php
  */
 
@@ -288,7 +288,7 @@ echo PHP_EOL . "2. Testing Campaign Modification, Soft-Delete & Restore Lifecycl
 
 // Test 7: Campaign update works
 $updated = $campaignService->updateCampaign($campaign['id'], [
-    'title'       => 'Suicide Prevention Campaign 2026 — Updated',
+    'title'       => 'Suicide Prevention Campaign 2026 - Updated',
     'slug'        => 'spc-2026-updated',
     'theme'       => 'Listening Heals',
     'description' => 'Updated description content.',
@@ -299,7 +299,7 @@ $updated = $campaignService->updateCampaign($campaign['id'], [
 
 assertCampaignTest(
     "7. Campaign update works (title, theme, status, and dates modified)",
-    $updated['title'] === 'Suicide Prevention Campaign 2026 — Updated' &&
+    $updated['title'] === 'Suicide Prevention Campaign 2026 - Updated' &&
     $updated['slug'] === 'spc-2026-updated' &&
     $updated['theme'] === 'Listening Heals' &&
     $updated['status'] === 'completed' &&

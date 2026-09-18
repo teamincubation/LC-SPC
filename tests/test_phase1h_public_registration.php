@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Phase 1H — Public Campaign, Event Discovery & Public Event Registration Test Suite
+ * Phase 1H - Public Campaign, Event Discovery & Public Event Registration Test Suite
  * Run via: php tests/test_phase1h_public_registration.php
  */
 

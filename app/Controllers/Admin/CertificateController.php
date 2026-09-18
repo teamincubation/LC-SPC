@@ -119,7 +119,7 @@ class CertificateController
 
         return Response::html(
             View::render('admin/certificates/event', [
-                'title'          => 'Certificates — ' . $event['title'],
+                'title'          => 'Certificates - ' . $event['title'],
                 'event'          => $event,
                 'type'           => $type,
                 'certificates'   => $pagination['items'],
@@ -260,7 +260,7 @@ class CertificateController
 
         return Response::html(
             View::render('admin/certificates/print', [
-                'title'       => 'Official Certificate — ' . $cert['certificate_number'],
+                'title'       => 'Official Certificate - ' . $cert['certificate_number'],
                 'certificate' => $cert,
                 'qrSvg'       => $qrSvg,
                 'verifyUrl'   => $verifyUrl,
@@ -478,7 +478,7 @@ class CertificateController
 
         return Response::html(
             View::render('admin/certificates/designer', [
-                'title'         => 'Certificate Template Designer — ' . ($event['title'] ?? ''),
+                'title'         => 'Certificate Template Designer - ' . ($event['title'] ?? ''),
                 'event'         => $event,
                 'template'      => $template,
                 'defaultConfig' => $defaultConfig,

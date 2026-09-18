@@ -354,7 +354,7 @@ class PublicEventRegistrationController
         $whatsappCountdown = !empty($form['whatsapp_countdown_seconds']) ? (int) $form['whatsapp_countdown_seconds'] : (int) ($globalSettings['whatsapp_countdown_seconds'] ?? 5);
 
         return Response::html(View::render('public/events/pass_v2', [
-            'title'             => 'Registration Pass — ' . ($event['title'] ?? 'Event'),
+            'title'             => 'Registration Pass - ' . ($event['title'] ?? 'Event'),
             'registration'      => $reg,
             'event'             => $event,
             'participant'       => $participant,

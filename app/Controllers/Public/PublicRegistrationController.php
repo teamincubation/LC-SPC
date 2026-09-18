@@ -75,7 +75,7 @@ class PublicRegistrationController
 
         return Response::html(
             View::render('public/registration/form', [
-                'title'       => 'Register — ' . $event['title'],
+                'title'       => 'Register - ' . $event['title'],
                 'event'       => $event,
                 'isWaitlist'  => $isWaitlist,
                 'errors'      => Session::getFlash('errors', []),
@@ -259,7 +259,7 @@ class PublicRegistrationController
 
         return Response::html(
             View::render('public/registration/confirmation', [
-                'title'        => 'Registration Confirmed — ' . $confirmationData['attendee_name'],
+                'title'        => 'Registration Confirmed - ' . $confirmationData['attendee_name'],
                 'confirmation' => $confirmationData,
             ])
         );
@@ -273,7 +273,7 @@ class PublicRegistrationController
     {
         return Response::html(
             View::render('public/registration/status', [
-                'title'  => 'Check Registration Status — Listening Community',
+                'title'  => 'Check Registration Status - Listening Community',
                 'status' => null,
                 'error'  => Session::getFlash('status_error'),
                 'code'   => Session::getFlash('status_code', ''),
@@ -307,7 +307,7 @@ class PublicRegistrationController
             $this->recordAttempt($clientIp, 'status_ip', 10, 900);
             return Response::html(
                 View::render('public/registration/status', [
-                    'title'  => 'Check Registration Status — Listening Community',
+                    'title'  => 'Check Registration Status - Listening Community',
                     'status' => null,
                     'error'  => 'Please enter a valid registration code in the format: REG-YY-XXXXX',
                     'code'   => $code,
@@ -323,7 +323,7 @@ class PublicRegistrationController
             $this->recordAttempt($clientIp, 'status_ip', 10, 900);
             return Response::html(
                 View::render('public/registration/status', [
-                    'title'  => 'Check Registration Status — Listening Community',
+                    'title'  => 'Check Registration Status - Listening Community',
                     'status' => null,
                     'error'  => 'No registration was found for the provided registration code. Please double-check your pass code.',
                     'code'   => $code,
@@ -350,7 +350,7 @@ class PublicRegistrationController
 
         return Response::html(
             View::render('public/registration/status', [
-                'title'  => 'Registration Status — ' . $statusCard['registration_code'],
+                'title'  => 'Registration Status - ' . $statusCard['registration_code'],
                 'status' => $statusCard,
                 'error'  => null,
                 'code'   => $code,

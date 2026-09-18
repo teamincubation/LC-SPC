@@ -39,7 +39,7 @@ class FormSettingsController
         $settings = $this->formSettingsRepo->getSettings();
 
         return Response::html(View::render('admin/form_settings/index', [
-            'title'     => 'Form Settings — Global Rules',
+            'title'     => 'Form Settings - Global Rules',
             'settings'  => $settings,
             'activeNav' => 'form-settings',
         ], 'layouts/admin'));

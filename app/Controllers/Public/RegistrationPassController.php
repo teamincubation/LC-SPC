@@ -98,7 +98,7 @@ class RegistrationPassController
 
         return Response::html(
             View::render('public/pass/show', [
-                'title' => 'Attendance Pass — ' . ($passData['attendee_name'] ?? 'Attendee'),
+                'title' => 'Attendance Pass - ' . ($passData['attendee_name'] ?? 'Attendee'),
                 'pass'  => $passData,
             ])
         );

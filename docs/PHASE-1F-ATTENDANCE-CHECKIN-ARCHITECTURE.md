@@ -1,4 +1,4 @@
-# Phase 1F — Attendance & Check-in System Architecture Specification
+# Phase 1F - Attendance & Check-in System Architecture Specification
 
 **Project**: Listening Community – Suicide Prevention Campaign (LC-SPC)  
 **Production URL**: `https://teami.in/LC/`  
@@ -150,7 +150,7 @@ The database column `check_in_method` supports three values: `admin_manual`, `qr
   - `checked_in_by = current_user.id`
   - `check_in_method = 'admin_manual'`
 
-#### C. Self-Verified Check-In (`self_verified`) — Locked Decision: Disabled
+#### C. Self-Verified Check-In (`self_verified`) - Locked Decision: Disabled
 - **Context & Risk Assessment**: LC-SPC is an educational suicide prevention and peer-listening campaign. Workshops and circles require physical presence, interactive roleplay, and emotional safeguarding.
 - **Integrity Risks**:
   - Unsupervised link sharing: Participants could share self-check-in links on social messaging channels, allowing non-attending individuals to falsely claim attendance for certificates.
@@ -542,7 +542,7 @@ In community event venues (auditoriums, college halls, community centers), cellu
 LC-SPC adopts an **Online-First with Progressive UI Resilience** architecture:
 1. **Ultra-Lightweight Verification API**: `POST /admin/checkin/verify` returns a compact JSON payload under 1.5 KB, achieving sub-100ms response times even over constrained 3G/4G connections.
 2. **Client-Side Connectivity Monitor**: The console monitors `navigator.onLine` and `window.addEventListener('online'/'offline')`.
-3. **Visual Network Badge**: If network connectivity drops, the scanner displays an orange warning badge: `"Network Paused — Reconnecting..."` and prevents queuing unverified entries.
+3. **Visual Network Badge**: If network connectivity drops, the scanner displays an orange warning badge: `"Network Paused - Reconnecting..."` and prevents queuing unverified entries.
 4. **Ephemeral Request Timeout & Retry**: AJAX calls timeout after 5.0 seconds. If a timeout occurs, staff is presented with a non-destructive `"Retry Verification"` button.
 
 ---
@@ -781,10 +781,10 @@ A dedicated test suite `tests/Unit/AttendanceTest.php` and `tests/Feature/CheckI
    - Record appears instantly; volunteer checks attendee in with one tap.
 5. **Invalid / Cancelled Pass Rejection**:
    - Volunteer scans a cancelled pass and a waitlisted pass.
-   - Red and amber warning cards display clearly with bold status message (`"Entry Denied — Cancelled Registration"`).
+   - Red and amber warning cards display clearly with bold status message (`"Entry Denied - Cancelled Registration"`).
 6. **Network Drop / Venue Reconnect**:
    - Volunteer device toggles to Airplane mode while scanning.
-   - UI displays orange `"Network Paused — Reconnecting..."` banner without losing scanner state.
+   - UI displays orange `"Network Paused - Reconnecting..."` banner without losing scanner state.
    - Re-enabling connectivity resumes scanning seamlessly.
 7. **Post-Event Reconciliation & Bulk Absent Gate**:
    - Coordinator opens `/admin/events/{id}/attendance` 1 hour after event ends.

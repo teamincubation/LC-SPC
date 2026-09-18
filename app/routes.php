@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * LC-SPC Application Route Registry — V3 Standalone Automated Certificate Platform
+ * LC-SPC Application Route Registry - V3 Standalone Automated Certificate Platform
  * Dedicated workflow:
  * Certificate Settings -> Certificate Templates -> CSV Validation -> Chunked Generation -> Certificate Repository -> Public Verification
  */

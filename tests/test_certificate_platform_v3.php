@@ -57,7 +57,7 @@ class TestCertificatePlatformV3
     public function run(): void
     {
         echo "====================================================================\n";
-        echo "  LC-SPC CERTIFICATE PLATFORM V3 — COMPREHENSIVE TEST SUITE\n";
+        echo "  LC-SPC CERTIFICATE PLATFORM V3 - COMPREHENSIVE TEST SUITE\n";
         echo "====================================================================\n\n";
 
         $this->setupMariaDb();
@@ -84,7 +84,7 @@ class TestCertificatePlatformV3
         echo "====================================================================\n";
 
         if ($this->failCount > 0) {
-            echo "RESULT: BLOCKED — FIX REQUIRED\n";
+            echo "RESULT: BLOCKED - FIX REQUIRED\n";
             exit(1);
         } else {
             echo "RESULT: READY FOR REVIEW\n";
@@ -524,7 +524,7 @@ class TestCertificatePlatformV3
     }
 
     /**
-     * TEST 7: Batch Processing — 100 Records Scale
+     * TEST 7: Batch Processing - 100 Records Scale
      */
     private function test7_BatchProcessing100Records(): void
     {
@@ -566,7 +566,7 @@ class TestCertificatePlatformV3
     }
 
     /**
-     * TEST 8: Batch Processing — 500 Records Scale
+     * TEST 8: Batch Processing - 500 Records Scale
      */
     private function test8_BatchProcessing500Records(): void
     {
@@ -603,7 +603,7 @@ class TestCertificatePlatformV3
     }
 
     /**
-     * TEST 9: Batch Processing — 1000 Records Resilience & Partial Failure Recovery
+     * TEST 9: Batch Processing - 1000 Records Resilience & Partial Failure Recovery
      */
     private function test9_BatchProcessing1000RecordsResilience(): void
     {

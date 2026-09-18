@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Phase 1E — Event Registration & Attendance Pass Generation Test Suite
+ * Phase 1E - Event Registration & Attendance Pass Generation Test Suite
  * Run via: php tests/test_phase1e_registrations.php
  */
 

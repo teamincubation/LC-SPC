@@ -51,7 +51,7 @@
             $selected = ((int) ($old['event_id'] ?? $selectedEventId) === (int) $ev['id']) ? 'selected' : '';
           ?>
           <option value="<?= e((string) $ev['id']) ?>" <?= $selected ?>>
-            <?= e($ev['title']) ?> (<?= e(date('M d, Y H:i', strtotime((string) $ev['start_time']))) ?>) — <?= e($capText . $requiresApprovalText) ?>
+            <?= e($ev['title']) ?> (<?= e(date('M d, Y H:i', strtotime((string) $ev['start_time']))) ?>) - <?= e($capText . $requiresApprovalText) ?>
           </option>
         <?php endforeach; ?>
       </select>

@@ -258,7 +258,7 @@ class AdminManagementController
         }
 
         return Response::html(View::render('admin/admins/password', [
-            'title'     => "Reset Password — {$admin['name']}",
+            'title'     => "Reset Password - {$admin['name']}",
             'admin'     => $admin,
             'activeNav' => 'admins',
         ], 'layouts/admin'));
@@ -332,7 +332,7 @@ class AdminManagementController
         $assignedIds = $this->permService->getUserPermissionIds($id);
 
         return Response::html(View::render('admin/admins/permissions', [
-            'title'         => "Permission Assignment — {$admin['name']}",
+            'title'         => "Permission Assignment - {$admin['name']}",
             'admin'         => $admin,
             'groupedPerms'  => $groupedPerms,
             'assignedIds'   => $assignedIds,

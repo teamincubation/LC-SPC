@@ -1638,10 +1638,10 @@ button .svg-icon,
 
 .auth-header-tagline {
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 500;
   color: #64748B;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   margin-top: 2px;
 }
 
@@ -2014,20 +2014,51 @@ button .svg-icon,
 /* Responsive Rules */
 @media (max-width: 640px) {
   .auth-header {
-    padding: 0.625rem 1rem;
+    padding: 0.5rem 0.875rem;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
   }
 
   .auth-brand-logo {
-    height: 32px !important;
-    max-height: 32px !important;
+    height: 30px !important;
+    max-height: 30px !important;
+    width: auto !important;
   }
 
-  .auth-header-divider,
+  .auth-header-divider {
+    display: block;
+    width: 1px;
+    height: 22px;
+    background-color: #CBD5E1;
+    margin: 0 0.5rem;
+    flex-shrink: 0;
+  }
+
   .auth-header-title-block {
-    display: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .auth-header-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #0F172A;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .auth-header-tagline {
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: #64748B;
+    line-height: 1.2;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    margin-top: 1px;
   }
 
   .auth-main {
@@ -2106,6 +2137,33 @@ button .svg-icon,
 }
 
 @media (max-width: 360px) {
+  .auth-header {
+    padding: 0.375rem 0.5rem;
+  }
+
+  .auth-brand-logo {
+    height: 26px !important;
+    max-height: 26px !important;
+  }
+
+  .auth-header-divider {
+    height: 18px;
+    margin: 0 0.35rem;
+  }
+
+  .auth-header-title {
+    font-size: 0.75rem;
+  }
+
+  .auth-header-tagline {
+    font-size: 0.5625rem;
+  }
+
+  .auth-badge-pill {
+    padding: 0.2rem 0.45rem;
+    font-size: 0.6875rem;
+  }
+
   .auth-main {
     padding: 0.75rem 0.5rem;
     width: 100%;

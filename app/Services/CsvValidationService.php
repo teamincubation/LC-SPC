@@ -152,8 +152,8 @@ class CsvValidationService
             if (count($validRecords) + count($invalidRows) >= self::MAX_RECORDS_LIMIT) {
                 $invalidRows[] = [
                     'row'   => $rowNumber,
-                    'name'  => '—',
-                    'phone' => '—',
+                    'name'  => '-',
+                    'phone' => '-',
                     'error' => 'Maximum record batch limit (' . self::MAX_RECORDS_LIMIT . ') reached. Remaining rows ignored.',
                 ];
                 break;
@@ -174,8 +174,8 @@ class CsvValidationService
             if ($name === '' || mb_strlen($name) < 2) {
                 $invalidRows[] = [
                     'row'   => $rowNumber,
-                    'name'  => $name ?: '—',
-                    'phone' => $phone ?: '—',
+                    'name'  => $name ?: '-',
+                    'phone' => $phone ?: '-',
                     'error' => 'Recipient Name is required (minimum 2 characters).',
                 ];
                 continue;
@@ -186,7 +186,7 @@ class CsvValidationService
                 $invalidRows[] = [
                     'row'   => $rowNumber,
                     'name'  => $name,
-                    'phone' => '—',
+                    'phone' => '-',
                     'error' => 'Phone / WhatsApp number is required.',
                 ];
                 continue;

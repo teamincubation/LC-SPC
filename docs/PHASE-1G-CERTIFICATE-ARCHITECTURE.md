@@ -1,7 +1,7 @@
-# Phase 1G — Certificate System & Issuance Architecture Specification
+# Phase 1G - Certificate System & Issuance Architecture Specification
 
 **Project**: Listening Community – Suicide Prevention Campaign (LC-SPC)  
-**Document**: Architecture Design Specification — Phase 1G  
+**Document**: Architecture Design Specification - Phase 1G  
 **Baseline Commit**: `fc3bf88` (Phase 1F Approved, Locked, and Code-Frozen)  
 **Target Repository**: `teamincubation/LC-SPC`  
 **Production URL**: `https://teami.in/LC/`  
@@ -9,7 +9,7 @@
 
 ---
 
-# REVISION 1 — Architectural Resolutions
+# REVISION 1 - Architectural Resolutions
 
 This section documents the authoritative resolutions to the critical architectural questions raised during architectural review. These decisions supersede preliminary assumptions and govern all subsequent design sections.
 
@@ -35,7 +35,7 @@ In MySQL/InnoDB, this composite unique constraint applies indiscriminately acros
 | **Operational Impact** | Highly confusing for employers/verifiers scanning old paper copies. | Clean institutional standard; zero ambiguity between old and new copies. | Catastrophic for participants with clerical spelling mistakes in their names. |
 | **Database Schema Impact** | 0 migrations required, but introduces severe verification defects. | **Requires updating the unique constraint** via a proposed migration (`m0008`). | 0 migrations required, but operationally unacceptable for an NGO. |
 
-#### Authoritative Decision: Approach B — The Superseded Credential Architecture
+#### Authoritative Decision: Approach B - The Superseded Credential Architecture
 Approach B is the **only** cryptographically sound and forensically consistent model. Under this architecture:
 1. **Certificate History**: Every issued physical or digital certificate is an immutable historical entity with a permanent identity. An issued certificate is never erased, overwritten, or mutated.
 2. **Revoked Credential Behavior**:
@@ -700,7 +700,7 @@ $$\text{Campaigns} \longrightarrow \text{Events} \longrightarrow \text{Participa
    - Should certificate signatures default dynamically to `events.coordinator_id` and the organization campaign director from config?
    - *(Recommended: **YES** &mdash; maintains consistency with event coordinator assignment).*
 3. **OpenGraph Social Sharing Metadata**:
-   - Should `/verify/{token}` provide OpenGraph tags (title: "Verified Certificate of Participation — LC-SPC") for clean previews on LinkedIn/WhatsApp?
+   - Should `/verify/{token}` provide OpenGraph tags (title: "Verified Certificate of Participation - LC-SPC") for clean previews on LinkedIn/WhatsApp?
    - *(Recommended: **YES** with minimal disclosure).*
 
 ---

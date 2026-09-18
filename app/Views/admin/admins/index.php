@@ -44,7 +44,7 @@
               <div class="text-muted small"><?= e($admin['email']) ?></div>
             </td>
             <td>
-              <?= !empty($admin['phone']) ? e($admin['phone']) : '<span class="text-muted">—</span>' ?>
+              <?= !empty($admin['phone']) ? e($admin['phone']) : '<span class="text-muted">-</span>' ?>
             </td>
             <td>
               <?php 

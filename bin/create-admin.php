@@ -39,7 +39,7 @@ use App\Services\AuditService;
 App::bootstrap(APP_ROOT);
 
 echo "==================================================" . PHP_EOL;
-echo "  LC-SPC — Administrative Bootstrap Provisioner   " . PHP_EOL;
+echo "  LC-SPC - Administrative Bootstrap Provisioner   " . PHP_EOL;
 echo "==================================================" . PHP_EOL . PHP_EOL;
 
 // 1. Verify database connectivity

@@ -78,7 +78,7 @@ class EventFormController
         $checkInQrSvg = $this->formService->getPublicCheckInQrSvg($form['slug']);
 
         return Response::html(View::render('admin/forms/builder', [
-            'title'        => "Event Reg. Form — {$form['event_title']}",
+            'title'        => "Event Reg. Form - {$form['event_title']}",
             'form'         => $form,
             'fields'       => $fields,
             'regCount'     => $regCount,

@@ -191,7 +191,7 @@ class CertificateRenderer
             self::drawTextElement($im, 'OFFICIALLY REVOKED / INVALID CREDENTIAL', (int) ($w / 2), 135, 32, $bannerWhite, $fontBold, 'center', $w);
 
             // Watermark diagonal or center void
-            self::drawTextElement($im, 'VOID — REVOKED CREDENTIAL — VOID', (int) ($w / 2), 950, 48, $textRed, $fontBold, 'center', $w);
+            self::drawTextElement($im, 'VOID - REVOKED CREDENTIAL - VOID', (int) ($w / 2), 950, 48, $textRed, $fontBold, 'center', $w);
         }
 
         return $im;

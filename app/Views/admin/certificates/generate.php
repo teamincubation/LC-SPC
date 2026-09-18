@@ -90,8 +90,8 @@ declare(strict_types=1);
       <div style="margin-bottom: 1rem;">
         <strong style="display: block; color: var(--text-primary); margin-bottom: 0.25rem;">Mandatory Columns:</strong>
         <ul style="padding-left: 1.25rem; margin: 0; color: var(--text-secondary);">
-          <li><code>name</code> — Full name of the recipient</li>
-          <li><code>phone</code> — Contact phone number (auto-normalized to E.164)</li>
+          <li><code>name</code> - Full name of the recipient</li>
+          <li><code>phone</code> - Contact phone number (auto-normalized to E.164)</li>
         </ul>
       </div>
 

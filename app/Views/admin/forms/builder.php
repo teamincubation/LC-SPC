@@ -229,7 +229,7 @@
               <input type="text" name="placeholder" class="form-control form-control-sm" placeholder="Input placeholder...">
             </div>
             <div class="mb-3">
-              <label class="form-label small fw-semibold">Options (For Dropdown/Radio/Checkbox — 1 per line)</label>
+              <label class="form-label small fw-semibold">Options (For Dropdown/Radio/Checkbox - 1 per line)</label>
               <textarea name="options_json" class="form-control form-control-sm" rows="3" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
             </div>
             <div class="d-flex justify-content-end gap-2">

@@ -837,7 +837,7 @@ class CertificateService
             $bannerWhite = imagecolorallocate($im, 255, 255, 255);
             imagefilledrectangle($im, 70, 70, $w - 70, 150, $revokedRed);
             $this->drawCenteredText($im, 'OFFICIALLY REVOKED / INVALID CREDENTIAL', 28, 125, $bannerWhite, $fontBold);
-            $this->drawCenteredText($im, 'VOID — REVOKED CREDENTIAL — VOID', 42, 920, $revokedRed, $fontBold);
+            $this->drawCenteredText($im, 'VOID - REVOKED CREDENTIAL - VOID', 42, 920, $revokedRed, $fontBold);
         }
 
         ob_start();

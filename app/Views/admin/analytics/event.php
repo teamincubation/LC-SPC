@@ -208,7 +208,7 @@
                 </span>
               </td>
               <td style="padding: 1rem; color: #475569;">
-                <?= e($row['place'] ?: '—') ?>
+                <?= e($row['place'] ?: '-') ?>
               </td>
               <td style="padding: 1rem;">
                 <?php if ($row['attendance_status'] === 'attended'): ?>
@@ -222,7 +222,7 @@
                 <?php endif; ?>
               </td>
               <td style="padding: 1rem; font-size: 0.85rem; color: #64748b;">
-                <?= e($row['check_in_method'] ?: '—') ?>
+                <?= e($row['check_in_method'] ?: '-') ?>
               </td>
               <td style="padding: 1rem 1.5rem; font-size: 0.8rem; color: #64748b;">
                 <?= e(\App\Services\RegistrationMetadataService::maskIp($row['ip_address'])) ?> &bull; <?= e($row['device_type'] ?: 'Unknown') ?>

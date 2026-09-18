@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Phase 1G — Certificate System & Issuance Test Suite
+ * Phase 1G - Certificate System & Issuance Test Suite
  * Run via: php tests/test_phase1g_certificates.php
  *
  * Implements full coverage of Section 21 Test Matrix (40+ scenarios, 50+ assertions).
