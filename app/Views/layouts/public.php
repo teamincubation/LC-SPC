@@ -54,7 +54,7 @@
 
   <!-- Content Shell -->
   <main id="auth-main-content" class="public-main auth-main" role="main">
-    <div class="auth-portal-wrapper">
+    <div class="auth-portal-wrapper <?= (!empty($certPortal) || isset($verification) || isset($mode)) ? 'cert-portal-wrapper' : '' ?>">
       <?php if ($flashSuccess = flash('success')): ?>
         <div class="alert alert-success auth-flash-alert" data-dismissible="true" role="status">
           <div class="alert-content"><?= e($flashSuccess) ?></div>
