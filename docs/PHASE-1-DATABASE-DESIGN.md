@@ -1,4 +1,4 @@
-# Phase 1 — Database Architecture & Design Specification
+# Phase 1 - Database Architecture & Design Specification
 **Project**: Listening Community – Suicide Prevention Campaign (LC-SPC)  
 **Database**: `u806388046_LC` (MySQL 8.0 / MariaDB InnoDB, `utf8mb4_unicode_ci`)  
 **Status**: Final Design Specification (Zero Schema Changes Executed)  
@@ -581,4 +581,4 @@ The following architectural decisions have been formally approved for Phase 1 im
 
 ---
 
-*(End of Specification — No database changes, migration files, or application code changes have been made).*
+*(End of Specification - No database changes, migration files, or application code changes have been made).*

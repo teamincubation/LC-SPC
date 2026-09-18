@@ -228,7 +228,7 @@ class RegistrationController
 
         return Response::html(
             View::render('admin/registrations/show', [
-                'title'          => 'Registration #' . $registration['id'] . ' — ' . $registration['registration_code'],
+                'title'          => 'Registration #' . $registration['id'] . ' - ' . $registration['registration_code'],
                 'registration'   => $registration,
                 'confirmedCount' => $confirmedCount,
                 'isEventFull'    => $isEventFull,
@@ -257,7 +257,7 @@ class RegistrationController
 
         return Response::html(
             View::render('admin/registrations/pass', [
-                'title'        => 'Attendance Pass — ' . $registration['registration_code'],
+                'title'        => 'Attendance Pass - ' . $registration['registration_code'],
                 'registration' => $registration,
                 'userRole'     => $userRole,
             ], 'layouts/admin')
@@ -280,7 +280,7 @@ class RegistrationController
 
         return Response::html(
             View::render('admin/registrations/print_pass', [
-                'title'        => 'Print Pass — ' . $registration['registration_code'],
+                'title'        => 'Print Pass - ' . $registration['registration_code'],
                 'registration' => $registration,
             ])
         );

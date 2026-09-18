@@ -1,4 +1,4 @@
-# Phase 1 — Application Architecture & Engineering Specification
+# Phase 1 - Application Architecture & Engineering Specification
 
 **Project**: Listening Community – Suicide Prevention Campaign (LC-SPC)  
 **Base URL**: `https://teami.in/LC/` (Production) / `http://localhost:8000/` (Development)  

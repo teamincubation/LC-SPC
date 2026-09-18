@@ -62,7 +62,7 @@ class AttendanceController
 
             return Response::html(
                 View::render('admin/attendance/index', [
-                    'title'                    => 'Attendance — ' . $data['event']['title'],
+                    'title'                    => 'Attendance - ' . $data['event']['title'],
                     'event'                    => $data['event'],
                     'roster'                   => $data['roster']['items'],
                     'pagination'               => $data['roster'],

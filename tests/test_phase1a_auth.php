@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Phase 1A — Authentication & RBAC Automated Test Suite
+ * Phase 1A - Authentication & RBAC Automated Test Suite
  * Run via: php tests/test_phase1a_auth.php
  */
 

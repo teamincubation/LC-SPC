@@ -1,4 +1,4 @@
-# PHASE 1H — PUBLIC CAMPAIGN, EVENT DISCOVERY & PUBLIC EVENT REGISTRATION
+# PHASE 1H - PUBLIC CAMPAIGN, EVENT DISCOVERY & PUBLIC EVENT REGISTRATION
 ## Comprehensive Architectural Specification & Technical Design Document
 
 ---
@@ -108,7 +108,7 @@ graph TD
     B --> C["Selects Event (/events/slug or /campaigns/slug/events/slug)"]
     C --> D{"Inspects Event Status"}
     D -->|Draft / Deleted| E["HTTP 404 Not Found"]
-    D -->|Completed / Ongoing| F["Event Details Visible — Registration Closed"]
+    D -->|Completed / Ongoing| F["Event Details Visible - Registration Closed"]
     D -->|Published & Pre-Deadline| G["Registration Form Open"]
     G --> H["Fills Form: Name, Email, Phone, Category, Org, Consents"]
     H --> I["Submits Form (CSRF + Honeypot Check)"]
@@ -285,7 +285,7 @@ GET /registration/confirmed/{registration_code}
   - Prominent Action Button: **"View / Print Attendance Pass"** (`/registration/pass/{code}`).
   - Recommendation: Bookmark the URL or screenshot the pass.
 - **Pending Registration**:
-  - Yellow Attention Banner: "Registration Received — Awaiting Coordinator Approval".
+  - Yellow Attention Banner: "Registration Received - Awaiting Coordinator Approval".
   - Explanation: This event requires manual coordinator verification. The pass will activate once approved.
   - Self-check instructions via `/registration/status`.
 - **Waitlisted Registration**:

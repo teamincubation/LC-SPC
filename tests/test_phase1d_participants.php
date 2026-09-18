@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Phase 1D — Participant Management Automated Test Suite
+ * Phase 1D - Participant Management Automated Test Suite
  * Run via: php tests/test_phase1d_participants.php
  */
 

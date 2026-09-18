@@ -80,7 +80,7 @@ class CheckInController
 
         return Response::html(
             View::render('admin/checkin/index', [
-                'title'  => 'Check-In Console — Event Hub',
+                'title'  => 'Check-In Console - Event Hub',
                 'events' => $activeEvents,
             ], 'layouts/admin')
         );
@@ -125,7 +125,7 @@ class CheckInController
 
         return Response::html(
             View::render('admin/checkin/console', [
-                'title'            => 'Check-In Console — ' . $event['title'],
+                'title'            => 'Check-In Console - ' . $event['title'],
                 'event'            => $event,
                 'attendees'        => $attendees,
                 'metrics'          => $metrics,

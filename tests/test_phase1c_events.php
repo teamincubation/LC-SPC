@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Phase 1C — Event Management Automated Test Suite
+ * Phase 1C - Event Management Automated Test Suite
  * Run via: php tests/test_phase1c_events.php
  */
 

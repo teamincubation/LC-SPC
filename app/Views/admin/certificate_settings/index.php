@@ -101,15 +101,15 @@ declare(strict_types=1);
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
           <label class="form-check" style="display: flex; align-items: center; gap: 0.75rem;">
             <input type="radio" name="output_format" value="pdf_image" <?= (($settings['output_format'] ?? '') === 'pdf_image' || empty($settings['output_format'])) ? 'checked' : '' ?>>
-            <span><strong>PDF + High-Resolution Image (Recommended)</strong> — Generates both ISO-compliant A4 Landscape PDF and high-res JPG sharing the exact coordinate model.</span>
+            <span><strong>PDF + High-Resolution Image (Recommended)</strong> - Generates both ISO-compliant A4 Landscape PDF and high-res JPG sharing the exact coordinate model.</span>
           </label>
           <label class="form-check" style="display: flex; align-items: center; gap: 0.75rem;">
             <input type="radio" name="output_format" value="pdf" <?= (($settings['output_format'] ?? '') === 'pdf') ? 'checked' : '' ?>>
-            <span><strong>PDF Only</strong> — Generates ISO-compliant A4 Landscape vector PDF credential.</span>
+            <span><strong>PDF Only</strong> - Generates ISO-compliant A4 Landscape vector PDF credential.</span>
           </label>
           <label class="form-check" style="display: flex; align-items: center; gap: 0.75rem;">
             <input type="radio" name="output_format" value="image" <?= (($settings['output_format'] ?? '') === 'image') ? 'checked' : '' ?>>
-            <span><strong>Image Only</strong> — Generates 300 DPI high-resolution JPEG credential.</span>
+            <span><strong>Image Only</strong> - Generates 300 DPI high-resolution JPEG credential.</span>
           </label>
         </div>
       </div>

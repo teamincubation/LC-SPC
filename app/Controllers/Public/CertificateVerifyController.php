@@ -108,7 +108,7 @@ class CertificateVerifyController
 
         return Response::html(
             View::render('public/certificates/verify', [
-                'title'        => ($verificationData['is_revoked'] ? 'Revoked Certificate — ' : 'Verified Certificate — ') . $verificationData['certificate_number'],
+                'title'        => ($verificationData['is_revoked'] ? 'Revoked Certificate - ' : 'Verified Certificate - ') . $verificationData['certificate_number'],
                 'verification' => $verificationData,
                 'token'        => $token,
             ])

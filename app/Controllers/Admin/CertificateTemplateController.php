@@ -146,7 +146,7 @@ class CertificateTemplateController
         $allVars = VariableRegistry::getAll();
 
         return Response::html(View::render('admin/certificate_templates/edit', [
-            'title'     => "Edit Template — {$template['name']}",
+            'title'     => "Edit Template - {$template['name']}",
             'template'  => $template,
             'allVars'   => $allVars,
             'activeNav' => 'certificate-templates',
@@ -230,7 +230,7 @@ class CertificateTemplateController
         $fonts = FontManagementService::getAllFonts();
 
         return Response::html(View::render('admin/certificate_templates/designer', [
-            'title'     => "Certificate Designer — {$template['name']}",
+            'title'     => "Certificate Designer - {$template['name']}",
             'template'  => $template,
             'allVars'   => $allVars,
             'fonts'     => $fonts,

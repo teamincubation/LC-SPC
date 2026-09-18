@@ -85,7 +85,7 @@ class PublicCheckInController
         $qrSvg = $this->formService->getPublicCheckInQrSvg($event['slug'], 200);
 
         return Response::html(View::render('public/checkin/index', [
-            'title'       => 'Check-in — ' . $event['title'],
+            'title'       => 'Check-in - ' . $event['title'],
             'event'       => $event,
             'timing'      => $timing,
             'hasGeofence' => $hasGeofence,

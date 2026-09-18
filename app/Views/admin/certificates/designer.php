@@ -88,7 +88,7 @@
           <div class="row g-4">
             <!-- Signature 1 (Left) -->
             <div class="col-md-6 border-end">
-              <h6 class="fw-bold text-secondary mb-3">Signatory 1 (Left — Coordinator)</h6>
+              <h6 class="fw-bold text-secondary mb-3">Signatory 1 (Left - Coordinator)</h6>
               <div class="mb-3">
                 <label class="form-label small fw-semibold">Signature Image (PNG)</label>
                 <?php if (!empty($template['signature1_image_path'])): ?>
@@ -111,7 +111,7 @@
 
             <!-- Signature 2 (Right) -->
             <div class="col-md-6">
-              <h6 class="fw-bold text-secondary mb-3">Signatory 2 (Right — Executive)</h6>
+              <h6 class="fw-bold text-secondary mb-3">Signatory 2 (Right - Executive)</h6>
               <div class="mb-3">
                 <label class="form-label small fw-semibold">Signature Image (PNG)</label>
                 <?php if (!empty($template['signature2_image_path'])): ?>

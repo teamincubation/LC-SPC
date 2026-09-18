@@ -38,7 +38,7 @@ class PublicCampaignController
 
         return Response::html(
             View::render('public/campaigns/index', [
-                'title'             => 'Initiatives & Campaigns — Listening Community',
+                'title'             => 'Initiatives & Campaigns - Listening Community',
                 'activeCampaigns'   => $activeCampaigns,
                 'archivedCampaigns' => $archivedCampaigns,
             ])
@@ -69,7 +69,7 @@ class PublicCampaignController
 
         return Response::html(
             View::render('public/campaigns/show', [
-                'title'    => $campaign['title'] . ' — Listening Community',
+                'title'    => $campaign['title'] . ' - Listening Community',
                 'campaign' => $campaign,
                 'events'   => $events,
             ])

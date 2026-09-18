@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Phase 1F — Attendance & Check-In System Test Suite
+ * Phase 1F - Attendance & Check-In System Test Suite
  * Run via: php tests/test_phase1f_attendance.php
  *
  * Implements full coverage of Section 17.1 Test Matrix (35+ scenarios, 50+ assertions).

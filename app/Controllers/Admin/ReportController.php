@@ -91,7 +91,7 @@ class ReportController extends Controller
         $isCompleted = ($event['status'] ?? '') === 'completed';
 
         $reportData = [
-            'title'       => 'Final Event Report — ' . ($event['title'] ?? ''),
+            'title'       => 'Final Event Report - ' . ($event['title'] ?? ''),
             'event'       => $event,
             'isCompleted' => $isCompleted,
             'user'        => $user,

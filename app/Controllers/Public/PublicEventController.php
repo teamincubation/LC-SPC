@@ -45,7 +45,7 @@ class PublicEventController
 
         return Response::html(
             View::render('public/events/index', [
-                'title'     => 'Upcoming Events — Listening Community',
+                'title'     => 'Upcoming Events - Listening Community',
                 'events'    => $events,
                 'campaigns' => $campaigns,
                 'filters'   => $filters,
@@ -78,7 +78,7 @@ class PublicEventController
 
         return Response::html(
             View::render('public/events/show', [
-                'title'        => $event['title'] . ' — ' . $event['campaign_title'],
+                'title'        => $event['title'] . ' - ' . $event['campaign_title'],
                 'event'        => $event,
                 'availability' => $availability,
             ])

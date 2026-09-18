@@ -42,8 +42,8 @@
         </a>
         <div class="auth-header-divider" aria-hidden="true"></div>
         <div class="auth-header-title-block">
-          <span class="auth-header-title">Suicide Prevention Campaign</span>
-          <span class="auth-header-tagline">LISTEN &bull; SUPPORT &bull; EMPOWER</span>
+          <span class="auth-header-title">Listening Community</span>
+          <span class="auth-header-tagline">Words and beyond</span>
         </div>
       </div>
       <div class="auth-header-actions">
