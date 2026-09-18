@@ -87,6 +87,30 @@ $initials = strtoupper($initials ?: 'LC');
             <span>Dashboard</span>
           </a>
         </li>
+        <li class="admin-nav-item" role="none">
+          <a href="<?= e(url('/admin/certificate-settings')) ?>" class="admin-nav-link <?= $isNavActive('certificate-settings') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('certificate-settings') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('sliders') ?></span>
+            <span>Certificate Settings</span>
+          </a>
+        </li>
+        <li class="admin-nav-item" role="none">
+          <a href="<?= e(url('/admin/certificate-templates')) ?>" class="admin-nav-link <?= $isNavActive('certificate-templates') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('certificate-templates') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('file-text') ?></span>
+            <span>Certificate Templates</span>
+          </a>
+        </li>
+        <li class="admin-nav-item" role="none">
+          <a href="<?= e(url('/admin/certificates/generate')) ?>" class="admin-nav-link <?= $isNavActive('certificates/generate') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('certificates/generate') ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('plus-circle') ?></span>
+            <span>Generate Certificates</span>
+          </a>
+        </li>
+        <li class="admin-nav-item" role="none">
+          <a href="<?= e(url('/admin/certificates')) ?>" class="admin-nav-link <?= ($isNavActive('certificates') && !$isNavActive('certificates/generate')) ? 'is-active' : '' ?>" role="menuitem" <?= ($isNavActive('certificates') && !$isNavActive('certificates/generate')) ? 'aria-current="page"' : '' ?>>
+            <span class="admin-nav-icon" aria-hidden="true"><?= icon('award') ?></span>
+            <span>Show Certificates</span>
+          </a>
+        </li>
         <?php if ($adminRoleSlug === 'super_admin'): ?>
           <li class="admin-nav-item" role="none">
             <a href="<?= e(url('/admin/admins')) ?>" class="admin-nav-link <?= $isNavActive('admins') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('admins') ? 'aria-current="page"' : '' ?>>
@@ -95,60 +119,6 @@ $initials = strtoupper($initials ?: 'LC');
             </a>
           </li>
         <?php endif; ?>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/events')) ?>" class="admin-nav-link <?= $isNavActive('events') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('events') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('calendar') ?></span>
-            <span>Events</span>
-          </a>
-        </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/forms')) ?>" class="admin-nav-link <?= $isNavActive('forms') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('forms') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('file-text') ?></span>
-            <span>Event Reg. Form</span>
-          </a>
-        </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/registrations')) ?>" class="admin-nav-link <?= $isNavActive('registrations') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('registrations') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('clipboard-list') ?></span>
-            <span>Registrations</span>
-          </a>
-        </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/checkin')) ?>" class="admin-nav-link <?= $isNavActive('checkin') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('checkin') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('scan-line') ?></span>
-            <span>Check-in</span>
-          </a>
-        </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/analytics')) ?>" class="admin-nav-link <?= $isNavActive('analytics') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('analytics') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('trending-up') ?></span>
-            <span>Analytics</span>
-          </a>
-        </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/certificates')) ?>" class="admin-nav-link <?= $isNavActive('certificates') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('certificates') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('award') ?></span>
-            <span>Certificates</span>
-          </a>
-        </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/reports')) ?>" class="admin-nav-link <?= $isNavActive('reports') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('reports') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('bar-chart') ?></span>
-            <span>Reports</span>
-          </a>
-        </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/form-settings')) ?>" class="admin-nav-link <?= $isNavActive('form-settings') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('form-settings') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('sliders') ?></span>
-            <span>Form Settings</span>
-          </a>
-        </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/settings')) ?>" class="admin-nav-link <?= $isNavActive('settings') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('settings') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('settings') ?></span>
-            <span>System Settings</span>
-          </a>
-        </li>
       </ul>
 
       <div class="admin-sidebar-footer">

@@ -259,8 +259,129 @@ try {
     $jsonVal = $pdo->query("SELECT JSON_EXTRACT(layout_config, '$.recipient_name.font_size') AS fsz FROM certificate_templates WHERE event_id = 1")->fetchColumn();
     assertMaria("MariaDB JSON_EXTRACT query validated (font_size = 28)", (int)$jsonVal === 28);
 
-    // 9. Test Rollback down() for m0013 -> m0009
-    echo PHP_EOL . "7. Testing Rollback down() Execution for V2 Migrations..." . PHP_EOL;
+    // 9. Test m0014: create_certificate_platform_v3_tables
+    echo PHP_EOL . "7. Executing Migration m0014 (Certificate Platform V3 Tables & Settings)..." . PHP_EOL;
+    $m0014 = require APP_ROOT . '/database/migrations/m0014_create_certificate_platform_v3_tables.php';
+    $m0014->up($pdo);
+
+    // Verify certificate_settings table and seed
+    $settingsCount = (int) $pdo->query("SELECT COUNT(*) FROM certificate_settings")->fetchColumn();
+    assertMaria("Certificate settings table created and seeded (count = {$settingsCount})", $settingsCount >= 10);
+
+    // Verify v3_certificate_templates table
+    $templateInsert = $pdo->prepare("
+        INSERT INTO v3_certificate_templates (
+            name, description, certificate_type, status,
+            layout_config, required_variables, created_at, updated_at
+        ) VALUES (
+            :name, :desc, 'participation', 'active',
+            :layout, :vars, NOW(), NOW()
+        )
+    ");
+    $templateInsert->execute([
+        ':name'   => 'National Awareness Workshop Template',
+        ':desc'   => 'Official A4 landscape template',
+        ':layout' => json_encode(['width' => 2480, 'height' => 1754, 'dpi' => 300]),
+        ':vars'   => json_encode(['name', 'phone', 'event_title', 'date', 'certificate_number']),
+    ]);
+    $v3TemplateId = (int) $pdo->lastInsertId();
+    assertMaria("V3 Certificate template created in MariaDB (id = {$v3TemplateId})", $v3TemplateId > 0);
+
+    // Verify v3_certificate_batches table
+    $batchInsert = $pdo->prepare("
+        INSERT INTO v3_certificate_batches (
+            batch_code, template_id, total_records, valid_records, invalid_records, status, created_at, updated_at
+        ) VALUES (
+            :code, :tid, 100, 98, 2, 'completed', NOW(), NOW()
+        )
+    ");
+    $batchInsert->execute([
+        ':code' => 'BATCH-TEST-2026-001',
+        ':tid'  => $v3TemplateId,
+    ]);
+    $v3BatchId = (int) $pdo->lastInsertId();
+    assertMaria("V3 Certificate batch created in MariaDB (id = {$v3BatchId})", $v3BatchId > 0);
+
+    // Verify v3_certificates table with UNIQUE certificate_id and verification_token
+    $certInsert = $pdo->prepare("
+        INSERT INTO v3_certificates (
+            certificate_id, verification_token, batch_id, template_id,
+            name, phone, phone_normalized, event_title, date, certificate_data_json,
+            status, created_at, updated_at
+        ) VALUES (
+            :cid, :token, :bid, :tid,
+            :name, :phone, :phone_norm, :event, :date, :snap,
+            'active', NOW(), NOW()
+        )
+    ");
+    $certInsert->execute([
+        ':cid'        => 'LC26-X7Q9-M4KP',
+        ':token'      => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+        ':bid'        => $v3BatchId,
+        ':tid'        => $v3TemplateId,
+        ':name'       => 'John Mathew',
+        ':phone'      => '+919876543210',
+        ':phone_norm' => '+919876543210',
+        ':event'      => 'World Suicide Prevention Day',
+        ':date'       => '15 September 2026',
+        ':snap'       => json_encode(['name' => 'John Mathew', 'cert_id' => 'LC26-X7Q9-M4KP']),
+    ]);
+    $v3CertId = (int) $pdo->lastInsertId();
+    assertMaria("V3 Certificate record inserted with foreign keys and JSON snapshot (id = {$v3CertId})", $v3CertId > 0);
+
+    // Verify duplicate certificate_id strictly blocked by UNIQUE key
+    $duplicateCidBlocked = false;
+    try {
+        $certInsert->execute([
+            ':cid'        => 'LC26-X7Q9-M4KP',
+            ':token'      => '9999944298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+            ':bid'        => $v3BatchId,
+            ':tid'        => $v3TemplateId,
+            ':name'       => 'Another User',
+            ':phone'      => '+919876543211',
+            ':phone_norm' => '+919876543211',
+            ':event'      => 'World Suicide Prevention Day',
+            ':date'       => '15 September 2026',
+            ':snap'       => json_encode([]),
+        ]);
+    } catch (PDOException $e) {
+        if ($e->getCode() === '23000' || strpos($e->getMessage(), 'Duplicate entry') !== false) {
+            $duplicateCidBlocked = true;
+        }
+    }
+    assertMaria("Duplicate certificate_id in v3_certificates strictly blocked by MariaDB UNIQUE key", $duplicateCidBlocked);
+
+    // Verify duplicate verification_token strictly blocked by UNIQUE key
+    $duplicateTokenBlocked = false;
+    try {
+        $certInsert->execute([
+            ':cid'        => 'LC26-AAAA-BBBB',
+            ':token'      => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+            ':bid'        => $v3BatchId,
+            ':tid'        => $v3TemplateId,
+            ':name'       => 'Another User',
+            ':phone'      => '+919876543211',
+            ':phone_norm' => '+919876543211',
+            ':event'      => 'World Suicide Prevention Day',
+            ':date'       => '15 September 2026',
+            ':snap'       => json_encode([]),
+        ]);
+    } catch (PDOException $e) {
+        if ($e->getCode() === '23000' || strpos($e->getMessage(), 'Duplicate entry') !== false) {
+            $duplicateTokenBlocked = true;
+        }
+    }
+    assertMaria("Duplicate verification_token in v3_certificates strictly blocked by MariaDB UNIQUE key", $duplicateTokenBlocked);
+
+    // Verify V3 permissions added
+    $v3PermCount = (int) $pdo->query("SELECT COUNT(*) FROM permissions WHERE module IN ('certificate_settings', 'certificate_templates') OR (module = 'certificates' AND action = 'generate')")->fetchColumn();
+    assertMaria("Canonical V3 permissions registered in permissions table (count = {$v3PermCount})", $v3PermCount >= 7);
+
+    // 10. Test Rollback down() for m0014 -> m0009
+    echo PHP_EOL . "8. Testing Rollback down() Execution for V2 & V3 Migrations..." . PHP_EOL;
+    $m0014->down($pdo);
+    assertMaria("m0014 down() executed without errors", true);
+
     $m0013->down($pdo);
     assertMaria("m0013 down() executed without errors", true);
 
@@ -276,18 +397,19 @@ try {
     $m0009->down($pdo);
     assertMaria("m0009 down() executed without errors", true);
 
-    // 10. Test Re-Up Idempotency
-    echo PHP_EOL . "8. Testing Re-Up Idempotency (m0009 -> m0013)..." . PHP_EOL;
+    // 11. Test Re-Up Idempotency (m0009 -> m0014)
+    echo PHP_EOL . "9. Testing Re-Up Idempotency (m0009 -> m0014)..." . PHP_EOL;
     $m0009->up($pdo);
     $m0010->up($pdo);
     $m0011->up($pdo);
     $m0012->up($pdo);
     $m0013->up($pdo);
-    assertMaria("All V2 migrations re-applied successfully (Idempotency Confirmed)", true);
+    $m0014->up($pdo);
+    assertMaria("All V2 & V3 migrations re-applied successfully (Idempotency Confirmed)", true);
 
 } finally {
-    // 11. Cleanup test database
-    echo PHP_EOL . "9. Cleaning Up Isolated Test Database..." . PHP_EOL;
+    // 12. Cleanup test database
+    echo PHP_EOL . "10. Cleaning Up Isolated Test Database..." . PHP_EOL;
     $serverPdo->exec("DROP DATABASE IF EXISTS `{$testDb}`;");
     assertMaria("Isolated test database `{$testDb}` dropped cleanly", true);
 }

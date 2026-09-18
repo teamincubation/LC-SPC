@@ -102,18 +102,20 @@ class PermissionService
     public function getModuleLabel(string $module): string
     {
         return match ($module) {
-            'dashboard'     => 'Dashboard Overview',
-            'admins'        => 'Admin Management',
-            'events'        => 'Events Module',
-            'forms'         => 'Event Registration Forms',
-            'registrations' => 'Registrations Module',
-            'checkin'       => 'Check-in System',
-            'analytics'     => 'Registration Analytics',
-            'certificates'  => 'Certificates Module',
-            'reports'       => 'Executive Reports',
-            'form_settings' => 'Form Settings (Global)',
-            'settings'      => 'System Settings',
-            default         => ucfirst(str_replace('_', ' ', $module)),
+            'dashboard'             => 'Dashboard Overview',
+            'admins'                => 'Admin Management',
+            'certificate_settings'  => 'Certificate Settings',
+            'certificate_templates' => 'Certificate Templates',
+            'certificates'          => 'Certificates & Issuance',
+            'events'                => 'Events Module (Legacy)',
+            'forms'                 => 'Event Registration Forms (Legacy)',
+            'registrations'         => 'Registrations Module (Legacy)',
+            'checkin'               => 'Check-in System (Legacy)',
+            'analytics'             => 'Registration Analytics (Legacy)',
+            'reports'               => 'Executive Reports (Legacy)',
+            'form_settings'         => 'Form Settings (Legacy)',
+            'settings'              => 'System Settings',
+            default                 => ucfirst(str_replace('_', ' ', $module)),
         };
     }
 }
