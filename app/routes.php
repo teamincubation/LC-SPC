@@ -86,6 +86,8 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
     $adminRouter->post('/certificate-templates/{id}', [CertificateTemplateController::class, 'update'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
     $adminRouter->get('/certificate-templates/{id}/designer', [CertificateTemplateController::class, 'designer'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
     $adminRouter->post('/certificate-templates/{id}/designer', [CertificateTemplateController::class, 'saveDesigner'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+    $adminRouter->post('/certificate-templates/{id}/assets', [CertificateTemplateController::class, 'uploadAsset'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
+    $adminRouter->post('/certificate-templates/{id}/assets/delete', [CertificateTemplateController::class, 'deleteAsset'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
     $adminRouter->get('/certificate-templates/{id}/preview', [CertificateTemplateController::class, 'preview'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
     $adminRouter->post('/certificate-templates/{id}/duplicate', [CertificateTemplateController::class, 'duplicate'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
     $adminRouter->post('/certificate-templates/{id}/delete', [CertificateTemplateController::class, 'destroy'], [new RoleMiddleware(RoleService::ROLE_ADMIN), CsrfMiddleware::class]);

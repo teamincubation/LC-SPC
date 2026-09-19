@@ -121,7 +121,7 @@ class CertificateRenderer
                     break;
 
                 case 'seal':
-                    $sealPath = $template['seal_image_path'] ?? null;
+                    $sealPath = $el['image_path'] ?? ($template['seal_image_path'] ?? null);
                     $size = (int) ($el['size'] ?? 160);
                     if ($sealPath) {
                         self::drawImageElement($im, $sealPath, $x, $y, $size, $size);
@@ -129,7 +129,7 @@ class CertificateRenderer
                     break;
 
                 case 'signature1':
-                    $sig1Path = $template['signature1_image_path'] ?? null;
+                    $sig1Path = $el['image_path'] ?? ($template['signature1_image_path'] ?? null);
                     $width = (int) ($el['width'] ?? 220);
                     $height = (int) ($el['height'] ?? 80);
                     if ($sig1Path) {
@@ -138,16 +138,24 @@ class CertificateRenderer
                     // Signatory 1 name & title
                     $s1Name = $template['signature1_name'] ?? ($el['name'] ?? '');
                     $s1Title = $template['signature1_designation'] ?? ($el['title'] ?? '');
-                    if ($s1Name !== '') {
-                        imagesetthickness($im, 3);
-                        imageline($im, $x - ($width / 2), $y + $height + 10, $x + ($width / 2), $y + $height + 10, $lineColor);
-                        self::drawTextElement($im, $s1Name, (int)$x, (int)($y + $height + 40), 22, $textDark, $fontFile, 'center', $width + 100);
-                        self::drawTextElement($im, $s1Title, (int)$x, (int)($y + $height + 70), 18, $textMuted, $fontFile, 'center', $width + 100);
+                    if ($s1Name !== '' || $s1Title !== '') {
+                        if (($el['show_line'] ?? true) !== false) {
+                            imagesetthickness($im, 3);
+                            imageline($im, $x - ($width / 2), $y + $height + 10, $x + ($width / 2), $y + $height + 10, $lineColor);
+                        }
+                        if ($s1Name !== '') {
+                            $nameSize = (int) ($el['name_font_size'] ?? 22);
+                            self::drawTextElement($im, $s1Name, (int)$x, (int)($y + $height + 40), $nameSize, $textDark, $fontFile, 'center', $width + 100);
+                        }
+                        if ($s1Title !== '') {
+                            $titleSize = (int) ($el['title_font_size'] ?? 18);
+                            self::drawTextElement($im, $s1Title, (int)$x, (int)($y + $height + 70), $titleSize, $textMuted, $fontFile, 'center', $width + 100);
+                        }
                     }
                     break;
 
                 case 'signature2':
-                    $sig2Path = $template['signature2_image_path'] ?? null;
+                    $sig2Path = $el['image_path'] ?? ($template['signature2_image_path'] ?? null);
                     $width = (int) ($el['width'] ?? 220);
                     $height = (int) ($el['height'] ?? 80);
                     if ($sig2Path) {
@@ -156,26 +164,62 @@ class CertificateRenderer
                     // Signatory 2 name & title
                     $s2Name = $template['signature2_name'] ?? ($el['name'] ?? '');
                     $s2Title = $template['signature2_designation'] ?? ($el['title'] ?? '');
-                    if ($s2Name !== '') {
-                        imagesetthickness($im, 3);
-                        imageline($im, $x - ($width / 2), $y + $height + 10, $x + ($width / 2), $y + $height + 10, $lineColor);
-                        self::drawTextElement($im, $s2Name, (int)$x, (int)($y + $height + 40), 22, $textDark, $fontFile, 'center', $width + 100);
-                        self::drawTextElement($im, $s2Title, (int)$x, (int)($y + $height + 70), 18, $textMuted, $fontFile, 'center', $width + 100);
+                    if ($s2Name !== '' || $s2Title !== '') {
+                        if (($el['show_line'] ?? true) !== false) {
+                            imagesetthickness($im, 3);
+                            imageline($im, $x - ($width / 2), $y + $height + 10, $x + ($width / 2), $y + $height + 10, $lineColor);
+                        }
+                        if ($s2Name !== '') {
+                            $nameSize = (int) ($el['name_font_size'] ?? 22);
+                            self::drawTextElement($im, $s2Name, (int)$x, (int)($y + $height + 40), $nameSize, $textDark, $fontFile, 'center', $width + 100);
+                        }
+                        if ($s2Title !== '') {
+                            $titleSize = (int) ($el['title_font_size'] ?? 18);
+                            self::drawTextElement($im, $s2Title, (int)$x, (int)($y + $height + 70), $titleSize, $textMuted, $fontFile, 'center', $width + 100);
+                        }
+                    }
+                    break;
+
+                case 'image':
+                case 'logo':
+                    $imgPath = $el['image_path'] ?? null;
+                    $width = (int) ($el['width'] ?? 160);
+                    $height = (int) ($el['height'] ?? 160);
+                    if ($imgPath) {
+                        self::drawImageElement($im, $imgPath, $x, $y, $width, $height);
                     }
                     break;
 
                 case 'qr_code':
-                    $token = $data['verification_token'] ?? '';
-                    $verifyUrl = "https://teami.in/LC/certificates/verify/{$token}";
+                    $verifyUrl = $data['verification_url'] ?? null;
+                    if (empty($verifyUrl)) {
+                        $token = $data['verification_token'] ?? '';
+                        $appUrl = rtrim((string) (Config::get('app.url') ?: 'https://teami.in/LC'), '/');
+                        if (!empty($token)) {
+                            $verifyUrl = "{$appUrl}/certificates/verify/{$token}";
+                        } else {
+                            $verifyUrl = "{$appUrl}/certificates/verify/DEMO_TEMPLATE_VERIFICATION_TOKEN";
+                        }
+                    }
+
+                    if (!empty($el['url_template'])) {
+                        $verifyUrl = VariableRegistry::replacePlaceholders(
+                            $el['url_template'],
+                            array_merge($data, ['verification_url' => $verifyUrl])
+                        );
+                    }
+
                     $qrSize = (int) ($el['size'] ?? 220);
                     $qr = new QrCode($verifyUrl);
                     $qrX = (int) ($x - ($qrSize / 2));
                     $qrY = (int) ($y);
                     $qr->drawOnGd($im, $qrX, $qrY, $qrSize, 2);
 
-                    // Border around QR
-                    imagesetthickness($im, 2);
-                    imagerectangle($im, $qrX - 2, $qrY - 2, $qrX + $qrSize + 2, $qrY + $qrSize + 2, $lineColor);
+                    // Border around QR if requested or default
+                    if (($el['show_border'] ?? true) !== false) {
+                        imagesetthickness($im, 2);
+                        imagerectangle($im, $qrX - 2, $qrY - 2, $qrX + $qrSize + 2, $qrY + $qrSize + 2, $lineColor);
+                    }
                     break;
             }
         }
@@ -554,11 +598,12 @@ class CertificateRenderer
                 'size'        => 160,
             ],
             [
-                'type'        => 'qr_code',
-                'id'          => 'qr_code',
-                'x'           => 1240,
-                'y'           => 1240,
-                'size'        => 180,
+                'type'         => 'qr_code',
+                'id'           => 'qr_code',
+                'x'            => 1240,
+                'y'            => 1240,
+                'size'         => 180,
+                'url_template' => '{{verification_url}}',
             ],
             [
                 'type'        => 'dynamic_text',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Core\Config;
 use App\Core\Database;
 use App\Core\Exceptions\CertificateException;
 use PDO;
@@ -167,9 +168,11 @@ class CertificateBatchService
             $cid = CertificateIdGenerator::generateCertificateId($pdo);
             $token = CertificateIdGenerator::generateVerificationToken($pdo);
 
+            $appUrl = rtrim((string) (Config::get('app.url') ?: 'https://teami.in/LC'), '/');
             $certData = array_merge($row, [
                 'certificate_number' => $cid,
                 'verification_token' => $token,
+                'verification_url'   => "{$appUrl}/certificates/verify/{$token}",
                 'template_name'      => $template['name'],
             ]);
 
