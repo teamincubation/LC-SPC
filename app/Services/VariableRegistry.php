@@ -171,6 +171,15 @@ class VariableRegistry
                 'description' => 'Name or office issuing the credential',
                 'example'     => 'Academic Council, LC-SPC',
             ],
+            'verification_url' => [
+                'key'         => 'verification_url',
+                'placeholder' => '{{verification_url}}',
+                'label'       => 'Public Verification URL',
+                'type'        => 'string',
+                'required'    => false,
+                'description' => 'Canonical public verification URL for the certificate',
+                'example'     => 'https://teami.in/LC/certificates/verify/DEMO_TEMPLATE_VERIFICATION_TOKEN',
+            ],
         ];
     }
 
@@ -260,6 +269,8 @@ class VariableRegistry
             'workshop_name'      => 'First Response Listening Skills',
             'duration'           => '8 Hours',
             'issued_by'          => 'Program Director, LC-SPC',
+            'verification_token' => 'DEMO_TEMPLATE_VERIFICATION_TOKEN',
+            'verification_url'   => 'https://teami.in/LC/certificates/verify/DEMO_TEMPLATE_VERIFICATION_TOKEN',
         ];
     }
 }
