@@ -77,14 +77,7 @@
   <footer class="public-footer auth-footer" role="contentinfo">
     <div class="container auth-footer-inner">
       <div class="auth-footer-copy">
-        &copy; <?= date('Y') ?> <?= e(config('app.name')) ?> &mdash; <?= e(config('app.full_title')) ?>. All rights reserved.
-      </div>
-      <div class="auth-footer-links">
-        <a href="<?= e(url('/')) ?>" class="auth-footer-link">Privacy Policy</a>
-        <span class="auth-footer-sep">|</span>
-        <a href="<?= e(url('/')) ?>" class="auth-footer-link">Terms of Use</a>
-        <span class="auth-footer-sep">|</span>
-        <a href="<?= e(url('/')) ?>" class="auth-footer-link">Contact</a>
+        &copy; <?= date('Y') ?> <?= e(config('app.name')) ?> | <?= e(config('app.full_title')) ?>. All rights reserved.
       </div>
     </div>
   </footer>

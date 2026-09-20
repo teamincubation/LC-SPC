@@ -38,18 +38,22 @@ class DashboardController extends Controller
     public function index(Request $request): Response
     {
         $user = $this->authService->getCurrentUser();
+        $adminRoleSlug = (string) ($user['role'] ?? '');
+        $isSuperAdmin = RoleService::isSuperAdmin($adminRoleSlug);
         $metrics = $this->certRepo->getDashboardMetrics();
-        $recentLogs = $this->auditRepo->getRecent(6);
+        $recentLogs = $isSuperAdmin ? $this->auditRepo->getRecent(6) : [];
 
         return $this->render('admin/dashboard/index', [
-            'title'       => 'Administrative Overview',
-            'breadcrumb'  => 'Dashboard',
-            'user'        => $user,
-            'roleLabel'   => RoleService::getRoleLabel($user['role'] ?? 'viewer'),
-            'roleBadge'   => RoleService::getBadgeClass($user['role'] ?? 'viewer'),
-            'metrics'     => $metrics,
-            'recentLogs'  => $recentLogs,
-            'activeNav'   => 'dashboard',
+            'title'         => 'Administrative Overview',
+            'breadcrumb'    => 'Dashboard',
+            'user'          => $user,
+            'adminRoleSlug' => $adminRoleSlug,
+            'isSuperAdmin'  => $isSuperAdmin,
+            'roleLabel'     => RoleService::getRoleLabel($adminRoleSlug ?: 'viewer'),
+            'roleBadge'     => RoleService::getBadgeClass($adminRoleSlug ?: 'viewer'),
+            'metrics'       => $metrics,
+            'recentLogs'    => $recentLogs,
+            'activeNav'     => 'dashboard',
         ], 'layouts/admin');
     }
 }
