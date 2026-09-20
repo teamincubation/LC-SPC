@@ -36,6 +36,23 @@ if (!empty($authUserId)) {
 $adminName = $authUser['name'] ?? ($user['name'] ?? 'Admin User');
 $adminRoleSlug = $authUser['role'] ?? ($user['role'] ?? session('_auth_user_role', 'viewer'));
 $adminRoleLabel = \App\Services\RoleService::getRoleLabel($adminRoleSlug);
+$isSuperAdmin = \App\Services\RoleService::isSuperAdmin((string) $adminRoleSlug);
+$permissionService = new \App\Services\PermissionService();
+$canAccessNav = function (array|string $permissions) use ($isSuperAdmin, $authUserId, $adminRoleSlug, $permissionService): bool {
+    if ($isSuperAdmin) {
+        return true;
+    }
+    if (empty($authUserId)) {
+        return false;
+    }
+    $perms = is_array($permissions) ? $permissions : [$permissions];
+    foreach ($perms as $perm) {
+        if ($permissionService->hasPermission((int) $authUserId, $perm, (string) $adminRoleSlug)) {
+            return true;
+        }
+    }
+    return false;
+};
 
 // Avatar initials
 $nameParts = preg_split('/\s+/', trim((string) $adminName));
@@ -81,37 +98,47 @@ $initials = strtoupper($initials ?: 'LC');
       </div>
 
       <ul class="admin-nav" role="menubar">
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin')) ?>" class="admin-nav-link <?= $isNavActive('dashboard') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('dashboard') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('layout-dashboard') ?></span>
-            <span>Dashboard</span>
-          </a>
-        </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/certificate-settings')) ?>" class="admin-nav-link <?= $isNavActive('certificate-settings') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('certificate-settings') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('sliders') ?></span>
-            <span>Certificate Settings</span>
-          </a>
-        </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/certificate-templates')) ?>" class="admin-nav-link <?= $isNavActive('certificate-templates') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('certificate-templates') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('file-text') ?></span>
-            <span>Certificate Templates</span>
-          </a>
-        </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/certificates/generate')) ?>" class="admin-nav-link <?= $isNavActive('certificates/generate') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('certificates/generate') ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('plus-circle') ?></span>
-            <span>Generate Certificates</span>
-          </a>
-        </li>
-        <li class="admin-nav-item" role="none">
-          <a href="<?= e(url('/admin/certificates')) ?>" class="admin-nav-link <?= ($isNavActive('certificates') && !$isNavActive('certificates/generate')) ? 'is-active' : '' ?>" role="menuitem" <?= ($isNavActive('certificates') && !$isNavActive('certificates/generate')) ? 'aria-current="page"' : '' ?>>
-            <span class="admin-nav-icon" aria-hidden="true"><?= icon('award') ?></span>
-            <span>Show Certificates</span>
-          </a>
-        </li>
-        <?php if (\App\Services\RoleService::isSuperAdmin((string) $adminRoleSlug)): ?>
+        <?php if ($canAccessNav('dashboard.view')): ?>
+          <li class="admin-nav-item" role="none">
+            <a href="<?= e(url('/admin')) ?>" class="admin-nav-link <?= $isNavActive('dashboard') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('dashboard') ? 'aria-current="page"' : '' ?>>
+              <span class="admin-nav-icon" aria-hidden="true"><?= icon('layout-dashboard') ?></span>
+              <span>Dashboard</span>
+            </a>
+          </li>
+        <?php endif; ?>
+        <?php if ($canAccessNav(['certificates.manage', 'settings.view'])): ?>
+          <li class="admin-nav-item" role="none">
+            <a href="<?= e(url('/admin/certificate-settings')) ?>" class="admin-nav-link <?= $isNavActive('certificate-settings') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('certificate-settings') ? 'aria-current="page"' : '' ?>>
+              <span class="admin-nav-icon" aria-hidden="true"><?= icon('sliders') ?></span>
+              <span>Certificate Settings</span>
+            </a>
+          </li>
+        <?php endif; ?>
+        <?php if ($canAccessNav(['certificates.view', 'certificates.manage'])): ?>
+          <li class="admin-nav-item" role="none">
+            <a href="<?= e(url('/admin/certificate-templates')) ?>" class="admin-nav-link <?= $isNavActive('certificate-templates') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('certificate-templates') ? 'aria-current="page"' : '' ?>>
+              <span class="admin-nav-icon" aria-hidden="true"><?= icon('file-text') ?></span>
+              <span>Certificate Templates</span>
+            </a>
+          </li>
+        <?php endif; ?>
+        <?php if ($canAccessNav(['certificates.create', 'certificates.manage'])): ?>
+          <li class="admin-nav-item" role="none">
+            <a href="<?= e(url('/admin/certificates/generate')) ?>" class="admin-nav-link <?= $isNavActive('certificates/generate') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('certificates/generate') ? 'aria-current="page"' : '' ?>>
+              <span class="admin-nav-icon" aria-hidden="true"><?= icon('plus-circle') ?></span>
+              <span>Generate Certificates</span>
+            </a>
+          </li>
+        <?php endif; ?>
+        <?php if ($canAccessNav(['certificates.view', 'certificates.manage'])): ?>
+          <li class="admin-nav-item" role="none">
+            <a href="<?= e(url('/admin/certificates')) ?>" class="admin-nav-link <?= ($isNavActive('certificates') && !$isNavActive('certificates/generate')) ? 'is-active' : '' ?>" role="menuitem" <?= ($isNavActive('certificates') && !$isNavActive('certificates/generate')) ? 'aria-current="page"' : '' ?>>
+              <span class="admin-nav-icon" aria-hidden="true"><?= icon('award') ?></span>
+              <span>Show Certificates</span>
+            </a>
+          </li>
+        <?php endif; ?>
+        <?php if ($isSuperAdmin): ?>
           <li class="admin-nav-item" role="none">
             <a href="<?= e(url('/admin/admins')) ?>" class="admin-nav-link <?= $isNavActive('admins') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('admins') ? 'aria-current="page"' : '' ?>>
               <span class="admin-nav-icon" aria-hidden="true"><?= icon('shield') ?></span>
