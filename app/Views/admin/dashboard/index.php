@@ -204,6 +204,10 @@ $recentBatches = (array) ($metrics['recent_batches'] ?? []);
   </div>
 </div>
 
+<?php 
+$adminRoleSlug = (string) ($adminRoleSlug ?? ($user['role'] ?? ''));
+if (\App\Services\RoleService::isSuperAdmin($adminRoleSlug)): 
+?>
 <!-- Recent System Activity Audit Trail -->
 <div class="card mb-6">
   <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding: 1.25rem 1.5rem;">
@@ -252,3 +256,4 @@ $recentBatches = (array) ($metrics['recent_batches'] ?? []);
     </div>
   </div>
 </div>
+<?php endif; ?>

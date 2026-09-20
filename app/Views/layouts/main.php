@@ -68,7 +68,7 @@
   <footer class="public-footer" role="contentinfo">
     <div class="container">
       <p class="mb-2">
-        &copy; <?= date('Y') ?> <strong><?= e(config('app.name')) ?></strong> &mdash; <?= e(config('app.full_title')) ?>. All rights reserved.
+        &copy; <?= date('Y') ?> <strong><?= e(config('app.name')) ?></strong> | <?= e(config('app.full_title')) ?>. All rights reserved.
       </p>
       <p class="text-caption text-muted">
         Version <?= e(config('app.version', '1.0.0')) ?> &bull; Environment: <?= e(ucfirst((string) config('app.env', 'production'))) ?>
