@@ -17,6 +17,8 @@ class RoleService
     public const ROLE_ADMIN = 'admin';
     public const ROLE_SUPER_ADMIN = 'super_admin';
 
+    public const ROLE_DEFAULT_ADMINISTRATOR = self::ROLE_STAFF;
+
     /**
      * Canonical Role Hierarchy Ranks
      */
@@ -34,6 +36,22 @@ class RoleService
     public static function isValidRole(string $role): bool
     {
         return array_key_exists($role, self::ROLE_HIERARCHY);
+    }
+
+    /**
+     * Determine if a role represents a Super Administrator.
+     */
+    public static function isSuperAdmin(?string $role): bool
+    {
+        return $role === self::ROLE_SUPER_ADMIN;
+    }
+
+    /**
+     * Determine if a role represents a standard non-super-admin Administrator.
+     */
+    public static function isAdministrator(?string $role): bool
+    {
+        return !empty($role) && $role !== self::ROLE_SUPER_ADMIN;
     }
 
     /**
@@ -77,17 +95,17 @@ class RoleService
     }
 
     /**
-     * Human-readable label for a role.
+     * User-facing role presentation label:
+     * - super_admin -> 'Super Administrator'
+     * - all other roles -> 'Administrator'
      */
     public static function getRoleLabel(string $role): string
     {
-        return match ($role) {
-            self::ROLE_SUPER_ADMIN => 'Super Administrator',
-            self::ROLE_COORDINATOR => 'Program Coordinator',
-            self::ROLE_STAFF       => 'Field Staff',
-            self::ROLE_VIEWER      => 'Auditor / Viewer',
-            default                => ucfirst($role),
-        };
+        if (self::isSuperAdmin($role)) {
+            return 'Super Administrator';
+        }
+
+        return 'Administrator';
     }
 
     /**
@@ -95,12 +113,6 @@ class RoleService
      */
     public static function getBadgeClass(string $role): string
     {
-        return match ($role) {
-            self::ROLE_SUPER_ADMIN => 'badge-danger',
-            self::ROLE_COORDINATOR => 'badge-primary',
-            self::ROLE_STAFF       => 'badge-success',
-            self::ROLE_VIEWER      => 'badge-secondary',
-            default                => 'badge-light',
-        };
+        return self::isSuperAdmin($role) ? 'badge-danger' : 'badge-primary';
     }
 }

@@ -111,7 +111,7 @@ $initials = strtoupper($initials ?: 'LC');
             <span>Show Certificates</span>
           </a>
         </li>
-        <?php if ($adminRoleSlug === 'super_admin'): ?>
+        <?php if (\App\Services\RoleService::isSuperAdmin((string) $adminRoleSlug)): ?>
           <li class="admin-nav-item" role="none">
             <a href="<?= e(url('/admin/admins')) ?>" class="admin-nav-link <?= $isNavActive('admins') ? 'is-active' : '' ?>" role="menuitem" <?= $isNavActive('admins') ? 'aria-current="page"' : '' ?>>
               <span class="admin-nav-icon" aria-hidden="true"><?= icon('shield') ?></span>

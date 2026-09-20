@@ -11,7 +11,7 @@
         <span class="text-white-50 small">Access Governance</span>
       </div>
       <h2 class="h3 fw-bold mb-1 text-white">Administrator Management</h2>
-      <p class="text-white-50 mb-0">Manage system administrators, roles, status, security credentials, and granular module permissions.</p>
+      <p class="text-white-50 mb-0">Manage system administrators, account status, credentials, and granular module permissions.</p>
     </div>
     <a href="<?= e(url('/admin/admins/create')) ?>" class="btn btn-primary fw-semibold shadow-sm">
       <i class="bi bi-person-plus-fill me-1"></i> Add Administrator
@@ -30,7 +30,7 @@
         <tr>
           <th>Administrator</th>
           <th>Contact</th>
-          <th>Role</th>
+          <th>Account Level</th>
           <th>Status</th>
           <th>Created</th>
           <th class="text-end">Actions</th>
@@ -48,15 +48,10 @@
             </td>
             <td>
               <?php 
-                $roleBadge = match ($admin['role'] ?? 'viewer') {
-                  'super_admin' => 'bg-danger',
-                  'admin'       => 'bg-primary',
-                  'coordinator' => 'bg-info',
-                  'staff'       => 'bg-secondary',
-                  default       => 'bg-light text-dark border',
-                };
+                $isSuper = \App\Services\RoleService::isSuperAdmin($admin['role'] ?? '');
+                $roleBadge = $isSuper ? 'bg-danger' : 'bg-primary';
               ?>
-              <span class="badge <?= $roleBadge ?>"><?= e(\App\Services\RoleService::getRoleLabel($admin['role'] ?? 'viewer')) ?></span>
+              <span class="badge <?= $roleBadge ?>"><?= e(\App\Services\RoleService::getRoleLabel($admin['role'] ?? 'staff')) ?></span>
             </td>
             <td>
               <?php if (($admin['status'] ?? '') === 'active'): ?>
@@ -76,7 +71,7 @@
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                   <li>
                     <a class="dropdown-item small" href="<?= e(url('/admin/admins/' . $admin['id'] . '/edit')) ?>">
-                      <i class="bi bi-pencil me-2 text-primary"></i> Edit Profile & Role
+                      <i class="bi bi-pencil me-2 text-primary"></i> Edit Profile
                     </a>
                   </li>
                   <li>
@@ -89,6 +84,26 @@
                       <i class="bi bi-key me-2 text-danger"></i> Reset Password
                     </a>
                   </li>
+                  <li><hr class="dropdown-divider"></li>
+                  <?php if (($admin['status'] ?? '') === 'active'): ?>
+                    <li>
+                      <form action="<?= e(url('/admin/admins/' . $admin['id'] . '/deactivate')) ?>" method="POST" style="margin: 0;">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="dropdown-item small text-danger" onclick="return confirm('Are you sure you want to deactivate this administrator?');">
+                          <i class="bi bi-person-x me-2"></i> Deactivate
+                        </button>
+                      </form>
+                    </li>
+                  <?php else: ?>
+                    <li>
+                      <form action="<?= e(url('/admin/admins/' . $admin['id'] . '/activate')) ?>" method="POST" style="margin: 0;">
+                        <?= csrf_field() ?>
+                        <button type="submit" class="dropdown-item small text-success">
+                          <i class="bi bi-person-check me-2"></i> Activate
+                        </button>
+                      </form>
+                    </li>
+                  <?php endif; ?>
                 </ul>
               </div>
             </td>

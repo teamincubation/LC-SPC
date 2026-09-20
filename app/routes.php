@@ -124,6 +124,8 @@ $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], 
     $adminRouter->post('/admins/{id}/password', [AdminManagementController::class, 'updatePassword'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
     $adminRouter->get('/admins/{id}/permissions', [AdminManagementController::class, 'permissions'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN)]);
     $adminRouter->post('/admins/{id}/permissions', [AdminManagementController::class, 'updatePermissions'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
+    $adminRouter->post('/admins/{id}/activate', [AdminManagementController::class, 'activate'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
+    $adminRouter->post('/admins/{id}/deactivate', [AdminManagementController::class, 'deactivate'], [new RoleMiddleware(RoleService::ROLE_SUPER_ADMIN), CsrfMiddleware::class]);
 
     // -------------------------------------------------------------------------
     // RBAC Capability Gate Routes

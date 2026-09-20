@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controllers\Admin;
 
-use App\Core\Exceptions\ValidationException;
 use App\Core\Request;
 use App\Core\Response;
 use App\Core\Security;
@@ -19,6 +18,7 @@ use Throwable;
 /**
  * Super Administrator Admin Management Controller
  * Handles administrative accounts, lifecycle states, password resets, and module permissions.
+ * Strictly restricted to Super Administrators.
  */
 class AdminManagementController
 {
@@ -37,17 +37,57 @@ class AdminManagementController
     }
 
     /**
+     * Defense-in-depth authorization guard.
+     * Enforces that only Super Administrators can execute any Admin Management action.
+     */
+    private function ensureSuperAdmin(Request $request, string $action): ?Response
+    {
+        Session::start();
+        $userRole = (string) Session::get('_auth_user_role', '');
+
+        if (!RoleService::isSuperAdmin($userRole)) {
+            try {
+                $this->auditService->log(
+                    'auth.access_denied',
+                    'route',
+                    null,
+                    [
+                        'path'          => $request->getPath(),
+                        'required_role' => RoleService::ROLE_SUPER_ADMIN,
+                        'user_role'     => $userRole ?: 'anonymous',
+                        'action'        => $action,
+                    ]
+                );
+            } catch (Throwable) {
+                // Ignore audit logging failures during access denied
+            }
+
+            return Response::html(View::render('errors/403', [
+                'title'        => '403 Forbidden',
+                'requiredRole' => 'Super Administrator',
+                'userRole'     => RoleService::getRoleLabel($userRole ?: 'anonymous'),
+            ], 'layouts/admin'), 403);
+        }
+
+        return null;
+    }
+
+    /**
      * List all administrative users.
      * GET /admin/admins
      */
     public function index(Request $request): Response
     {
+        if ($denied = $this->ensureSuperAdmin($request, 'index')) {
+            return $denied;
+        }
+
         $admins = $this->userRepo->getAllAdmins();
 
         return Response::html(View::render('admin/admins/index', [
-            'title'      => 'Admin Management',
-            'admins'     => $admins,
-            'activeNav'  => 'admins',
+            'title'     => 'Admin Management',
+            'admins'    => $admins,
+            'activeNav' => 'admins',
         ], 'layouts/admin'));
     }
 
@@ -57,10 +97,17 @@ class AdminManagementController
      */
     public function create(Request $request): Response
     {
+        if ($denied = $this->ensureSuperAdmin($request, 'create')) {
+            return $denied;
+        }
+
+        // Module permissions available for assignment (excluding admin-management)
+        $groupedPerms = $this->permService->getAllPermissionsGrouped(true);
+
         return Response::html(View::render('admin/admins/create', [
-            'title'     => 'Create Administrator',
-            'roles'     => RoleService::getAllRoles(),
-            'activeNav' => 'admins',
+            'title'        => 'Create Administrator',
+            'groupedPerms' => $groupedPerms,
+            'activeNav'    => 'admins',
         ], 'layouts/admin'));
     }
 
@@ -70,6 +117,10 @@ class AdminManagementController
      */
     public function store(Request $request): Response
     {
+        if ($denied = $this->ensureSuperAdmin($request, 'store')) {
+            return $denied;
+        }
+
         $currentUserId = (int) Session::get('_auth_user_id', 0);
         $currentUserRole = (string) Session::get('_auth_user_role', RoleService::ROLE_SUPER_ADMIN);
 
@@ -77,9 +128,9 @@ class AdminManagementController
         $email = strtolower(trim((string) $request->input('email', '')));
         $phone = trim((string) $request->input('phone', ''));
         $password = (string) $request->input('password', '');
-        $role = trim((string) $request->input('role', 'staff'));
+        $confirmPassword = (string) $request->input('password_confirmation', '');
 
-        if (empty($name) || strlen($name) < 2) {
+        if (empty($name) || mb_strlen($name) < 2) {
             Session::flash('error', 'Administrator name must be at least 2 characters.');
             return Response::redirect(url('/admin/admins/create'));
         }
@@ -99,10 +150,13 @@ class AdminManagementController
             return Response::redirect(url('/admin/admins/create'));
         }
 
-        if (!RoleService::isValidRole($role)) {
-            Session::flash('error', 'Invalid role selected.');
+        if ($password !== $confirmPassword) {
+            Session::flash('error', 'Password confirmation does not match.');
             return Response::redirect(url('/admin/admins/create'));
         }
+
+        // Internal role resolved strictly server-side: Super Admin creating an Administrator
+        $role = RoleService::ROLE_DEFAULT_ADMINISTRATOR;
 
         try {
             $hash = Security::hashPassword($password);
@@ -115,17 +169,24 @@ class AdminManagementController
                 'status'        => 'active',
             ]);
 
+            // Assign initial module permissions if selected
+            $permIds = (array) $request->input('permissions', []);
+            $cleanIds = array_map('intval', array_filter($permIds, 'is_numeric'));
+            if (!empty($cleanIds)) {
+                $this->permService->assignPermissions($newAdminId, $cleanIds);
+            }
+
             $this->auditService->log(
-                'admin.create',
+                'administrator_created',
                 'users',
                 $newAdminId,
                 [
                     'name'  => $name,
                     'email' => $email,
-                    'role'  => $role,
+                    'role'  => 'Administrator',
                 ],
                 $currentUserId,
-                $currentUserRole
+                'admin'
             );
 
             Session::flash('success', "Administrator [{$name}] successfully created.");
@@ -142,6 +203,10 @@ class AdminManagementController
      */
     public function edit(Request $request, array $vars): Response
     {
+        if ($denied = $this->ensureSuperAdmin($request, 'edit')) {
+            return $denied;
+        }
+
         $id = (int) ($vars['id'] ?? 0);
         $admin = $this->userRepo->findById($id);
 
@@ -150,11 +215,13 @@ class AdminManagementController
             return Response::redirect(url('/admin/admins'));
         }
 
+        $isSuperAdmin = RoleService::isSuperAdmin($admin['role'] ?? '');
+
         return Response::html(View::render('admin/admins/edit', [
-            'title'     => 'Edit Administrator',
-            'admin'     => $admin,
-            'roles'     => RoleService::getAllRoles(),
-            'activeNav' => 'admins',
+            'title'        => 'Edit Administrator Profile',
+            'admin'        => $admin,
+            'isSuperAdmin' => $isSuperAdmin,
+            'activeNav'    => 'admins',
         ], 'layouts/admin'));
     }
 
@@ -164,6 +231,10 @@ class AdminManagementController
      */
     public function update(Request $request, array $vars): Response
     {
+        if ($denied = $this->ensureSuperAdmin($request, 'update')) {
+            return $denied;
+        }
+
         $id = (int) ($vars['id'] ?? 0);
         $currentUserId = (int) Session::get('_auth_user_id', 0);
         $currentUserRole = (string) Session::get('_auth_user_role', RoleService::ROLE_SUPER_ADMIN);
@@ -177,10 +248,12 @@ class AdminManagementController
         $name = trim((string) $request->input('name', ''));
         $email = strtolower(trim((string) $request->input('email', '')));
         $phone = trim((string) $request->input('phone', ''));
-        $role = trim((string) $request->input('role', $admin['role']));
         $status = trim((string) $request->input('status', $admin['status']));
 
-        if (empty($name) || strlen($name) < 2) {
+        // Preserve target user's existing internal role (do not accept client-provided role)
+        $role = $admin['role'];
+
+        if (empty($name) || mb_strlen($name) < 2) {
             Session::flash('error', 'Name must be at least 2 characters.');
             return Response::redirect(url("/admin/admins/{$id}/edit"));
         }
@@ -196,16 +269,16 @@ class AdminManagementController
             return Response::redirect(url("/admin/admins/{$id}/edit"));
         }
 
-        // Prevent self-demotion or self-deactivation if sole super_admin
-        if ($id === $currentUserId) {
-            if ($status !== 'active') {
-                Session::flash('error', 'You cannot deactivate your own administrative account.');
-                return Response::redirect(url("/admin/admins/{$id}/edit"));
-            }
-            if ($role !== RoleService::ROLE_SUPER_ADMIN && $this->userRepo->countSuperAdmins() <= 1) {
-                Session::flash('error', 'Cannot remove super_admin role from the only active Super Administrator.');
-                return Response::redirect(url("/admin/admins/{$id}/edit"));
-            }
+        // Prevent self-deactivation
+        if ($id === $currentUserId && $status !== 'active') {
+            Session::flash('error', 'You cannot deactivate your own administrative account.');
+            return Response::redirect(url("/admin/admins/{$id}/edit"));
+        }
+
+        // Prevent deactivating the only active Super Administrator
+        if (RoleService::isSuperAdmin($role) && $status !== 'active' && $this->userRepo->countSuperAdmins() <= 1) {
+            Session::flash('error', 'Cannot deactivate the only active Super Administrator.');
+            return Response::redirect(url("/admin/admins/{$id}/edit"));
         }
 
         if (!in_array($status, ['active', 'inactive', 'suspended'], true)) {
@@ -226,13 +299,11 @@ class AdminManagementController
                 'users',
                 $id,
                 [
-                    'old_role'   => $admin['role'],
-                    'new_role'   => $role,
                     'old_status' => $admin['status'],
                     'new_status' => $status,
                 ],
                 $currentUserId,
-                $currentUserRole
+                'admin'
             );
 
             Session::flash('success', "Administrator [{$name}] updated successfully.");
@@ -249,6 +320,10 @@ class AdminManagementController
      */
     public function password(Request $request, array $vars): Response
     {
+        if ($denied = $this->ensureSuperAdmin($request, 'password')) {
+            return $denied;
+        }
+
         $id = (int) ($vars['id'] ?? 0);
         $admin = $this->userRepo->findById($id);
 
@@ -258,7 +333,7 @@ class AdminManagementController
         }
 
         return Response::html(View::render('admin/admins/password', [
-            'title'     => "Reset Password - {$admin['name']}",
+            'title'     => "Reset Password: {$admin['name']}",
             'admin'     => $admin,
             'activeNav' => 'admins',
         ], 'layouts/admin'));
@@ -270,6 +345,10 @@ class AdminManagementController
      */
     public function updatePassword(Request $request, array $vars): Response
     {
+        if ($denied = $this->ensureSuperAdmin($request, 'updatePassword')) {
+            return $denied;
+        }
+
         $id = (int) ($vars['id'] ?? 0);
         $currentUserId = (int) Session::get('_auth_user_id', 0);
         $currentUserRole = (string) Session::get('_auth_user_role', RoleService::ROLE_SUPER_ADMIN);
@@ -303,7 +382,7 @@ class AdminManagementController
                 $id,
                 ['target_user' => $admin['email']],
                 $currentUserId,
-                $currentUserRole
+                'admin'
             );
 
             Session::flash('success', "Password successfully updated for [{$admin['name']}].");
@@ -315,11 +394,95 @@ class AdminManagementController
     }
 
     /**
+     * Activate Administrator Account.
+     * POST /admin/admins/{id}/activate
+     */
+    public function activate(Request $request, array $vars): Response
+    {
+        if ($denied = $this->ensureSuperAdmin($request, 'activate')) {
+            return $denied;
+        }
+
+        $id = (int) ($vars['id'] ?? 0);
+        $currentUserId = (int) Session::get('_auth_user_id', 0);
+        $currentUserRole = (string) Session::get('_auth_user_role', RoleService::ROLE_SUPER_ADMIN);
+
+        $admin = $this->userRepo->findById($id);
+        if (!$admin) {
+            Session::flash('error', 'Administrator not found.');
+            return Response::redirect(url('/admin/admins'));
+        }
+
+        $this->userRepo->updateAdmin($id, ['status' => 'active']);
+
+        $this->auditService->log(
+            'admin.activate',
+            'users',
+            $id,
+            ['target_user' => $admin['email']],
+            $currentUserId,
+            'admin'
+        );
+
+        Session::flash('success', "Administrator [{$admin['name']}] activated.");
+        return Response::redirect(url('/admin/admins'));
+    }
+
+    /**
+     * Deactivate Administrator Account.
+     * POST /admin/admins/{id}/deactivate
+     */
+    public function deactivate(Request $request, array $vars): Response
+    {
+        if ($denied = $this->ensureSuperAdmin($request, 'deactivate')) {
+            return $denied;
+        }
+
+        $id = (int) ($vars['id'] ?? 0);
+        $currentUserId = (int) Session::get('_auth_user_id', 0);
+        $currentUserRole = (string) Session::get('_auth_user_role', RoleService::ROLE_SUPER_ADMIN);
+
+        $admin = $this->userRepo->findById($id);
+        if (!$admin) {
+            Session::flash('error', 'Administrator not found.');
+            return Response::redirect(url('/admin/admins'));
+        }
+
+        if ($id === $currentUserId) {
+            Session::flash('error', 'You cannot deactivate your own administrative account.');
+            return Response::redirect(url('/admin/admins'));
+        }
+
+        if (RoleService::isSuperAdmin($admin['role'] ?? '') && $this->userRepo->countSuperAdmins() <= 1) {
+            Session::flash('error', 'Cannot deactivate the only active Super Administrator.');
+            return Response::redirect(url('/admin/admins'));
+        }
+
+        $this->userRepo->updateAdmin($id, ['status' => 'inactive']);
+
+        $this->auditService->log(
+            'admin.deactivate',
+            'users',
+            $id,
+            ['target_user' => $admin['email']],
+            $currentUserId,
+            'admin'
+        );
+
+        Session::flash('success', "Administrator [{$admin['name']}] deactivated.");
+        return Response::redirect(url('/admin/admins'));
+    }
+
+    /**
      * Permission Assignment Matrix Form.
      * GET /admin/admins/{id}/permissions
      */
     public function permissions(Request $request, array $vars): Response
     {
+        if ($denied = $this->ensureSuperAdmin($request, 'permissions')) {
+            return $denied;
+        }
+
         $id = (int) ($vars['id'] ?? 0);
         $admin = $this->userRepo->findById($id);
 
@@ -328,12 +491,15 @@ class AdminManagementController
             return Response::redirect(url('/admin/admins'));
         }
 
-        $groupedPerms = $this->permService->getAllPermissionsGrouped();
+        $isTargetSuper = RoleService::isSuperAdmin($admin['role'] ?? '');
+        // Exclude admin-management module for regular administrators
+        $groupedPerms = $this->permService->getAllPermissionsGrouped(true);
         $assignedIds = $this->permService->getUserPermissionIds($id);
 
         return Response::html(View::render('admin/admins/permissions', [
-            'title'         => "Permission Assignment - {$admin['name']}",
+            'title'         => "Permission Assignment: {$admin['name']}",
             'admin'         => $admin,
+            'isTargetSuper' => $isTargetSuper,
             'groupedPerms'  => $groupedPerms,
             'assignedIds'   => $assignedIds,
             'activeNav'     => 'admins',
@@ -346,6 +512,10 @@ class AdminManagementController
      */
     public function updatePermissions(Request $request, array $vars): Response
     {
+        if ($denied = $this->ensureSuperAdmin($request, 'updatePermissions')) {
+            return $denied;
+        }
+
         $id = (int) ($vars['id'] ?? 0);
         $currentUserId = (int) Session::get('_auth_user_id', 0);
         $currentUserRole = (string) Session::get('_auth_user_role', RoleService::ROLE_SUPER_ADMIN);
@@ -367,11 +537,11 @@ class AdminManagementController
                 'users',
                 $id,
                 [
-                    'target_user'      => $admin['email'],
-                    'assigned_count'   => count($cleanIds),
+                    'target_user'    => $admin['email'],
+                    'assigned_count' => count($cleanIds),
                 ],
                 $currentUserId,
-                $currentUserRole
+                'admin'
             );
 
             Session::flash('success', "Permissions updated for [{$admin['name']}].");

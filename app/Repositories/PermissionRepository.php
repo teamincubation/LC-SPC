@@ -30,6 +30,14 @@ class PermissionRepository
     }
 
     /**
+     * Get all permissions for a specific module.
+     */
+    public function getByModule(string $module): array
+    {
+        return Database::fetchAll("SELECT * FROM `permissions` WHERE `module` = :module ORDER BY `id` ASC", [':module' => $module]);
+    }
+
+    /**
      * Get list of permission names assigned to a user.
      */
     public function getUserPermissionNames(int $userId): array

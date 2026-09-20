@@ -1,6 +1,6 @@
 <?php
   /** @var array $admin */
-  /** @var array $roles */
+  /** @var bool $isSuperAdmin */
 ?>
 
 <div class="card mb-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; border: none;">
@@ -38,14 +38,16 @@
       </div>
 
       <div class="mb-3">
-        <label class="form-label fw-semibold small">System Role <span class="text-danger">*</span></label>
-        <select name="role" class="form-select">
-          <?php foreach ($roles as $roleKey => $roleLabel): ?>
-            <option value="<?= e($roleKey) ?>" <?= ($admin['role'] ?? '') === $roleKey ? 'selected' : '' ?>>
-              <?= e($roleLabel) ?>
-            </option>
-          <?php endforeach; ?>
-        </select>
+        <label class="form-label fw-semibold small">Account Level</label>
+        <div>
+          <?php if (!empty($isSuperAdmin)): ?>
+            <span class="badge bg-danger px-3 py-2">Super Administrator</span>
+            <div class="form-text small text-muted mt-1">Super Administrator authority is system-protected.</div>
+          <?php else: ?>
+            <span class="badge bg-primary px-3 py-2">Administrator</span>
+            <div class="form-text small text-muted mt-1">Standard operational administrator account.</div>
+          <?php endif; ?>
+        </div>
       </div>
 
       <div class="mb-4">
@@ -58,8 +60,8 @@
       </div>
 
       <div class="d-flex justify-content-between align-items-center">
-        <a href="<?= e(url('/admin/admins/' . $admin['id'] . '/password')) ?>" class="text-danger text-decoration-none small">
-          <i class="bi bi-key me-1"></i> Reset Password
+        <a href="<?= e(url('/admin/admins/' . $admin['id'] . '/password')) ?>" class="btn btn-outline-danger btn-sm">
+          Reset Password
         </a>
         <div class="d-flex gap-2">
           <a href="<?= e(url('/admin/admins')) ?>" class="btn btn-light border">Cancel</a>

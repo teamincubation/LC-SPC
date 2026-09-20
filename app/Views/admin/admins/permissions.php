@@ -2,6 +2,7 @@
   /** @var array $admin */
   /** @var array $groupedPerms */
   /** @var array $assignedIds */
+  /** @var bool $isTargetSuper */
 ?>
 
 <div class="card mb-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #fff; border: none;">
@@ -13,12 +14,12 @@
         <span class="badge bg-danger">SUPER ADMIN ONLY</span>
       </div>
       <h2 class="h3 fw-bold mb-1 text-white">Module Permissions Assignment</h2>
-      <p class="text-white-50 mb-0">Manage granular module permissions for <strong><?= e($admin['name']) ?></strong> (<?= e(\App\Services\RoleService::getRoleLabel($admin['role'] ?? 'viewer')) ?>)</p>
+      <p class="text-white-50 mb-0">Manage granular module permissions for <strong><?= e($admin['name']) ?></strong> (<?= e(\App\Services\RoleService::getRoleLabel($admin['role'] ?? 'staff')) ?>)</p>
     </div>
   </div>
 </div>
 
-<?php if (($admin['role'] ?? '') === 'super_admin'): ?>
+<?php if (!empty($isTargetSuper)): ?>
   <div class="alert alert-info border-0 shadow-sm d-flex align-items-center gap-3 mb-4">
     <i class="bi bi-shield-check fs-3 text-primary"></i>
     <div>
@@ -41,12 +42,15 @@
     </div>
     <div class="card-body p-4">
       <div class="row g-4">
-        <?php foreach ($groupedPerms as $moduleName => $permissions): ?>
+        <?php foreach ($groupedPerms as $moduleName => $moduleData): 
+          $permissions = $moduleData['permissions'] ?? [];
+          $moduleLabel = $moduleData['label'] ?? ucfirst(str_replace('_', ' ', $moduleName));
+        ?>
           <div class="col-md-6 col-lg-4">
             <div class="card h-100 border bg-light">
               <div class="card-header bg-white py-2 px-3 border-bottom d-flex justify-content-between align-items-center">
                 <span class="fw-bold text-dark small text-uppercase">
-                  <?= e(str_replace('_', ' ', $moduleName)) ?>
+                  <?= e($moduleLabel) ?>
                 </span>
                 <span class="badge bg-light text-muted border small"><?= count($permissions) ?> actions</span>
               </div>

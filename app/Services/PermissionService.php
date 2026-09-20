@@ -40,8 +40,15 @@ class PermissionService
         }
 
         // Super Admin possesses unconditional permission across all modules
-        if ($role === RoleService::ROLE_SUPER_ADMIN) {
+        if (RoleService::isSuperAdmin($role)) {
             return true;
+        }
+
+        // Administrator Management is strictly a SUPER-ADMIN-ONLY capability.
+        // A regular Administrator CANNOT have administrator-management capability,
+        // regardless of any granular permission records.
+        if (str_starts_with($permission, 'admins.') || $permission === 'admins') {
+            return false;
         }
 
         $userPerms = $this->permRepo->getUserPermissionNames($userId);
@@ -68,22 +75,36 @@ class PermissionService
 
     /**
      * Assign / synchronize permission IDs for a user.
+     * Strips out 'admins' module permissions for any non-super-admin to prevent privilege escalation.
      */
     public function assignPermissions(int $userId, array $permissionIds): void
     {
+        $user = $this->userRepo->findById($userId);
+        $role = $user['role'] ?? null;
+
+        if (!RoleService::isSuperAdmin($role) && !empty($permissionIds)) {
+            $adminPerms = $this->permRepo->getByModule('admins');
+            $adminPermIds = array_map(static fn(array $p): int => (int) $p['id'], $adminPerms);
+            $permissionIds = array_values(array_diff($permissionIds, $adminPermIds));
+        }
+
         $this->permRepo->syncUserPermissions($userId, $permissionIds);
     }
 
     /**
      * Get all registered permissions grouped by module.
+     * Optionally excludes 'admins' module when displaying permissions for regular administrators.
      */
-    public function getAllPermissionsGrouped(): array
+    public function getAllPermissionsGrouped(bool $excludeAdminModule = false): array
     {
         $all = $this->permRepo->getAll();
         $grouped = [];
 
         foreach ($all as $p) {
             $module = $p['module'];
+            if ($excludeAdminModule && $module === 'admins') {
+                continue;
+            }
             if (!isset($grouped[$module])) {
                 $grouped[$module] = [
                     'label'       => $this->getModuleLabel($module),
