@@ -20,6 +20,7 @@ use App\Controllers\Public\PublicCertificatePortalController;
 use App\Core\Middleware\AuthMiddleware;
 use App\Core\Middleware\CsrfMiddleware;
 use App\Core\Middleware\GuestMiddleware;
+use App\Core\Middleware\PermissionMiddleware;
 use App\Core\Middleware\RoleMiddleware;
 use App\Core\Request;
 use App\Core\Response;
@@ -65,52 +66,52 @@ $router->post('/logout', [AuthController::class, 'logout'], [AuthMiddleware::cla
 // -----------------------------------------------------------------------------
 $router->group(['prefix' => '/admin', 'middleware' => [AuthMiddleware::class]], function (Router $adminRouter): void {
     // Admin Dashboard Overview
-    $adminRouter->get('/', [DashboardController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
-    $adminRouter->get('/dashboard', [DashboardController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
+    $adminRouter->get('/', [DashboardController::class, 'index'], [new PermissionMiddleware('dashboard.view')]);
+    $adminRouter->get('/dashboard', [DashboardController::class, 'index'], [new PermissionMiddleware('dashboard.view')]);
 
     // -------------------------------------------------------------------------
-    // Module 1: Certificate Settings & Fonts (Super Admin / Admin)
+    // Module 1: Certificate Settings & Fonts
     // -------------------------------------------------------------------------
-    $adminRouter->get('/certificate-settings', [CertificateSettingsController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_ADMIN)]);
-    $adminRouter->post('/certificate-settings', [CertificateSettingsController::class, 'update'], [new RoleMiddleware(RoleService::ROLE_ADMIN), CsrfMiddleware::class]);
-    $adminRouter->post('/certificate-settings/fonts', [CertificateSettingsController::class, 'uploadFont'], [new RoleMiddleware(RoleService::ROLE_ADMIN), CsrfMiddleware::class]);
-    $adminRouter->post('/certificate-settings/fonts/{id}/delete', [CertificateSettingsController::class, 'deleteFont'], [new RoleMiddleware(RoleService::ROLE_ADMIN), CsrfMiddleware::class]);
+    $adminRouter->get('/certificate-settings', [CertificateSettingsController::class, 'index'], [new PermissionMiddleware(['certificates.manage', 'settings.view'])]);
+    $adminRouter->post('/certificate-settings', [CertificateSettingsController::class, 'update'], [new PermissionMiddleware(['certificates.manage', 'settings.manage']), CsrfMiddleware::class]);
+    $adminRouter->post('/certificate-settings/fonts', [CertificateSettingsController::class, 'uploadFont'], [new PermissionMiddleware(['certificates.manage', 'settings.manage']), CsrfMiddleware::class]);
+    $adminRouter->post('/certificate-settings/fonts/{id}/delete', [CertificateSettingsController::class, 'deleteFont'], [new PermissionMiddleware(['certificates.manage', 'settings.manage']), CsrfMiddleware::class]);
 
     // -------------------------------------------------------------------------
-    // Module 2: Certificate Templates & Visual Designer (Coordinator+)
+    // Module 2: Certificate Templates & Visual Designer
     // -------------------------------------------------------------------------
-    $adminRouter->get('/certificate-templates', [CertificateTemplateController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
-    $adminRouter->get('/certificate-templates/create', [CertificateTemplateController::class, 'create'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
-    $adminRouter->post('/certificate-templates', [CertificateTemplateController::class, 'store'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
-    $adminRouter->get('/certificate-templates/{id}/edit', [CertificateTemplateController::class, 'edit'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
-    $adminRouter->post('/certificate-templates/{id}', [CertificateTemplateController::class, 'update'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
-    $adminRouter->get('/certificate-templates/{id}/designer', [CertificateTemplateController::class, 'designer'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
-    $adminRouter->post('/certificate-templates/{id}/designer', [CertificateTemplateController::class, 'saveDesigner'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
-    $adminRouter->post('/certificate-templates/{id}/assets', [CertificateTemplateController::class, 'uploadAsset'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
-    $adminRouter->post('/certificate-templates/{id}/assets/delete', [CertificateTemplateController::class, 'deleteAsset'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
-    $adminRouter->get('/certificate-templates/{id}/preview', [CertificateTemplateController::class, 'preview'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
-    $adminRouter->post('/certificate-templates/{id}/duplicate', [CertificateTemplateController::class, 'duplicate'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
-    $adminRouter->post('/certificate-templates/{id}/delete', [CertificateTemplateController::class, 'destroy'], [new RoleMiddleware(RoleService::ROLE_ADMIN), CsrfMiddleware::class]);
+    $adminRouter->get('/certificate-templates', [CertificateTemplateController::class, 'index'], [new PermissionMiddleware(['certificates.view', 'certificates.manage'])]);
+    $adminRouter->get('/certificate-templates/create', [CertificateTemplateController::class, 'create'], [new PermissionMiddleware(['certificates.create', 'certificates.manage'])]);
+    $adminRouter->post('/certificate-templates', [CertificateTemplateController::class, 'store'], [new PermissionMiddleware(['certificates.create', 'certificates.manage']), CsrfMiddleware::class]);
+    $adminRouter->get('/certificate-templates/{id}/edit', [CertificateTemplateController::class, 'edit'], [new PermissionMiddleware(['certificates.edit', 'certificates.manage'])]);
+    $adminRouter->post('/certificate-templates/{id}', [CertificateTemplateController::class, 'update'], [new PermissionMiddleware(['certificates.edit', 'certificates.manage']), CsrfMiddleware::class]);
+    $adminRouter->get('/certificate-templates/{id}/designer', [CertificateTemplateController::class, 'designer'], [new PermissionMiddleware(['certificates.edit', 'certificates.manage'])]);
+    $adminRouter->post('/certificate-templates/{id}/designer', [CertificateTemplateController::class, 'saveDesigner'], [new PermissionMiddleware(['certificates.edit', 'certificates.manage']), CsrfMiddleware::class]);
+    $adminRouter->post('/certificate-templates/{id}/assets', [CertificateTemplateController::class, 'uploadAsset'], [new PermissionMiddleware(['certificates.edit', 'certificates.manage']), CsrfMiddleware::class]);
+    $adminRouter->post('/certificate-templates/{id}/assets/delete', [CertificateTemplateController::class, 'deleteAsset'], [new PermissionMiddleware(['certificates.edit', 'certificates.manage']), CsrfMiddleware::class]);
+    $adminRouter->get('/certificate-templates/{id}/preview', [CertificateTemplateController::class, 'preview'], [new PermissionMiddleware(['certificates.view', 'certificates.manage'])]);
+    $adminRouter->post('/certificate-templates/{id}/duplicate', [CertificateTemplateController::class, 'duplicate'], [new PermissionMiddleware(['certificates.create', 'certificates.manage']), CsrfMiddleware::class]);
+    $adminRouter->post('/certificate-templates/{id}/delete', [CertificateTemplateController::class, 'destroy'], [new PermissionMiddleware(['certificates.delete', 'certificates.manage']), CsrfMiddleware::class]);
 
     // -------------------------------------------------------------------------
-    // Module 3: Certificate Generation & Batch Processing (Coordinator+)
+    // Module 3: Certificate Generation & Batch Processing
     // -------------------------------------------------------------------------
-    $adminRouter->get('/certificates/generate', [CertificateGenerateController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
-    $adminRouter->get('/certificates/sample-csv/{id}', [CertificateGenerateController::class, 'sampleCsv'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
-    $adminRouter->post('/certificates/validate-csv', [CertificateGenerateController::class, 'validateCsv'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
-    $adminRouter->post('/certificates/download-error-report', [CertificateGenerateController::class, 'downloadErrorReport'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
-    $adminRouter->post('/certificates/start-batch', [CertificateGenerateController::class, 'startBatch'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
-    $adminRouter->post('/certificates/process-chunk', [CertificateGenerateController::class, 'processChunk'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR)]);
+    $adminRouter->get('/certificates/generate', [CertificateGenerateController::class, 'index'], [new PermissionMiddleware(['certificates.create', 'certificates.manage'])]);
+    $adminRouter->get('/certificates/sample-csv/{id}', [CertificateGenerateController::class, 'sampleCsv'], [new PermissionMiddleware(['certificates.create', 'certificates.manage'])]);
+    $adminRouter->post('/certificates/validate-csv', [CertificateGenerateController::class, 'validateCsv'], [new PermissionMiddleware(['certificates.create', 'certificates.manage'])]);
+    $adminRouter->post('/certificates/download-error-report', [CertificateGenerateController::class, 'downloadErrorReport'], [new PermissionMiddleware(['certificates.create', 'certificates.manage']), CsrfMiddleware::class]);
+    $adminRouter->post('/certificates/start-batch', [CertificateGenerateController::class, 'startBatch'], [new PermissionMiddleware(['certificates.create', 'certificates.manage'])]);
+    $adminRouter->post('/certificates/process-chunk', [CertificateGenerateController::class, 'processChunk'], [new PermissionMiddleware(['certificates.create', 'certificates.manage'])]);
 
     // -------------------------------------------------------------------------
-    // Module 4: Certificate Repository (Viewer+)
+    // Module 4: Certificate Repository
     // -------------------------------------------------------------------------
-    $adminRouter->get('/certificates', [CertificateRepositoryController::class, 'index'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
-    $adminRouter->get('/certificates/{id}', [CertificateRepositoryController::class, 'show'], [new RoleMiddleware(RoleService::ROLE_VIEWER)]);
-    $adminRouter->get('/certificates/{id}/pdf', [CertificateRepositoryController::class, 'downloadPdf'], [new RoleMiddleware(RoleService::ROLE_STAFF)]);
-    $adminRouter->get('/certificates/{id}/image', [CertificateRepositoryController::class, 'downloadImage'], [new RoleMiddleware(RoleService::ROLE_STAFF)]);
-    $adminRouter->post('/certificates/{id}/invalidate', [CertificateRepositoryController::class, 'invalidate'], [new RoleMiddleware(RoleService::ROLE_COORDINATOR), CsrfMiddleware::class]);
-    $adminRouter->post('/certificates/{id}/delete', [CertificateRepositoryController::class, 'destroy'], [new RoleMiddleware(RoleService::ROLE_ADMIN), CsrfMiddleware::class]);
+    $adminRouter->get('/certificates', [CertificateRepositoryController::class, 'index'], [new PermissionMiddleware(['certificates.view', 'certificates.manage'])]);
+    $adminRouter->get('/certificates/{id}', [CertificateRepositoryController::class, 'show'], [new PermissionMiddleware(['certificates.view', 'certificates.manage'])]);
+    $adminRouter->get('/certificates/{id}/pdf', [CertificateRepositoryController::class, 'downloadPdf'], [new PermissionMiddleware(['certificates.export', 'certificates.manage'])]);
+    $adminRouter->get('/certificates/{id}/image', [CertificateRepositoryController::class, 'downloadImage'], [new PermissionMiddleware(['certificates.export', 'certificates.manage'])]);
+    $adminRouter->post('/certificates/{id}/invalidate', [CertificateRepositoryController::class, 'invalidate'], [new PermissionMiddleware(['certificates.delete', 'certificates.manage']), CsrfMiddleware::class]);
+    $adminRouter->post('/certificates/{id}/delete', [CertificateRepositoryController::class, 'destroy'], [new PermissionMiddleware(['certificates.delete', 'certificates.manage']), CsrfMiddleware::class]);
 
     // -------------------------------------------------------------------------
     // Module 5: Admin Management Routes (Super Administrator Only)

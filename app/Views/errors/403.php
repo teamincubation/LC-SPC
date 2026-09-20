@@ -31,7 +31,15 @@
     <h1 style="font-size: 1.5rem; margin-bottom: 0.75rem; color: #1e293b;"><?= e($title ?? 'Access Forbidden') ?></h1>
     <p style="color: #64748b; margin-bottom: 1.5rem; line-height: 1.6;">
       <?= e($message ?? 'You do not possess the administrative privileges required to access this resource or action.') ?>
-      <?php if (!empty($requiredRole)): ?>
+      <?php if (!empty($requiredPermissions)): ?>
+        <?php if (count($requiredPermissions) > 1): ?>
+          <br><small style="color: #94a3b8;">Requires one of: <strong><?= e(implode(', ', $requiredPermissions)) ?></strong></small>
+        <?php else: ?>
+          <br><small style="color: #94a3b8;">Requires permission: <strong><?= e($requiredPermissions[0]) ?></strong></small>
+        <?php endif; ?>
+      <?php elseif (!empty($requiredPermission)): ?>
+        <br><small style="color: #94a3b8;">Requires permission: <strong><?= e($requiredPermission) ?></strong></small>
+      <?php elseif (!empty($requiredRole)): ?>
         <br><small style="color: #94a3b8;">Requires minimum rank: <strong><?= e($requiredRole) ?></strong></small>
       <?php endif; ?>
     </p>
