@@ -67,7 +67,7 @@ declare(strict_types=1);
                   }
                   ?>
                   <span style="font-size: var(--font-size-xs); font-family: var(--font-mono); color: var(--text-secondary);">
-                    <?= e(count($vList)) ?> variables ({{name}}, {{phone}}...)
+                    <?= e(count($vList)) ?> variables (<?= e(implode(', ', array_slice(array_map(fn($v) => '{{' . (is_array($v) ? ($v['key'] ?? '') : $v) . '}}', $vList), 0, 2))) ?>...)
                   </span>
                 </td>
                 <td>

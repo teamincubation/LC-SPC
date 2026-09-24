@@ -83,13 +83,10 @@ class CertificateTemplateController
             return Response::redirect(url('/admin/certificate-templates/create'));
         }
 
-        // Variables: ensure name and phone are strictly required
-        $rawVars = (array) $request->input('required_variables', ['name', 'phone', 'certificate_number']);
+        // Variables: ensure name is strictly required
+        $rawVars = (array) $request->input('required_variables', ['name', 'certificate_number']);
         if (!in_array('name', $rawVars, true)) {
             $rawVars[] = 'name';
-        }
-        if (!in_array('phone', $rawVars, true)) {
-            $rawVars[] = 'phone';
         }
 
         try {
@@ -174,12 +171,9 @@ class CertificateTemplateController
         $certType = trim((string) $request->input('certificate_type', 'participation'));
         $status = trim((string) $request->input('status', 'active'));
 
-        $rawVars = (array) $request->input('required_variables', ['name', 'phone', 'certificate_number']);
+        $rawVars = (array) $request->input('required_variables', ['name', 'certificate_number']);
         if (!in_array('name', $rawVars, true)) {
             $rawVars[] = 'name';
-        }
-        if (!in_array('phone', $rawVars, true)) {
-            $rawVars[] = 'phone';
         }
 
         try {
@@ -260,29 +254,19 @@ class CertificateTemplateController
             return Response::json(['error' => 'Layout elements cannot be empty.'], 422);
         }
 
-        // Verify mandatory variables are present in the designer elements
+        // Verify mandatory recipient name placeholder is present in the designer elements
         $foundName = false;
-        $foundPhone = false;
         foreach ($layout['elements'] as $el) {
             $text = $el['text'] ?? '';
             if (str_contains($text, '{{name}}')) {
                 $foundName = true;
-            }
-            if (str_contains($text, '{{phone}}')) {
-                $foundPhone = true;
+                break;
             }
         }
 
-        if (!$foundName || !$foundPhone) {
-            $missing = [];
-            if (!$foundName) {
-                $missing[] = '{{name}}';
-            }
-            if (!$foundPhone) {
-                $missing[] = '{{phone}}';
-            }
+        if (!$foundName) {
             return Response::json([
-                'error' => 'Designer validation failed: Template layout MUST contain the mandatory placeholders: ' . implode(' and ', $missing) . '.'
+                'error' => 'Designer validation failed: Template layout MUST contain the mandatory recipient placeholder: {{name}}.'
             ], 422);
         }
 
