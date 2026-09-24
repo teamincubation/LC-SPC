@@ -27,15 +27,6 @@ class VariableRegistry
                 'description' => 'Full legal name of the certificate recipient',
                 'example'     => 'John Mathew',
             ],
-            'phone' => [
-                'key'         => 'phone',
-                'placeholder' => '{{phone}}',
-                'label'       => 'Recipient Mobile / WhatsApp',
-                'type'        => 'phone',
-                'required'    => true,
-                'description' => 'Mobile number used for recipient identification & verification',
-                'example'     => '+919876543210',
-            ],
             'certificate_number' => [
                 'key'         => 'certificate_number',
                 'placeholder' => '{{certificate_number}}',
@@ -184,17 +175,18 @@ class VariableRegistry
     }
 
     /**
-     * Get list of system-wide mandatory variables for CSV data.
-     * Every template data row MUST have 'name' and 'phone'.
+     * Get list of system-wide mandatory variables for recipient certificates.
+     * Recipient name is strictly mandatory.
      */
     public static function getMandatoryDataKeys(): array
     {
-        return ['name', 'phone'];
+        return ['name'];
     }
 
     /**
-     * Validate that a template configuration contains the mandatory variables:
-     * {{name}} and {{phone}} must be present.
+     * Validate that a template configuration contains the mandatory design variables:
+     * {{name}} must be present.
+     * Note: Phone is an ingestion/search field and NOT a certificate design variable.
      *
      * @throws ValidationException
      */
@@ -213,9 +205,6 @@ class VariableRegistry
         $missing = [];
         if (!in_array('name', $keys, true)) {
             $missing[] = '{{name}} (Recipient Full Name)';
-        }
-        if (!in_array('phone', $keys, true)) {
-            $missing[] = '{{phone}} (Recipient Phone / WhatsApp)';
         }
 
         if (!empty($missing)) {
@@ -237,11 +226,15 @@ class VariableRegistry
 
     /**
      * Replace placeholders with recipient data snapshot.
+     * Phone invariant: Phone is NOT a certificate design variable and is never rendered.
      */
     public static function replacePlaceholders(string $template, array $data): string
     {
         return preg_replace_callback('/\{\{([a-zA-Z0-9_]+)\}\}/', function ($matches) use ($data) {
             $key = $matches[1];
+            if ($key === 'phone') {
+                return '';
+            }
             return isset($data[$key]) ? (string) $data[$key] : '';
         }, $template);
     }

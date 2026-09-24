@@ -38,7 +38,7 @@ declare(strict_types=1);
             <select id="templateSelect" name="template_id" class="form-select" style="flex: 1; min-width: 260px;" required>
               <option value="">-- Choose an Active Template --</option>
               <?php foreach ($templates as $tmpl): ?>
-                <option value="<?= e($tmpl['id']) ?>" data-variables="<?= e(json_encode($tmpl['layout_config']['variables'] ?? [])) ?>">
+                <option value="<?= e($tmpl['id']) ?>" data-variables="<?= e(json_encode(\App\Services\CsvValidationService::getExpectedTemplateVariables($tmpl))) ?>">
                   <?= e($tmpl['name']) ?> (<?= e(ucfirst($tmpl['certificate_type'])) ?>)
                 </option>
               <?php endforeach; ?>
@@ -90,16 +90,17 @@ declare(strict_types=1);
       <div style="margin-bottom: 1rem;">
         <strong style="display: block; color: var(--text-primary); margin-bottom: 0.25rem;">Mandatory Columns:</strong>
         <ul style="padding-left: 1.25rem; margin: 0; color: var(--text-secondary);">
-          <li><code>name</code> - Full name of the recipient</li>
-          <li><code>phone</code> - Contact phone number (auto-normalized to E.164)</li>
+          <li><code>name</code> &mdash; Full name of the recipient</li>
+          <li>All design variables required by the selected template (e.g. <code>date</code>, <code>event_title</code>, <code>place</code>, etc.)</li>
         </ul>
       </div>
 
       <div style="margin-bottom: 1rem;">
-        <strong style="display: block; color: var(--text-primary); margin-bottom: 0.25rem;">Custom Columns:</strong>
-        <p class="text-secondary" style="margin: 0; font-size: var(--font-size-xs);">
-          Any custom variables defined in the selected template must also appear in the header row.
-        </p>
+        <strong style="display: block; color: var(--text-primary); margin-bottom: 0.25rem;">Ingestion &amp; Search Columns:</strong>
+        <ul style="padding-left: 1.25rem; margin: 0; color: var(--text-secondary);">
+          <li><code>phone</code> &mdash; Contact mobile / WhatsApp (for public lookup &amp; search; auto-normalized to E.164)</li>
+          <li><code>email</code> &mdash; Recipient email address (optional)</li>
+        </ul>
       </div>
 
       <div style="margin-bottom: 1rem;">
@@ -273,10 +274,16 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const selectedOption = templateSelect.options[templateSelect.selectedIndex];
       try {
-        const vars = JSON.parse(selectedOption.getAttribute('data-variables') || '[]');
-        const varList = vars.map(v => `<code>{{${v.key}}}</code>`).join(', ');
-        templateInfo.innerHTML = `Variables expected in CSV: <code>{{name}}</code>, <code>{{phone}}</code>${varList ? ', ' + varList : ''}`;
-        templateInfo.style.display = 'block';
+        const rawVars = selectedOption.getAttribute('data-variables');
+        const vars = JSON.parse(rawVars || '[]');
+        if (vars && vars.length > 0) {
+          const varList = vars.map(v => `<code>${escapeHtml(v)}</code>`).join(', ');
+          templateInfo.innerHTML = `<strong>Required CSV Columns:</strong> ${varList} <span class="text-secondary">(Optional ingestion columns: <code>phone</code>, <code>email</code>)</span>`;
+          templateInfo.style.display = 'block';
+        } else {
+          templateInfo.innerHTML = `<strong>Required CSV Columns:</strong> <code>name</code> <span class="text-secondary">(Optional ingestion columns: <code>phone</code>, <code>email</code>)</span>`;
+          templateInfo.style.display = 'block';
+        }
       } catch (e) {
         templateInfo.style.display = 'none';
       }
@@ -349,31 +356,57 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        alert('Server returned an invalid response. Please try again.');
+        return;
+      }
 
-      if (!response.ok || data.error) {
-        alert(data.error || 'Validation failed. Please check the file format.');
-        btnValidateCsv.disabled = false;
-        btnValidateCsv.innerHTML = `<span>Validate CSV</span>`;
+      if (!response.ok || data.error || data.status === 'error') {
+        let errMsg = data.error;
+        if (!errMsg && data.errors) {
+          if (Array.isArray(data.errors)) {
+            errMsg = data.errors.join('\n');
+          } else if (typeof data.errors === 'object') {
+            errMsg = Object.values(data.errors).join('\n');
+          }
+        }
+        alert(errMsg || 'Validation failed. Please check the file format and required columns.');
         return;
       }
 
       // Display validation results
-      statTotal.textContent = data.total_records;
-      statValid.textContent = data.valid_count;
-      statInvalid.textContent = data.invalid_count;
+      statTotal.textContent = data.total_records ?? 0;
+      statValid.textContent = data.valid_count ?? 0;
+      statInvalid.textContent = data.invalid_count ?? 0;
 
-      if (data.invalid_count > 0) {
+      const invalidRows = Array.isArray(data.invalid_rows) ? data.invalid_rows : [];
+      if (data.invalid_count > 0 && invalidRows.length > 0) {
         btnDownloadErrorReport.style.display = 'inline-flex';
         invalidRowsContainer.style.display = 'block';
         invalidRowsTableBody.innerHTML = '';
-        data.invalid_rows.forEach(row => {
+        invalidRows.forEach(row => {
+          if (!row) return;
           const tr = document.createElement('tr');
-          const errorsList = row.errors.map(err => `<span class="badge badge-danger" style="margin-right: 4px; margin-bottom: 2px;">${escapeHtml(err)}</span>`).join('');
+          let errorsArr = [];
+          if (Array.isArray(row.errors)) {
+            errorsArr = row.errors;
+          } else if (typeof row.error === 'string' && row.error.trim()) {
+            errorsArr = [row.error];
+          } else {
+            errorsArr = ['Validation issue detected'];
+          }
+          const errorsList = errorsArr.map(err => `<span class="badge badge-danger" style="margin-right: 4px; margin-bottom: 2px;">${escapeHtml(err)}</span>`).join('');
+          const lineNum = row.line ?? row.row ?? '-';
+          const nameVal = (row.data && row.data.name) ? row.data.name : (row.name || '-');
+          const phoneVal = (row.data && row.data.phone) ? row.data.phone : (row.phone || '-');
+
           tr.innerHTML = `
-            <td><strong>#${row.line}</strong></td>
-            <td>${escapeHtml(row.data.name || '-')}</td>
-            <td><code>${escapeHtml(row.data.phone || '-')}</code></td>
+            <td><strong>#${lineNum}</strong></td>
+            <td>${escapeHtml(nameVal)}</td>
+            <td><code>${escapeHtml(phoneVal)}</code></td>
             <td>${errorsList}</td>
           `;
           invalidRowsTableBody.appendChild(tr);
@@ -395,7 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
       validationResultsSection.scrollIntoView({ behavior: 'smooth' });
 
     } catch (err) {
-      alert('An unexpected network error occurred while validating: ' + err.message);
+      alert('An error occurred while validating: ' + err.message);
     } finally {
       btnValidateCsv.disabled = false;
       btnValidateCsv.innerHTML = `<span>Validate CSV</span>`;

@@ -65,19 +65,13 @@ if (is_string($selectedVars)) {
           </label>
 
           <label class="form-check" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-surface-subtle); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);">
-            <input type="checkbox" name="required_variables[]" value="phone" checked disabled>
-            <input type="hidden" name="required_variables[]" value="phone">
-            <span><strong>{{phone}}</strong> <span class="badge badge-danger" style="font-size: 10px; margin-left: 4px;">REQUIRED</span></span>
-          </label>
-
-          <label class="form-check" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-surface-subtle); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);">
             <input type="checkbox" name="required_variables[]" value="certificate_number" checked disabled>
             <input type="hidden" name="required_variables[]" value="certificate_number">
             <span><strong>{{certificate_number}}</strong></span>
           </label>
 
           <?php foreach ($allVars as $k => $v): ?>
-            <?php if (!in_array($k, ['name', 'phone', 'certificate_number'], true)): ?>
+            <?php if (!in_array($k, ['name', 'certificate_number'], true)): ?>
               <label class="form-check" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;">
                 <input type="checkbox" name="required_variables[]" value="<?= e($k) ?>" <?= in_array($k, $selectedVars, true) ? 'checked' : '' ?>>
                 <span><code><?= e($v['placeholder']) ?></code> &mdash; <?= e($v['label']) ?></span>

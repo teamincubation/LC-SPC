@@ -413,9 +413,11 @@ class TestCertificatePlatformV3
         $phoneNormalized = CsvValidationService::normalizePhone($phoneRaw);
         $this->assert($phoneNormalized === '+919876543210', "Normalized '{$phoneRaw}' to E.164: {$phoneNormalized}");
 
-        // Create an Active Certificate and an Invalid Certificate under the same phone
-        $activeId = CertificateIdGenerator::generateCertificateId($this->mariaPdo);
-        $activeToken = CertificateIdGenerator::generateVerificationToken($this->mariaPdo);
+        // Create Two Active Certificates (different batches) and an Invalid Certificate under the same phone
+        $activeId1 = CertificateIdGenerator::generateCertificateId($this->mariaPdo);
+        $activeToken1 = CertificateIdGenerator::generateVerificationToken($this->mariaPdo);
+        $activeId2 = CertificateIdGenerator::generateCertificateId($this->mariaPdo);
+        $activeToken2 = CertificateIdGenerator::generateVerificationToken($this->mariaPdo);
         $invalidId = CertificateIdGenerator::generateCertificateId($this->mariaPdo);
         $invalidToken = CertificateIdGenerator::generateVerificationToken($this->mariaPdo);
 
@@ -425,9 +427,19 @@ class TestCertificatePlatformV3
         ");
 
         $stmt->execute([
-            ':cid'    => $activeId,
-            ':token'  => $activeToken,
-            ':name'   => 'Rohan Verma',
+            ':cid'    => $activeId1,
+            ':token'  => $activeToken1,
+            ':name'   => 'Rohan Verma (Batch 1)',
+            ':phone'  => '9876543210',
+            ':norm'   => $phoneNormalized,
+            ':status' => 'active',
+            ':reason' => null,
+        ]);
+
+        $stmt->execute([
+            ':cid'    => $activeId2,
+            ':token'  => $activeToken2,
+            ':name'   => 'Rohan Verma (Batch 2)',
             ':phone'  => '9876543210',
             ':norm'   => $phoneNormalized,
             ':status' => 'active',
@@ -447,9 +459,10 @@ class TestCertificatePlatformV3
         // Query active certificates by phone
         $results = $certRepo->findActiveByPhone($phoneNormalized);
 
-        $this->assert(count($results) >= 1, "Phone search returned active certificate(s)");
+        $this->assert(count($results) >= 2, "Multiple active certificates for same phone returned by public search");
         $returnedIds = array_column($results, 'certificate_id');
-        $this->assert(in_array($activeId, $returnedIds, true), "Active Certificate {$activeId} is present in phone search");
+        $this->assert(in_array($activeId1, $returnedIds, true), "Active Certificate 1 {$activeId1} is present in phone search");
+        $this->assert(in_array($activeId2, $returnedIds, true), "Active Certificate 2 {$activeId2} with same phone is present in phone search");
         $this->assert(!in_array($invalidId, $returnedIds, true), "Revoked Certificate {$invalidId} is strictly EXCLUDED from phone search");
 
         // Test non-existent phone number: anti-enumeration generic behavior

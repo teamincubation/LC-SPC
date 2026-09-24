@@ -119,9 +119,20 @@ class CertificateGenerateController
                 'invalid_rows'   => $validation['invalid_rows'],
             ]);
         } catch (ValidationException $e) {
-            return Response::json(['error' => $e->getMessage()], 422);
+            $errList = method_exists($e, 'getErrors') ? $e->getErrors() : ($e->errors ?? []);
+            if (empty($errList)) {
+                $errList = [$e->getMessage()];
+            }
+            return Response::json([
+                'status' => 'error',
+                'error'  => $e->getMessage(),
+                'errors' => $errList,
+            ], 422);
         } catch (Throwable $e) {
-            return Response::json(['error' => 'Validation error: ' . $e->getMessage()], 500);
+            return Response::json([
+                'status' => 'error',
+                'error'  => 'Validation error: ' . $e->getMessage(),
+            ], 500);
         }
     }
 

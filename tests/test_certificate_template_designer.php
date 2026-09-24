@@ -109,7 +109,7 @@ assertCondition(
 // -----------------------------------------------------------------------------
 // 3. Mandatory Variable Validation on Designer Save
 // -----------------------------------------------------------------------------
-echo "\n3. Testing Mandatory Variables Validation ({{name}} and {{phone}})...\n";
+echo "\n3. Testing Mandatory Variables Validation ({{name}} mandatory, {{phone}} NOT design variable)...\n";
 
 $controller = new CertificateTemplateController();
 
@@ -119,7 +119,7 @@ $testTplId = $repo->create([
     'name'               => 'Automated Test Designer Template ' . bin2hex(random_bytes(3)),
     'certificate_type'   => 'participation',
     'status'             => 'draft',
-    'required_variables' => ['name', 'phone'],
+    'required_variables' => ['name'],
     'layout_config'      => ['elements' => $defaultElements],
 ]);
 
@@ -131,7 +131,7 @@ assertCondition(
 // A) Save without {{name}} should be rejected with 422
 $invalidElements1 = [
     ['type' => 'text', 'text' => 'Recipient: John Doe (Missing Tag)'],
-    ['type' => 'dynamic_text', 'text' => 'Phone: {{phone}}'],
+    ['type' => 'text', 'text' => 'Certificate of Participation'],
 ];
 $reqNoName = new Request([], ['layout_config' => json_encode(['elements' => $invalidElements1])]);
 $resNoName = $controller->saveDesigner($reqNoName, ['id' => $testTplId]);
@@ -140,22 +140,41 @@ assertCondition(
     'Saving template layout without {{name}} is strictly rejected (HTTP 422)'
 );
 
-// B) Save without {{phone}} should be rejected with 422
-$invalidElements2 = [
+// B) Save without {{phone}} should SUCCEED (phone is NOT a design variable)
+$elementsNoPhone = [
     ['type' => 'dynamic_text', 'text' => 'Recipient: {{name}}'],
-    ['type' => 'text', 'text' => 'Phone: +919876543210 (Missing Tag)'],
+    [
+        'type'         => 'qr_code',
+        'x'            => 1240,
+        'y'            => 1240,
+        'size'         => 180,
+        'url_template' => '{{verification_url}}',
+    ],
+    [
+        'type'   => 'signature1',
+        'x'      => 500,
+        'y'      => 1260,
+        'width'  => 220,
+        'height' => 80,
+        'name'   => 'Program Lead',
+        'title'  => 'Director',
+    ],
 ];
-$reqNoPhone = new Request([], ['layout_config' => json_encode(['elements' => $invalidElements2])]);
+$reqNoPhone = new Request([], [
+    'layout_config'          => json_encode(['elements' => $elementsNoPhone]),
+    'signature1_name'        => 'Test Signatory 1',
+    'signature1_designation' => 'Director of Academics',
+]);
 $resNoPhone = $controller->saveDesigner($reqNoPhone, ['id' => $testTplId]);
 assertCondition(
-    $resNoPhone->getStatusCode() === 422,
-    'Saving template layout without {{phone}} is strictly rejected (HTTP 422)'
+    $resNoPhone->getStatusCode() === 200,
+    'Saving template layout with {{name}} and WITHOUT {{phone}} succeeds (HTTP 200 - Phone is NOT a design requirement)'
 );
 
-// C) Save with both {{name}} and {{phone}} should succeed
+// C) Save valid full layout succeeds
 $validElements = [
     ['type' => 'dynamic_text', 'text' => 'This is to certify that {{name}} has participated.'],
-    ['type' => 'dynamic_text', 'text' => 'Phone: {{phone}}'],
+    ['type' => 'dynamic_text', 'text' => 'Date: {{date}}'],
     [
         'type'         => 'qr_code',
         'x'            => 1240,
@@ -174,14 +193,14 @@ $validElements = [
     ],
 ];
 $reqValid = new Request([], [
-    'layout_config'         => json_encode(['elements' => $validElements]),
+    'layout_config'          => json_encode(['elements' => $validElements]),
     'signature1_name'        => 'Test Signatory 1',
     'signature1_designation' => 'Director of Academics',
 ]);
 $resValid = $controller->saveDesigner($reqValid, ['id' => $testTplId]);
 assertCondition(
     $resValid->getStatusCode() === 200,
-    'Saving valid layout with both {{name}} and {{phone}} succeeds (HTTP 200)'
+    'Saving valid layout succeeds (HTTP 200)'
 );
 
 $savedTpl = $repo->findById($testTplId);

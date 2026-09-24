@@ -1075,7 +1075,6 @@ $activeSig2 = !empty($template['signature2_image_path']) ? url('/' . $template['
             <div class="var-group-label">Recipient (Personalization)</div>
             <div class="var-chips">
               <span class="var-chip is-mandatory" data-tag="{{name}}" title="Mandatory recipient full name">{{name}} *</span>
-              <span class="var-chip is-mandatory" data-tag="{{phone}}" title="Mandatory phone number">{{phone}} *</span>
               <span class="var-chip" data-tag="{{email}}">{{email}}</span>
               <span class="var-chip" data-tag="{{volunteer_id}}">{{volunteer_id}}</span>
               <span class="var-chip" data-tag="{{hours}}">{{hours}}</span>
@@ -1291,10 +1290,6 @@ $activeSig2 = !empty($template['signature2_image_path']) ? url('/' . $template['
             <div class="checklist-item">
               <span>Mandatory: {{name}}</span>
               <span class="status-pill status-pill-missing" id="chkNameStatus">Checking...</span>
-            </div>
-            <div class="checklist-item">
-              <span>Mandatory: {{phone}}</span>
-              <span class="status-pill status-pill-missing" id="chkPhoneStatus">Checking...</span>
             </div>
             <div class="checklist-item">
               <span>QR Code Verification</span>
@@ -2490,14 +2485,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Overview Checklist Validation
   function updateOverviewChecklist() {
     let hasName = false;
-    let hasPhone = false;
     let hasQr = false;
     let hasId = false;
 
     elements.forEach(el => {
       const txt = el.text || '';
       if (txt.includes('{{name}}')) hasName = true;
-      if (txt.includes('{{phone}}')) hasPhone = true;
       if (txt.includes('{{certificate_number}}')) hasId = true;
       if (el.type === 'qr_code') hasQr = true;
     });
@@ -2512,7 +2505,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     setStatus('chkNameStatus', hasName);
-    setStatus('chkPhoneStatus', hasPhone);
     setStatus('chkQrStatus', hasQr);
     setStatus('chkIdStatus', hasId);
   }
@@ -2649,17 +2641,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Save Designer Layout
   document.getElementById('btnSaveDesigner').addEventListener('click', async () => {
-    // Mandatory variables check: name and phone must be present
+    // Mandatory variables check: name must be present
     let hasName = false;
-    let hasPhone = false;
     elements.forEach(el => {
       const t = el.text || '';
       if (t.includes('{{name}}')) hasName = true;
-      if (t.includes('{{phone}}')) hasPhone = true;
     });
 
-    if (!hasName || !hasPhone) {
-      alert('Validation Error: The certificate template MUST contain both {{name}} and {{phone}} elements before saving.');
+    if (!hasName) {
+      alert('Validation Error: The certificate template MUST contain the {{name}} element before saving.');
       return;
     }
 

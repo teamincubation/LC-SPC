@@ -17,30 +17,87 @@ class CsvValidationService
     public const MAX_RECORDS_LIMIT = 5000;
 
     /**
-     * Generate template-specific sample CSV content.
+     * Resolve the list of required design variables for a given template.
+     * System variables ('certificate_number', 'verification_url', 'verification_token')
+     * and ingestion fields ('phone') are excluded from design requirements.
+     * 'name' is always mandatory.
+     *
+     * @param array $template
+     * @return array List of required column names (e.g. ['name', 'date', 'event_title', 'place'])
      */
-    public static function generateSampleCsv(array $template): string
+    public static function getExpectedTemplateVariables(array $template): array
     {
         $vars = $template['required_variables'] ?? [];
         if (is_string($vars)) {
             $vars = json_decode($vars, true) ?: [];
         }
 
-        // Ensure mandatory fields come first
-        $headers = ['name', 'phone'];
+        $systemExclude = ['certificate_number', 'verification_url', 'verification_token', 'phone'];
+        $cleanVars = [];
+
         foreach ($vars as $v) {
             $k = is_array($v) ? ($v['key'] ?? '') : (string) $v;
-            $cleanKey = trim(str_replace(['{{', '}}'], '', $k));
-            if ($cleanKey !== '' && !in_array($cleanKey, $headers, true) && $cleanKey !== 'certificate_number') {
-                $headers[] = $cleanKey;
+            $cleanKey = trim(strtolower(str_replace(['{{', '}}'], '', $k)));
+            $cleanKey = preg_replace('/[^a-z0-9_]/', '', str_replace([' ', '-'], '_', $cleanKey));
+            if ($cleanKey !== '' && !in_array($cleanKey, $systemExclude, true) && !in_array($cleanKey, $cleanVars, true)) {
+                $cleanVars[] = $cleanKey;
             }
         }
 
-        // Add common optional headers if not already present
-        foreach (['event_title', 'date', 'place', 'email'] as $extra) {
-            if (!in_array($extra, $headers, true)) {
-                $headers[] = $extra;
+        // Also inspect layout elements if present
+        $layout = $template['layout_config'] ?? [];
+        if (is_string($layout)) {
+            $layout = json_decode($layout, true) ?: [];
+        }
+        $elements = $layout['elements'] ?? [];
+        foreach ($elements as $el) {
+            $type = $el['type'] ?? '';
+            if ($type === 'variable' && !empty($el['variable'])) {
+                $k = trim(strtolower(str_replace(['{{', '}}'], '', (string) $el['variable'])));
+                $k = preg_replace('/[^a-z0-9_]/', '', str_replace([' ', '-'], '_', $k));
+                if ($k !== '' && !in_array($k, $systemExclude, true) && !in_array($k, $cleanVars, true)) {
+                    $cleanVars[] = $k;
+                }
+            } elseif (($type === 'text' || $type === 'dynamic_text') && !empty($el['text'])) {
+                $extracted = VariableRegistry::extractPlaceholders((string) $el['text']);
+                foreach ($extracted as $k) {
+                    $k = trim(strtolower($k));
+                    $k = preg_replace('/[^a-z0-9_]/', '', str_replace([' ', '-'], '_', $k));
+                    if ($k !== '' && !in_array($k, $systemExclude, true) && !in_array($k, $cleanVars, true)) {
+                        $cleanVars[] = $k;
+                    }
+                }
             }
+        }
+
+        // 'name' is always mandatory for any certificate
+        if (!in_array('name', $cleanVars, true)) {
+            array_unshift($cleanVars, 'name');
+        }
+
+        return $cleanVars;
+    }
+
+    /**
+     * Generate template-specific sample CSV content based on actual template variables.
+     */
+    public static function generateSampleCsv(array $template): string
+    {
+        $expectedVars = self::getExpectedTemplateVariables($template);
+
+        // Standard column order:
+        // 1. name
+        // 2. phone (ingestion & lookup field)
+        // 3. template-specific design variables
+        // 4. email (standard contact field)
+        $headers = ['name', 'phone'];
+        foreach ($expectedVars as $v) {
+            if (!in_array($v, $headers, true)) {
+                $headers[] = $v;
+            }
+        }
+        if (!in_array('email', $headers, true)) {
+            $headers[] = 'email';
         }
 
         $allVars = VariableRegistry::getAll();
@@ -48,14 +105,32 @@ class CsvValidationService
         $sampleRow2 = [];
 
         foreach ($headers as $h) {
-            $sampleRow1[] = $allVars[$h]['example'] ?? 'Sample ' . ucfirst($h);
             if ($h === 'name') {
+                $sampleRow1[] = 'John Mathew';
                 $sampleRow2[] = 'Sarah Jenkins';
             } elseif ($h === 'phone') {
+                $sampleRow1[] = '+919876543210';
                 $sampleRow2[] = '+919876543211';
             } elseif ($h === 'email') {
+                $sampleRow1[] = 'john.m@example.com';
                 $sampleRow2[] = 'sarah.j@example.com';
+            } elseif ($h === 'date') {
+                $sampleRow1[] = '10 September 2026';
+                $sampleRow2[] = '10 September 2026';
+            } elseif ($h === 'event_title') {
+                $sampleRow1[] = $template['name'] ?? 'Gatekeeper Training (Level 1)';
+                $sampleRow2[] = $template['name'] ?? 'Gatekeeper Training (Level 1)';
+            } elseif ($h === 'organization') {
+                $sampleRow1[] = 'Listening Community SPC';
+                $sampleRow2[] = 'Listening Community SPC';
+            } elseif ($h === 'duration') {
+                $sampleRow1[] = '2 Hours';
+                $sampleRow2[] = '2 Hours';
+            } elseif ($h === 'place') {
+                $sampleRow1[] = 'MES T O Abdulla Memorial College, Kunnukara';
+                $sampleRow2[] = 'MES T O Abdulla Memorial College, Kunnukara';
             } else {
+                $sampleRow1[] = $allVars[$h]['example'] ?? 'Sample ' . ucfirst($h);
                 $sampleRow2[] = $allVars[$h]['example'] ?? 'Sample ' . ucfirst($h);
             }
         }
@@ -78,6 +153,8 @@ class CsvValidationService
      * @param array $template Template record to match required headers against
      * @return array [
      *     'total_records'  => int,
+     *     'valid_count'    => int,
+     *     'invalid_count'  => int,
      *     'valid_records'  => array,
      *     'invalid_rows'   => array,
      *     'headers'        => array,
@@ -119,26 +196,52 @@ class CsvValidationService
             return preg_replace('/[^a-z0-9_]/', '', str_replace([' ', '-'], '_', $cleaned));
         }, $rawHeaders);
 
-        // Check required mandatory headers: name & phone
+        // Resolve expected design variables for selected template
+        $expectedVars = self::getExpectedTemplateVariables($template);
+
+        // Check required template headers
         $missingHeaders = [];
-        if (!in_array('name', $headers, true)) {
-            $missingHeaders[] = 'name';
-        }
-        if (!in_array('phone', $headers, true)) {
-            $missingHeaders[] = 'phone';
+        foreach ($expectedVars as $reqVar) {
+            if (!in_array($reqVar, $headers, true)) {
+                $missingHeaders[] = $reqVar;
+            }
         }
 
         if (!empty($missingHeaders)) {
             fclose($stream);
             throw new ValidationException(
-                'Missing mandatory CSV headers: [' . implode(', ', $missingHeaders) . ']. Both "name" and "phone" columns are required.',
+                'Missing required columns for selected template: [' . implode(', ', $missingHeaders) . ']. Please ensure your CSV contains all required template variables.',
                 ['csv_headers' => 'Required columns missing: ' . implode(', ', $missingHeaders)]
+            );
+        }
+
+        // Check for unsupported CSV columns
+        $allRegistryVars = array_keys(VariableRegistry::getAll());
+        $allowedHeaders = array_unique(array_merge(
+            $allRegistryVars,
+            $expectedVars,
+            ['phone', 'email']
+        ));
+
+        $unsupportedHeaders = [];
+        foreach ($headers as $h) {
+            if (!in_array($h, $allowedHeaders, true)) {
+                $unsupportedHeaders[] = $h;
+            }
+        }
+
+        if (!empty($unsupportedHeaders)) {
+            fclose($stream);
+            throw new ValidationException(
+                'Unsupported CSV columns: [' . implode(', ', $unsupportedHeaders) . ']. Please use only columns supported by this template or system variables.',
+                ['csv_headers' => 'Unsupported columns: ' . implode(', ', $unsupportedHeaders)]
             );
         }
 
         $validRecords = [];
         $invalidRows = [];
         $seenPhonesInFile = [];
+        $hasPhoneColumn = in_array('phone', $headers, true);
         $rowNumber = 1; // Header is row 1, data starts at row 2
 
         while (($row = fgetcsv($stream, 0, $delimiter, '"', "\\")) !== false) {
@@ -150,11 +253,15 @@ class CsvValidationService
             }
 
             if (count($validRecords) + count($invalidRows) >= self::MAX_RECORDS_LIMIT) {
+                $err = 'Maximum record batch limit (' . self::MAX_RECORDS_LIMIT . ') reached. Remaining rows ignored.';
                 $invalidRows[] = [
-                    'row'   => $rowNumber,
-                    'name'  => '-',
-                    'phone' => '-',
-                    'error' => 'Maximum record batch limit (' . self::MAX_RECORDS_LIMIT . ') reached. Remaining rows ignored.',
+                    'line'   => $rowNumber,
+                    'row'    => $rowNumber,
+                    'name'   => '-',
+                    'phone'  => '-',
+                    'error'  => $err,
+                    'errors' => [$err],
+                    'data'   => ['name' => '-', 'phone' => '-'],
                 ];
                 break;
             }
@@ -172,60 +279,118 @@ class CsvValidationService
 
             // Validation Rule 1: Blank Name
             if ($name === '' || mb_strlen($name) < 2) {
+                $err = 'Recipient Name is required (minimum 2 characters).';
                 $invalidRows[] = [
-                    'row'   => $rowNumber,
-                    'name'  => $name ?: '-',
-                    'phone' => $phone ?: '-',
-                    'error' => 'Recipient Name is required (minimum 2 characters).',
+                    'line'   => $rowNumber,
+                    'row'    => $rowNumber,
+                    'name'   => $name ?: '-',
+                    'phone'  => $phone ?: '-',
+                    'error'  => $err,
+                    'errors' => [$err],
+                    'data'   => $data,
                 ];
                 continue;
             }
 
-            // Validation Rule 2: Blank Phone
-            if ($phone === '') {
+            // Validation Rule 2: Check required template variables are not empty on this row
+            $emptyReqVar = null;
+            foreach ($expectedVars as $reqVar) {
+                if ($reqVar === 'name') continue;
+                $val = $data[$reqVar] ?? '';
+                if ($val === '') {
+                    // Check if fallback exists in template
+                    if ($reqVar === 'event_title' && !empty($template['name'])) {
+                        $data['event_title'] = $template['name'];
+                    } elseif ($reqVar === 'date') {
+                        $data['date'] = date('d F Y');
+                    } elseif ($reqVar === 'certificate_type' && !empty($template['certificate_type'])) {
+                        $data['certificate_type'] = $template['certificate_type'];
+                    } else {
+                        $emptyReqVar = $reqVar;
+                        break;
+                    }
+                }
+            }
+
+            if ($emptyReqVar !== null) {
+                $err = "Required value for '{$emptyReqVar}' is empty.";
                 $invalidRows[] = [
-                    'row'   => $rowNumber,
-                    'name'  => $name,
-                    'phone' => '-',
-                    'error' => 'Phone / WhatsApp number is required.',
+                    'line'   => $rowNumber,
+                    'row'    => $rowNumber,
+                    'name'   => $name,
+                    'phone'  => $phone ?: '-',
+                    'error'  => $err,
+                    'errors' => [$err],
+                    'data'   => $data,
                 ];
                 continue;
             }
 
-            // Validation Rule 3: Phone Normalization & Format
-            $normalizedPhone = self::normalizePhoneNumber($phone);
-            if ($normalizedPhone === null) {
-                $invalidRows[] = [
-                    'row'   => $rowNumber,
-                    'name'  => $name,
-                    'phone' => $phone,
-                    'error' => 'Invalid phone number format. Must be a valid 10-15 digit mobile number.',
-                ];
-                continue;
-            }
-            $data['phone_normalized'] = $normalizedPhone;
+            // Validation Rule 3: Phone validation (if phone column present)
+            if ($hasPhoneColumn) {
+                if ($phone === '') {
+                    $err = 'Phone / WhatsApp number is required when phone column is provided.';
+                    $invalidRows[] = [
+                        'line'   => $rowNumber,
+                        'row'    => $rowNumber,
+                        'name'   => $name,
+                        'phone'  => '-',
+                        'error'  => $err,
+                        'errors' => [$err],
+                        'data'   => $data,
+                    ];
+                    continue;
+                }
 
-            // Validation Rule 4: Duplicate in same CSV
-            if (isset($seenPhonesInFile[$normalizedPhone])) {
-                $prevRow = $seenPhonesInFile[$normalizedPhone];
-                $invalidRows[] = [
-                    'row'   => $rowNumber,
-                    'name'  => $name,
-                    'phone' => $phone,
-                    'error' => "Duplicate phone number in file (already present on row {$prevRow}).",
-                ];
-                continue;
-            }
-            $seenPhonesInFile[$normalizedPhone] = $rowNumber;
+                $normalizedPhone = self::normalizePhoneNumber($phone);
+                if ($normalizedPhone === null) {
+                    $err = 'Invalid phone number format. Must be a valid 10-15 digit mobile number.';
+                    $invalidRows[] = [
+                        'line'   => $rowNumber,
+                        'row'    => $rowNumber,
+                        'name'   => $name,
+                        'phone'  => $phone,
+                        'error'  => $err,
+                        'errors' => [$err],
+                        'data'   => $data,
+                    ];
+                    continue;
+                }
+                $data['phone_normalized'] = $normalizedPhone;
 
-            // Validation Rule 5: Email format check (if present)
+                // Duplicate check in same CSV
+                if (isset($seenPhonesInFile[$normalizedPhone])) {
+                    $prevRow = $seenPhonesInFile[$normalizedPhone];
+                    $err = "Duplicate phone number in this CSV batch. Already used in row {$prevRow}.";
+                    $invalidRows[] = [
+                        'line'   => $rowNumber,
+                        'row'    => $rowNumber,
+                        'name'   => $name,
+                        'phone'  => $phone,
+                        'error'  => $err,
+                        'errors' => [$err],
+                        'data'   => $data,
+                    ];
+                    continue;
+                }
+                $seenPhonesInFile[$normalizedPhone] = $rowNumber;
+            } else {
+                $data['phone'] = '';
+                $data['phone_normalized'] = '';
+            }
+
+            // Validation Rule 4: Email format check (if present and non-empty)
             if (!empty($data['email'])) {
                 if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+                    $err = 'Invalid email address format: ' . htmlspecialchars($data['email']);
                     $invalidRows[] = [
-                        'row'   => $rowNumber,
-                        'name'  => $name,
-                        'phone' => $phone,
-                        'error' => 'Invalid email address format: ' . htmlspecialchars($data['email']),
+                        'line'   => $rowNumber,
+                        'row'    => $rowNumber,
+                        'name'   => $name,
+                        'phone'  => $phone ?: '-',
+                        'error'  => $err,
+                        'errors' => [$err],
+                        'data'   => $data,
                     ];
                     continue;
                 }
@@ -267,11 +432,15 @@ class CsvValidationService
         fputcsv($output, ['Row Number', 'Recipient Name', 'Phone Provided', 'Validation Error'], ',', '"', "\\");
 
         foreach ($invalidRows as $err) {
+            $rowNum = $err['line'] ?? $err['row'] ?? '';
+            $nameVal = $err['name'] ?? ($err['data']['name'] ?? '');
+            $phoneVal = $err['phone'] ?? ($err['data']['phone'] ?? '');
+            $errorMsg = is_array($err['errors'] ?? null) ? implode('; ', $err['errors']) : ($err['error'] ?? '');
             fputcsv($output, [
-                $err['row'],
-                $err['name'],
-                $err['phone'],
-                $err['error'],
+                $rowNum,
+                $nameVal,
+                $phoneVal,
+                $errorMsg,
             ], ',', '"', "\\");
         }
 

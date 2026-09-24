@@ -26,4 +26,12 @@ class ValidationException extends InvalidArgumentException
         parent::__construct($message, $code, $previous);
         $this->errors = $errors;
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
 }

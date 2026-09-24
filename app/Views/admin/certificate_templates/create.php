@@ -57,7 +57,7 @@ declare(strict_types=1);
       <div class="form-group mb-4">
         <label class="form-label mb-2">Required Template Variables</label>
         <p class="text-secondary mb-3" style="font-size: var(--font-size-xs);">
-          Every template strictly requires <strong>{{name}}</strong> and <strong>{{phone}}</strong>. Select any additional variables that your CSV uploads will include.
+          Every template strictly requires <strong>{{name}}</strong>. Select any additional variables that your CSV uploads will include.
         </p>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem;">
@@ -69,12 +69,6 @@ declare(strict_types=1);
           </label>
 
           <label class="form-check" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-surface-subtle); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);">
-            <input type="checkbox" name="required_variables[]" value="phone" checked disabled>
-            <input type="hidden" name="required_variables[]" value="phone">
-            <span><strong>{{phone}}</strong> <span class="badge badge-danger" style="font-size: 10px; margin-left: 4px;">REQUIRED</span></span>
-          </label>
-
-          <label class="form-check" style="display: flex; align-items: center; gap: 0.5rem; background: var(--bg-surface-subtle); padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);">
             <input type="checkbox" name="required_variables[]" value="certificate_number" checked disabled>
             <input type="hidden" name="required_variables[]" value="certificate_number">
             <span><strong>{{certificate_number}}</strong></span>
@@ -82,7 +76,7 @@ declare(strict_types=1);
 
           <!-- Optional Registry Variables -->
           <?php foreach ($allVars as $k => $v): ?>
-            <?php if (!in_array($k, ['name', 'phone', 'certificate_number'], true)): ?>
+            <?php if (!in_array($k, ['name', 'certificate_number'], true)): ?>
               <label class="form-check" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;">
                 <input type="checkbox" name="required_variables[]" value="<?= e($k) ?>" <?= in_array($k, ['event_title', 'date', 'place'], true) ? 'checked' : '' ?>>
                 <span><code><?= e($v['placeholder']) ?></code> &mdash; <?= e($v['label']) ?></span>
